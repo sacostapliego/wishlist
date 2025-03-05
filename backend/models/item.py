@@ -1,8 +1,10 @@
 from sqlalchemy import Column, Integer, String, String, Boolean, DateTime, Float
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 
 from .base import Base
@@ -11,7 +13,8 @@ class WishListItem(Base):
     
     __tablename__ = 'wishlist_items'
     
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
     name = Column(String, index=True, nullable=False)
     description = Column(String)
     price = Column(Float)
@@ -22,23 +25,23 @@ class WishListItem(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
 # Pydantic models
-class WishtListItemBase(BaseModel):
+class WishListItemBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: Optional[float] = None
-    url: Optional[HttpUrl] = None
+    url: Optional[str] = None
     is_purchased: bool = False
     priority: int = 0
     
-class WishListItemCreate(WishtListItemBase):
+class WishListItemCreate(WishListItemBase):
     pass
 
-class WishListItemUpdate(WishtListItemBase):
+class WishListItemUpdate(WishListItemBase):
     pass
 
-class WishListItemReponse(WishtListItemBase):
-    id: int
+class WishListItemResponse(WishListItemBase):
+    id: Union[int, uuid.UUID]
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)

@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from models.base import get_db
-from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemReponse
+from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse
 
 router = APIRouter(prefix='/wishlist', tags=['wishlist'])
 
 ''' Create a new item '''
-@router.post('/', response_model=WishListItemReponse)
+@router.post('/', response_model=WishListItemResponse)
 def create_wishlist_item(
     item: WishListItemCreate,
     db: Session = Depends(get_db)
@@ -17,11 +17,12 @@ def create_wishlist_item(
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
+    
     return db_item
 
 
 ''' Get all items '''
-@router.get('/', response_model=WishListItemReponse)
+@router.get('/', response_model=List[WishListItemResponse])
 def read_wishlist_items(
     skip: int = 0,
     limit: int = 100,
@@ -32,7 +33,7 @@ def read_wishlist_items(
 
 
 ''' Update an item '''
-@router.put('/{item_id}', response_model=WishListItemReponse)
+@router.put('/{item_id}', response_model=WishListItemResponse)
 def update_wishlist_item(
     item_id: int,
     item: WishListItemUpdate,
@@ -51,7 +52,7 @@ def update_wishlist_item(
 
 ''' Delete an item '''
 @router.delete('/{item_id}', response_model=dict)
-def delete_wihstlist_item(
+def delete_wishstlist_item(
     item_id: int,
     db: Session = Depends(get_db)
 ):
