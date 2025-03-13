@@ -1,11 +1,13 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { View } from 'react-native';
 import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
+import AddModal from '../components/modals/AddItemModal';
+import { useState } from 'react';
 
 export default function AppLayout() {
   const insets = useSafeAreaInsets();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>
@@ -45,6 +47,12 @@ export default function AppLayout() {
         />
         <Tabs.Screen
           name="add"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              setIsModalVisible(true);
+            },
+          }}
           options={{
             title: 'Add',
             tabBarIcon: ({ color, size }) => (
@@ -71,6 +79,11 @@ export default function AppLayout() {
           }}
         />
       </Tabs>
+
+      <AddModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+      />
     </View>
   );
 }

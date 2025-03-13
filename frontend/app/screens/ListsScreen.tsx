@@ -1,7 +1,5 @@
-// frontend/app/screens/ListsScreen.tsx
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 
-// Sample data - replace with your actual data
 const sampleLists = [
   { id: '1', name: 'Birthday Wishlist' },
   { id: '2', name: 'Christmas Ideas' },
