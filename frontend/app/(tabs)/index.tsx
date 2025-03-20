@@ -1,41 +1,52 @@
-import { ScrollView, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { ScrollView, Text, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ListGrid from '../components/lists/ListGrid';
+import FriendsListGrid from '../components/lists/FriendsListGrid';
+import PersonalListStack from '../components/lists/PersonalListStack';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   
   const friendsLists = [
-    { id: '1', title: "Sarah's Birthday", itemCount: 12 },
-    { id: '2', title: "John's Wedding", itemCount: 8 },
-    { id: '3', title: "Mom's ", itemCount: 5 },
-    
+    { id: '1', title: "Sarah's Birthday", itemCount: 12, color: '#ff7f50' },
+    { id: '2', title: "John's Wedding", itemCount: 8, color: '#20b2aa' },
+    { id: '3', title: "Mom's Wish List", itemCount: 5, color: '#9370db' },
+    { id: '4', title: "D's Christmas", itemCount: 3, color: '#f08080' },
+    { id: '5', title: "S's Birthday", itemCount: 12, color: '#ff7f50' },
+    { id: '6', title: "J's Wedding", itemCount: 8, color: '#20b2aa' },
+    { id: '7', title: "M's Wish List", itemCount: 5, color: '#9370db' },
+    { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
   ];
 
   const personalLists = [
-    { id: '1', title: "My Birthday", itemCount: 15 },
-    { id: '2', title: "Christmas 2024", itemCount: 20 },
-    { id: '3', title: "Home Decor", itemCount: 7 },
+    { id: '1', title: "Sarah's Birthday", itemCount: 12, color: '#ff7f50' },
+    { id: '2', title: "John's Wedding", itemCount: 8, color: '#20b2aa' },
+    { id: '3', title: "Mom's Wish List", itemCount: 5, color: '#9370db' },
+    { id: '4', title: "D's Christmas", itemCount: 3, color: '#f08080' },
+    { id: '5', title: "S's Birthday", itemCount: 12, color: '#ff7f50' },
+    { id: '6', title: "J's Wedding", itemCount: 8, color: '#20b2aa' },
+    { id: '7', title: "M's Wish List", itemCount: 5, color: '#9370db' },
+    { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
+
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top }
+          { paddingTop: Math.min(insets.top, 10) }
         ]}
       >
         <Text style={styles.userName}>Welcome, Steven!</Text>
         
-        <ListGrid 
-          title="Friends" 
+        <FriendsListGrid 
+          title="Friends Lists" 
           lists={friendsLists}
           maxItems={6}
         />
         
-        <ListGrid 
+        <PersonalListStack 
           title="My Lists" 
           lists={personalLists}
         />
@@ -47,19 +58,21 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
+    backgroundColor: '#141414',
   },
   scrollView: {
     flex: 1,
   },
   content: {
     flexGrow: 1,
-    paddingTop: 16,
+    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
-    padding: 5,
+    color: '#ffffff',
+    marginVertical: 15,
+    paddingHorizontal: 10,
   },
 });

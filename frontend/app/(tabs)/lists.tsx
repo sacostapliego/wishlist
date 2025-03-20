@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Button, StatusBar } from 'react-native';
 
 const sampleLists = [
   { id: '1', name: 'Birthday Wishlist' },
@@ -22,6 +22,8 @@ export default function ListsScreen() {
         style={styles.list}
       />
     </View>
+
+    
   );
 }
 

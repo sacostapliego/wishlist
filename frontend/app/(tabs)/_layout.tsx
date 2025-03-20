@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { StatusBar, View } from 'react-native';
 import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
 import AddModal from '../components/modals/AddItemModal';
 import { useState } from 'react';
@@ -10,7 +10,13 @@ export default function AppLayout() {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }}>
+    <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: '#141414' }}>
+      
+      <StatusBar 
+        barStyle="light-content"
+        translucent={false}
+      />
+
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -22,7 +28,7 @@ export default function AppLayout() {
             borderTopWidth: 1,
             borderTopColor: 'transparent',
             paddingBottom: insets.bottom,
-            paddingTop: 5,
+            paddingTop: 10,
             height: 60 + insets.bottom,
           },
         }}
@@ -49,7 +55,7 @@ export default function AppLayout() {
           name="add"
           listeners={{
             tabPress: (e) => {
-              e.preventDefault();
+              e.preventDefault();//
               setIsModalVisible(true);
             },
           }}
