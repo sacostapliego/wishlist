@@ -2,6 +2,7 @@ import { ScrollView, Text, StyleSheet, SafeAreaView, StatusBar } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';
+import { COLORS } from '../styles/theme';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -12,7 +13,7 @@ export default function HomeScreen() {
     { id: '3', title: "Mom's Wish List", itemCount: 5, color: '#9370db' },
     { id: '4', title: "D's Christmas", itemCount: 3, color: '#f08080' },
     { id: '5', title: "S's Birthday", itemCount: 12, color: '#ff7f50' },
-    { id: '6', title: "J's Wedding", itemCount: 8, color: '#20b2aa' },
+    { id: '6', title: "L's Wedding", itemCount: 8, color: '#20b2aa' },
     { id: '7', title: "M's Wish List", itemCount: 5, color: '#9370db' },
     { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
   ];
@@ -23,7 +24,7 @@ export default function HomeScreen() {
     { id: '3', title: "Mom's Wish List", itemCount: 5, color: '#9370db' },
     { id: '4', title: "D's Christmas", itemCount: 3, color: '#f08080' },
     { id: '5', title: "S's Birthday", itemCount: 12, color: '#ff7f50' },
-    { id: '6', title: "J's Wedding", itemCount: 8, color: '#20b2aa' },
+    { id: '6', title: "L's Wedding", itemCount: 8, color: '#20b2aa' },
     { id: '7', title: "M's Wish List", itemCount: 5, color: '#9370db' },
     { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
   ];
@@ -41,14 +42,14 @@ export default function HomeScreen() {
         <Text style={styles.userName}>Welcome, Steven!</Text>
         
         <FriendsListGrid 
-          title="Friends Lists" 
+          title="Your Friends Lists" 
           lists={friendsLists}
           maxItems={6}
         />
-        
         <PersonalListStack 
           title="My Lists" 
           lists={personalLists}
+          containerStyle={{ marginTop:10 }}
         />
       </ScrollView>
     </SafeAreaView>
@@ -58,7 +59,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141414',
+    backgroundColor: COLORS.background,
   },
   scrollView: {
     flex: 1,
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: COLORS.text.primary,
     marginVertical: 15,
     paddingHorizontal: 10,
   },

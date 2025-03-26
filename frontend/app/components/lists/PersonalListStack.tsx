@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Section } from '../layout/Section';
-import { COLORS, CARD_WIDTH, SPACING } from '../../styles/theme';
+import { COLORS, CARD_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
 import { ListItem } from '../../types/lists';
 import { commonStyles } from '../../styles/common';
 import { useSwipe } from '../../hooks/useSwipe';
@@ -10,10 +10,13 @@ import { useSwipe } from '../../hooks/useSwipe';
 interface PersonalListStackProps {
   title: string;
   lists: ListItem[];
+
+  containerStyle?: object;
 }
 
 
-export default function PersonalListStack({ title, lists }: PersonalListStackProps) {
+
+export default function PersonalListStack({ title, lists, containerStyle }: PersonalListStackProps) {
   // Ensure lists is always an array, even if undefined is passed
   const safeListsArray = Array.isArray(lists) ? lists : [];
 
@@ -31,27 +34,6 @@ export default function PersonalListStack({ title, lists }: PersonalListStackPro
   const thirdCardScale = 0.85;
   const thirdCardOpacity = 0.5;
 
-  // Add visual animation function
-  const bounceCard = () => {
-    // Create a bouncing animation sequence
-    Animated.sequence([
-      Animated.timing(position, {
-        toValue: { x: 20, y: 0 },
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(position, {
-        toValue: { x: -10, y: 0 },
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(position, {
-        toValue: { x: 0, y: 0 },
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
     
   // Handle swipe left (next card)
 const handleSwipeLeft = useCallback(() => {
@@ -145,7 +127,7 @@ const handleSwipeLeft = useCallback(() => {
   const prevColor = prevList?.color || COLORS.card;
 
   return (
-    <Section title={title}>
+    <Section title={title} titleStyle={styles.mainTitle} containerStyle={containerStyle}>
       <View style={styles.cardsContainer}>
         {/* Previous card indicator (only when not at first card) */}
         {prevList && (
@@ -252,14 +234,17 @@ const handleSwipeLeft = useCallback(() => {
 }
 
 const styles = StyleSheet.create({
+  mainTitle: {
+      fontSize: TYPOGRAPHY.sectionTitle.fontSize,
+    },
   cardsContainer: {
-    height: 240,
+    height: 200,
     alignItems: 'center',
     justifyContent: 'center',
   },
   listCard: {
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     ...commonStyles.shadow,
   },
   listHeader: {

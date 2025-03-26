@@ -1,28 +1,37 @@
 import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Section } from '../layout/Section';
 import { Card } from '../ui/Card';
-import { COLORS, ITEM_WIDTH, ITEM_GAP, GRID_WIDTH } from '../../styles/theme';
+import { COLORS, ITEM_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
 import { ListItem as ListItemType } from '../../types/lists';
 import { commonStyles } from '../../styles/common';
 
 interface ListItemProps {
   title: string;
-  itemCount: number;
   color?: string;
   onPress: () => void;
+  username?: string; // Added username prop
 }
 
-export function ListItem({ title, itemCount, color = COLORS.secondary, onPress }: ListItemProps) {
+export function ListItem({ title, color = COLORS.secondary, onPress, username = "Friend" }: ListItemProps) {
   return (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-      <Card style={styles.listItem} color={color}>
+    <TouchableOpacity 
+      activeOpacity={0.7} 
+      onPress={onPress}
+      style={styles.listItemWrapper}
+    >
+      <Card style={StyleSheet.flatten([styles.listItem, { backgroundColor: color }])}>
         <View style={styles.listItemContent}>
-          <Ionicons name="gift-outline" size={24} color="white" />
+          {/* Icon container with circular background */}
+          <View style={styles.iconContainer}>
+            <Ionicons name="gift-outline" size={24} color="white" />
+          </View>
+
+          {/* Text content container */}
           <View style={styles.textContainer}>
             <Text style={styles.listTitle} numberOfLines={1}>{title}</Text>
-            <Text style={styles.itemCount}>{itemCount} items</Text>
+            <Text style={styles.username} numberOfLines={1}>{username}'s List</Text>
           </View>
         </View>
       </Card>
@@ -36,78 +45,100 @@ interface ListGridProps {
   maxItems?: number;
 }
 
-export default function ListGrid({ title, lists, maxItems = 6 }: ListGridProps) {
+export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGridProps) {
   const displayedLists = lists.slice(0, maxItems);
   
-  // Create pairs of lists for 2-column layout
-  const listPairs = [];
-  for (let i = 0; i < displayedLists.length; i += 2) {
-    listPairs.push(displayedLists.slice(i, i + 2));
-  }
-
-  return (
-    <Section title={title}>
-      <View style={styles.gridContainer}>
-        <View style={styles.grid}>
-          {listPairs.map((pair, pairIndex) => (
-            <View key={`pair-${pairIndex}`} style={styles.row}>
-              {pair.map((list) => (
-                <ListItem
-                  key={list.id}
-                  title={list.title}
-                  itemCount={list.itemCount}
-                  color={list.color}
-                  onPress={() => {}}
-                />
-              ))}
-              {pair.length === 1 && <View style={styles.emptyItem} />}
+  // Create rows with 2 items each
+  const createRows = () => {
+    const rows = [];
+    for (let i = 0; i < displayedLists.length; i += 2) {
+      rows.push(
+        <View key={`row-${i}`} style={styles.row}>
+          <View style={styles.column}>
+            <ListItem
+              title={displayedLists[i].title}
+              color={displayedLists[i].color}
+              username={`User${displayedLists[i].id}`} // dummy username
+              onPress={() => {}}
+            />
+          </View>
+          
+          {i + 1 < displayedLists.length && (
+            <View style={styles.column}>
+              <ListItem
+                title={displayedLists[i + 1].title}
+                color={displayedLists[i + 1].color}
+                username={`User${displayedLists[i + 1].id}`} // dummy username
+                onPress={() => {}}
+              />
             </View>
-          ))}
+          )}
         </View>
+      );
+    }
+    return rows;
+  };
+  
+  return (
+    <Section title={title} titleStyle={styles.mainTitle}>
+      <View style={styles.gridContainer}> 
+        {createRows()}
       </View>
     </Section>
   );
 }
 
 const styles = StyleSheet.create({
-  gridContainer: {
-    alignItems: 'center',
+  mainTitle: {
+    fontSize: TYPOGRAPHY.sectionTitle.fontSize,
   },
-  grid: {
-    width: GRID_WIDTH,
+  sectionContainer: {
+    marginBottom: 0,
+  },
+  gridContainer: {
+    paddingVertical: SPACING.xs,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: SPACING.sm,
+  },
+  column: {
+    flex: 1,
+    paddingHorizontal: SPACING.xs,
+  },
+  listItemWrapper: {
+    flex: 1,
   },
   listItem: {
-    width: ITEM_WIDTH,
-    aspectRatio: 1,
-    padding: 0,  // Override Card padding
+    borderRadius: 8,
+    padding: 14,
   },
   listItemContent: {
-    flex: 1,
-    padding: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.xs,
+    marginLeft: -4,
   },
   textContainer: {
-    alignItems: 'center',
-  },
-  emptyItem: {
-    width: ITEM_WIDTH,
+    flex: 1,
+    justifyContent: 'center',
   },
   listTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginTop: 8,
-    textAlign: 'center',
     color: 'white',
   },
-  itemCount: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 4,
+  username: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
   },
 });

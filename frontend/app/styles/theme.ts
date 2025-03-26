@@ -6,7 +6,7 @@ export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('wi
 // Layout
 export const CONTAINER_PADDING = 20;
 export const GRID_WIDTH = SCREEN_WIDTH - (CONTAINER_PADDING * 2);
-export const ITEM_GAP = 16;
+export const ITEM_GAP = 10;
 export const ITEM_WIDTH = (GRID_WIDTH - ITEM_GAP) / 2;
 export const CARD_WIDTH = SCREEN_WIDTH - 40;
 
