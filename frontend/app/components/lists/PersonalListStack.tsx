@@ -6,6 +6,7 @@ import { COLORS, CARD_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
 import { ListItem } from '../../types/lists';
 import { commonStyles } from '../../styles/common';
 import { useSwipe } from '../../hooks/useSwipe';
+import { useRouter } from 'expo-router';
 
 interface PersonalListStackProps {
   title: string;
@@ -17,6 +18,13 @@ interface PersonalListStackProps {
 
 
 export default function PersonalListStack({ title, lists, containerStyle }: PersonalListStackProps) {
+  // router
+  const router = useRouter();
+
+  const handleSeeAllPress = () => {
+    router.push('/(tabs)/lists');
+  };
+
   // Ensure lists is always an array, even if undefined is passed
   const safeListsArray = Array.isArray(lists) ? lists : [];
 
@@ -57,7 +65,7 @@ const handleSwipeLeft = useCallback(() => {
     }
   }, [safeListsArray.length]);
   
-  // Use our custom swipe hook with modified settings
+  // Use custom swipe hook with modified settings
   const { position, panHandlers, isAnimating, resetPosition } = useSwipe({
     onSwipeLeft: handleSwipeLeft,
     onSwipeRight: handleSwipeRight,
@@ -126,8 +134,20 @@ const handleSwipeLeft = useCallback(() => {
   const thirdColor = thirdList?.color || COLORS.card;
   const prevColor = prevList?.color || COLORS.card;
 
+  // See all link
+  // See All Link
+    const renderSectionHeader = () => (
+      <View style={styles.headerContainer}>
+        <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
+        <TouchableOpacity onPress={handleSeeAllPress}>
+          <Text style={styles.seeAllText}>See all</Text>
+        </TouchableOpacity>
+      </View>
+    );
+
   return (
-    <Section title={title} titleStyle={styles.mainTitle} containerStyle={containerStyle}>
+    <Section title={title} containerStyle={containerStyle} showTitle={false}>
+      {renderSectionHeader()}
       <View style={styles.cardsContainer}>
         {/* Previous card indicator (only when not at first card) */}
         {prevList && (
@@ -162,7 +182,7 @@ const handleSwipeLeft = useCallback(() => {
                 transform: [{ scale: thirdCardScale }],
                 opacity: thirdCardOpacity,
                 position: 'absolute',
-                zIndex: 1
+                zIndex: 1,
               }
             ]}
           >
@@ -236,9 +256,9 @@ const handleSwipeLeft = useCallback(() => {
 const styles = StyleSheet.create({
   mainTitle: {
       fontSize: TYPOGRAPHY.sectionTitle.fontSize,
+      marginBottom: 0,
     },
   cardsContainer: {
-    height: 200,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -267,5 +287,17 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginBottom: SPACING.md,
-  }
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+  },
+  seeAllText: {
+    color: COLORS.text.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

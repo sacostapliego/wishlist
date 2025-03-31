@@ -6,6 +6,7 @@ import { Card } from '../ui/Card';
 import { COLORS, ITEM_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
 import { ListItem as ListItemType } from '../../types/lists';
 import { commonStyles } from '../../styles/common';
+import { useRouter } from 'expo-router';
 
 interface ListItemProps {
   title: string;
@@ -46,8 +47,13 @@ interface ListGridProps {
 }
 
 export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGridProps) {
+  const router = useRouter();
   const displayedLists = lists.slice(0, maxItems);
   
+  const handleSeeAllPress = () => {
+    router.push('/(tabs)/friends');
+  };
+
   // Create rows with 2 items each
   const createRows = () => {
     const rows = [];
@@ -78,9 +84,20 @@ export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGrid
     }
     return rows;
   };
+
+  // See All Link
+  const renderSectionHeader = () => (
+    <View style={styles.headerContainer}>
+      <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
+      <TouchableOpacity onPress={handleSeeAllPress}>
+        <Text style={styles.seeAllText}>See all</Text>
+      </TouchableOpacity>
+    </View>
+  );
   
   return (
-    <Section title={title} titleStyle={styles.mainTitle}>
+    <Section title={title} titleStyle={styles.mainTitle} showTitle={false}>
+      {renderSectionHeader()}
       <View style={styles.gridContainer}> 
         {createRows()}
       </View>
@@ -91,6 +108,7 @@ export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGrid
 const styles = StyleSheet.create({
   mainTitle: {
     fontSize: TYPOGRAPHY.sectionTitle.fontSize,
+    marginBottom: 0,
   },
   sectionContainer: {
     marginBottom: 0,
@@ -140,5 +158,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 2,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+  },
+  seeAllText: {
+    color: COLORS.text.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

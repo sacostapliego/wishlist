@@ -1,8 +1,9 @@
-import { ScrollView, Text, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { ScrollView, Text, StyleSheet, SafeAreaView, StatusBar, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';
 import { COLORS } from '../styles/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -39,7 +40,12 @@ export default function HomeScreen() {
           { paddingTop: Math.min(insets.top, 10) }
         ]}
       >
-        <Text style={styles.userName}>Welcome, Steven!</Text>
+        <View style= {styles.headerContainer}>
+          <Text style={styles.userName}>Welcome, Steven!</Text>
+          <TouchableOpacity style = {styles.profileButton}>
+            <Ionicons name="person-circle-outline" size={48} color={COLORS.text.primary} style={styles.profileButton} />
+          </TouchableOpacity>
+        </View>
         
         <FriendsListGrid 
           title="Your Friends Lists" 
@@ -76,4 +82,12 @@ const styles = StyleSheet.create({
     marginVertical: 15,
     paddingHorizontal: 10,
   },
+  profileButton: {
+    padding: 7,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  }
 });

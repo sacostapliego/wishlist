@@ -43,15 +43,6 @@ export default function AppLayout() {
           }}
         />
         <Tabs.Screen
-          name="friends"
-          options={{
-            title: 'Friends',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="add"
           listeners={{
             tabPress: (e) => {
@@ -67,15 +58,6 @@ export default function AppLayout() {
           }}
         />
         <Tabs.Screen
-          name="lists"
-          options={{
-            title: 'My Lists',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="list" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="settings"
           options={{
             title: 'Settings',
@@ -84,6 +66,9 @@ export default function AppLayout() {
             ),
           }}
         />
+        {/* Don't feel like reconstructing the entire dir for the frontned, temp/permanent fix */}
+        <Tabs.Screen name="friends" options={{ href: null }} />
+        <Tabs.Screen name="lists" options={{ href: null }} />
       </Tabs>
 
       <AddModal
