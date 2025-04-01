@@ -4,6 +4,7 @@ import { StatusBar, View } from 'react-native';
 import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
 import AddModal from '../components/modals/AddItemModal';
 import { useState } from 'react';
+import { COLORS } from '../styles/theme';
 
 export default function AppLayout() {
   const insets = useSafeAreaInsets();
@@ -21,7 +22,7 @@ export default function AppLayout() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
-          tabBarActiveTintColor: '#0891b2',
+          tabBarActiveTintColor: COLORS.text.primary,
           tabBarInactiveTintColor: '#64748b', 
           tabBarStyle: {
             backgroundColor: 'transparent',

@@ -15,14 +15,14 @@ interface ListItemProps {
   username?: string; // Added username prop
 }
 
-export function ListItem({ title, color = COLORS.secondary, onPress, username = "Friend" }: ListItemProps) {
+export function ListItem({ title, onPress, username = "Friend" }: ListItemProps) {
   return (
     <TouchableOpacity 
       activeOpacity={0.7} 
       onPress={onPress}
       style={styles.listItemWrapper}
     >
-      <Card style={StyleSheet.flatten([styles.listItem, { backgroundColor: color }])}>
+      <Card style={StyleSheet.flatten([styles.listItem, { backgroundColor: COLORS.cardDark }])}>
         <View style={styles.listItemContent}>
           {/* Icon container with circular background */}
           <View style={styles.iconContainer}>
@@ -63,7 +63,6 @@ export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGrid
           <View style={styles.column}>
             <ListItem
               title={displayedLists[i].title}
-              color={displayedLists[i].color}
               username={`User${displayedLists[i].id}`} // dummy username
               onPress={() => {}}
             />
@@ -73,7 +72,6 @@ export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGrid
             <View style={styles.column}>
               <ListItem
                 title={displayedLists[i + 1].title}
-                color={displayedLists[i + 1].color}
                 username={`User${displayedLists[i + 1].id}`} // dummy username
                 onPress={() => {}}
               />

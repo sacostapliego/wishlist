@@ -1,4 +1,4 @@
-import { ScrollView, Text, StyleSheet, SafeAreaView, StatusBar, View, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, StyleSheet, SafeAreaView, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';

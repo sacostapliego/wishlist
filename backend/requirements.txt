@@ -1,12 +1,22 @@
+# Web
 fastapi
 uvicorn
+
+# Database
 sqlalchemy
 psycopg2-binary
-python-dotenv
+alembic
+
+# Auth
+supabase
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# Utils
 pydantic
 pydantic[email]
-alembic
+python-dotenv
 requests
 
-psycopg2
 sqlalchemy-utils

@@ -69,7 +69,7 @@ const handleSwipeLeft = useCallback(() => {
   const { position, panHandlers, isAnimating, resetPosition } = useSwipe({
     onSwipeLeft: handleSwipeLeft,
     onSwipeRight: handleSwipeRight,
-    swipeThreshold: CARD_WIDTH * 0.15, // Lower threshold for more sensitivity
+    swipeThreshold: CARD_WIDTH * 0.3, // Lower threshold for more sensitivity
     resetAfterSwipe: true
   });
   
