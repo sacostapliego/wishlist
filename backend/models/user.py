@@ -42,7 +42,11 @@ class UserUpdate(UserBase):
     password: Optional[str] = None
 
 class UserResponse(UserBase):
-    id: int
+    id: uuid.UUID  # Change from int to uuid.UUID
+    email: EmailStr
+    username: str
+    name: Optional[str] = None
+    pfp: Optional[HttpUrl] = None
     is_active: bool
     created_at: datetime
     

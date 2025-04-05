@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 
 from models.base import get_db
 from models.user import User, UserCreate, UserResponse, UserUpdate
@@ -8,6 +9,36 @@ from middleware.auth import get_current_user
 from routes.auth import get_password_hash
 
 router = APIRouter(prefix='/users', tags=['users'])
+
+@router.get('/me', response_model=UserResponse)
+def get_current_user_profile(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the profile of the currently authenticated user"""
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@router.get('/', response_model=List[UserResponse])
+def read_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    users = db.query(User).offset(skip).limit(limit).all()
+    return users
+
+@router.get('/{user_id}', response_model=UserResponse)
+def read_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 @router.post('/', response_model=UserResponse)
 def create_user(
@@ -40,28 +71,10 @@ def create_user(
     
     return db_user
 
-@router.get('/', response_model=List[UserResponse])
-def read_users(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
-
-@router.get('/{user_id}', response_model=UserResponse)
-def read_user(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
 
 @router.put('/{user_id}', response_model=UserResponse)
 def update_user(
-    user_id: int,
+    user_id: uuid.UUID,  # Change from int to uuid.UUID
     user_update: UserUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -91,7 +104,7 @@ def update_user(
 
 @router.delete('/{user_id}', response_model=dict)
 def delete_user(
-    user_id: int,
+    user_id: uuid.UUID,  # Change from int to uuid.UUID
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
