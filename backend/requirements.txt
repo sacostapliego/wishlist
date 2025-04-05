@@ -1,6 +1,7 @@
 # Web
 fastapi
 uvicorn
+fastapi[standard]
 
 # Database
 sqlalchemy

@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
   mainTitle: {
       fontSize: TYPOGRAPHY.sectionTitle.fontSize,
       marginBottom: 0,
+      
     },
   cardsContainer: {
     alignItems: 'center',
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.sm,
+    
   },
   seeAllText: {
     color: COLORS.text.primary,

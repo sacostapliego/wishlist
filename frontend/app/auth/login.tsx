@@ -32,9 +32,14 @@ export default function LoginScreen() {
       if (response && response.user) {
         router.replace('/(tabs)');
       }
-    } catch (error) {
-      const errorMessage = error?.response?.data?.detail || 
-                          'Unable to login. Please check your credentials.';
+    } catch (error: any) {
+      let errorMessage = 'Unable to login. Please check your credentials.';
+      
+      if (error?.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (typeof error?.message === 'string') {
+        errorMessage = error.message;
+      }
       
       console.error('Login error:', errorMessage);
       
