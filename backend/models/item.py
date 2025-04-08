@@ -17,6 +17,7 @@ class WishListItem(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    wishlist_id = Column(UUID(as_uuid=True), ForeignKey('wishlists.id'), nullable=True)
   
     name = Column(String, index=True, nullable=False)
     description = Column(String)
@@ -27,8 +28,9 @@ class WishListItem(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # relationship
+    # relationships
     user = relationship('User', back_populates='wishlist_items')
+    wishlist = relationship('Wishlist', back_populates='items')
     
 # Pydantic models
 class WishListItemBase(BaseModel):
@@ -38,6 +40,7 @@ class WishListItemBase(BaseModel):
     url: Optional[str] = None
     is_purchased: bool = False
     priority: int = 0
+    wishlist_id: Optional[uuid.UUID] = None
     
 class WishListItemCreate(WishListItemBase):
     pass
@@ -49,10 +52,11 @@ class WishListItemUpdate(WishListItemBase):
     url: Optional[str] = None
     is_purchased: Optional[bool] = None
     priority: Optional[int] = None
-    user_id: Optional[int] = None
+    wishlist_id: Optional[uuid.UUID] = None
 
 class WishListItemResponse(WishListItemBase):
-    id: Union[int, uuid.UUID]
+    id: uuid.UUID
+    user_id: uuid.UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
     

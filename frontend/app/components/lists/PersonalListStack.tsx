@@ -135,12 +135,11 @@ const handleSwipeLeft = useCallback(() => {
   const prevColor = prevList?.color || COLORS.card;
 
   // See all link
-  // See All Link
     const renderSectionHeader = () => (
       <View style={styles.headerContainer}>
         <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
         <TouchableOpacity onPress={handleSeeAllPress}>
-          <Text style={styles.seeAllText}>See all</Text>
+          <Text style={styles.seeAllText}>Show all</Text>
         </TouchableOpacity>
       </View>
     );

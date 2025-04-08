@@ -5,8 +5,14 @@ import PersonalListStack from '../components/lists/PersonalListStack';
 import { COLORS } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useAuth } from '../context/AuthContext';
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+
+  // display name
+  const displayName = user?.name || user?.username || 'Guest';
   
   const friendsLists = [
     { id: '1', title: "Sarah's Birthday", itemCount: 12, color: '#ff7f50' },
@@ -20,14 +26,7 @@ export default function HomeScreen() {
   ];
 
   const personalLists = [
-    { id: '1', title: "Sarah's Birthday", itemCount: 12, color: '#ff7f50' },
-    { id: '2', title: "John's Wedding", itemCount: 8, color: '#20b2aa' },
-    { id: '3', title: "Mom's Wish List", itemCount: 5, color: '#9370db' },
-    { id: '4', title: "D's Christmas", itemCount: 3, color: '#f08080' },
-    { id: '5', title: "S's Birthday", itemCount: 12, color: '#ff7f50' },
-    { id: '6', title: "L's Wedding", itemCount: 8, color: '#20b2aa' },
-    { id: '7', title: "M's Wish List", itemCount: 5, color: '#9370db' },
-    { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
+    { id: '1', title: "My Birthday", itemCount: 12, color: '#ff7f50' },
   ];
 
   return (
@@ -41,7 +40,7 @@ export default function HomeScreen() {
         ]}
       >
         <View style= {styles.headerContainer}>
-          <Text style={styles.userName}>Welcome, Steven!</Text>
+          <Text style={styles.userName}>Welcome, {displayName}!</Text>
           <TouchableOpacity style = {styles.profileButton}>
             <Ionicons name="person-circle-outline" size={48} color={COLORS.text.primary} style={styles.profileButton} />
           </TouchableOpacity>

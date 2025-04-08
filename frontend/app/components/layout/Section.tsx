@@ -11,9 +11,7 @@ interface SectionProps {
   showTitle?: boolean;
 }
 
-/**
- * A reusable section component with an optional title
- */
+
 export function Section({ 
   title, 
   children, 

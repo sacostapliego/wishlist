@@ -24,6 +24,36 @@ export const wishlistAPI = {
     getUserWishlist: async (userId: string) => {
       const response = await api.get(`/wishlist/user/${userId}`);
       return response.data;
+    },
+
+    getWishlists: async () => {
+      const response = await api.get('/wishlists');
+      return response.data;
+    },
+    
+    getWishlist: async (id: string) => {
+      const response = await api.get(`/wishlists/${id}`);
+      return response.data;
+    },
+    
+    createWishlist: async (wishlist: any) => {
+      const response = await api.post('/wishlists', wishlist);
+      return response.data;
+    },
+    
+    updateWishlist: async (id: string, wishlist: any) => {
+      const response = await api.put(`/wishlists/${id}`, wishlist);
+      return response.data;
+    },
+    
+    deleteWishlist: async (id: string) => {
+      const response = await api.delete(`/wishlists/${id}`);
+      return response.data;
+    },
+    
+    getUserWishlists: async (userId: string) => {
+      const response = await api.get(`/wishlists/user/${userId}`);
+      return response.data;
     }
   };
 
