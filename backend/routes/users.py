@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+import os
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
@@ -8,9 +9,10 @@ from models.user import User, UserCreate, UserResponse, UserUpdate
 from middleware.auth import get_current_user
 from routes.auth import get_password_hash
 
-from services.s3_service import upload_file_to_s3, delete_file_from_s3
+from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
 
 router = APIRouter(prefix='/users', tags=['users'])
+BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
 @router.get('/me', response_model=UserResponse)
 def get_current_user_profile(
@@ -173,3 +175,30 @@ def delete_user(
     db.commit()
     
     return {"message": "User deleted successfully"}
+
+@router.get('/{user_id}/profile-image', response_class=Response)
+async def get_user_profile_image(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Get a user's profile picture directly from S3"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.pfp:
+        raise HTTPException(status_code=404, detail="Profile image not found")
+    
+    try:
+        # Extract the key from the URL
+        # Format: https://bucket-name.s3.amazonaws.com/profile_pictures/image-id.jpg
+        s3_key = user.pfp.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
+        
+        # Get the object from S3
+        response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+        image_data = response['Body'].read()
+        
+        # Return the image with proper content type
+        content_type = response.get('ContentType', 'image/jpeg')
+        return Response(content=image_data, media_type=content_type)
+        
+    except Exception as e:
+        print(f"Error retrieving profile image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve profile image")

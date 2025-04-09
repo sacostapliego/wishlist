@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 interface AddModalProps {
   visible: boolean;
@@ -7,6 +8,18 @@ interface AddModalProps {
 }
 
 export default function AddModal({ visible, onClose }: AddModalProps) {
+  const router = useRouter();
+
+  const handleCreateWishlist = () => {
+    onClose(); // Close the modal first
+    router.push('/create-wishlist'); // Navigate to the create wishlist page
+  };
+
+  const handleAddItem = () => {
+    onClose(); // Close the modal first
+    router.push('/add-item'); // Navigate to add item page
+  };
+
   return (
     <Modal
       animationType="fade"
@@ -16,12 +29,18 @@ export default function AddModal({ visible, onClose }: AddModalProps) {
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <View style={styles.modalContent}>
-          <TouchableOpacity style={styles.option}>
+          <TouchableOpacity 
+            style={styles.option}
+            onPress={handleCreateWishlist}
+          >
             <Ionicons name="add-circle" size={24} color="#0891b2" />
             <Text style={styles.optionText}>Create New List</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.option}>
+          <TouchableOpacity 
+            style={styles.option}
+            onPress={handleAddItem}
+          >
             <Ionicons name="gift" size={24} color="#0891b2" />
             <Text style={styles.optionText}>Add Item to List</Text>
           </TouchableOpacity>

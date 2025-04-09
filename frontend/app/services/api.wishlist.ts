@@ -73,8 +73,13 @@ export const wishlistAPI = {
     },
     
     createWishlist: async (wishlist: any) => {
-      const response = await api.post('/wishlists', wishlist);
-      return response.data;
+      try {
+        const response = await api.post('/wishlists', wishlist);
+        return response.data;
+      } catch (error) {
+        console.error('API Error in createWishlist:', error);
+        throw error; // Make sure errors are propagated
+      }
     },
     
     updateWishlist: async (id: string, wishlist: any) => {

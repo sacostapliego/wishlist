@@ -16,6 +16,14 @@ export default function RootLayout() {
             name="auth" 
             options={{ headerShown: false, gestureEnabled: false }} 
           />
+          <Stack.Screen 
+            name="create-wishlist" 
+            options={{ presentation: 'modal', gestureEnabled: true }} 
+          />
+          <Stack.Screen 
+            name="add-item" 
+            options={{ presentation: 'modal', gestureEnabled: true }} 
+          />
         </Stack>
       </SafeAreaProvider>
     </AuthProvider>

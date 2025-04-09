@@ -1,15 +1,43 @@
-import { ScrollView, Text, StyleSheet, SafeAreaView, View, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, StyleSheet, SafeAreaView, View, TouchableOpacity, Image} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';
 import { COLORS } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
-
+import { wishlistAPI } from '../services/api.wishlist';
 import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+
+// Define the shape of your wishlist data from the API
+interface WishlistApiResponse {
+  id: string;
+  title: string;
+  description?: string;
+  color?: string;
+  is_public: boolean;
+  item_count: number;
+  created_at: string;
+  updated_at?: string;
+  user_id: string;
+}
+
+// Define the shape of data used by the UI component
+interface WishlistData {
+  id: string;
+  title: string;
+  itemCount: number;
+  color: string;
+}
+
+console.log(process.env.EXPO_PUBLIC_API_URL, "API URL");
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user } = useAuth();
+  const [personalLists, setPersonalLists] = useState<WishlistData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // display name
   const displayName = user?.name || user?.username || 'Guest';
@@ -25,13 +53,37 @@ export default function HomeScreen() {
     { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
   ];
 
-  const personalLists = [
-    { id: '1', title: "My Birthday", itemCount: 12, color: '#ff7f50' },
-  ];
+  // Personal lists
+  useEffect(() => {
+    async function fetchWishlists() {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const wishlists: WishlistApiResponse[] = await wishlistAPI.getWishlists();
+        
+        // Map API response to the format expected by PersonalListStack
+        const formattedLists: WishlistData[] = wishlists.map((list: WishlistApiResponse) => ({
+          id: list.id,
+          title: list.title,
+          itemCount: list.item_count || 0,
+          color: list.color || '#ff7f50' // Default color if none is specified
+        }));
+        
+        setPersonalLists(formattedLists);
+      } catch (error) {
+        console.error('Failed to fetch wishlists:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchWishlists();
+  }, [user]);
+
 
   return (
     <SafeAreaView style={styles.container}>
-
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={[
@@ -39,10 +91,22 @@ export default function HomeScreen() {
           { paddingTop: Math.min(insets.top, 10) }
         ]}
       >
-        <View style= {styles.headerContainer}>
+        <View style={styles.headerContainer}>
           <Text style={styles.userName}>Welcome, {displayName}!</Text>
-          <TouchableOpacity style = {styles.profileButton}>
-            <Ionicons name="person-circle-outline" size={48} color={COLORS.text.primary} style={styles.profileButton} />
+          <TouchableOpacity style={styles.profileButton}>
+          {user?.id ? (
+              <Image 
+                source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}users/${user.id}/profile-image` }} 
+                style={styles.profileImage} 
+                onError={(e) => console.error("Image loading error:", e.nativeEvent.error)}
+              />
+            ) : (
+              <Ionicons 
+                name="person-circle-outline" 
+                size={48} 
+                color={COLORS.text.primary} 
+              />
+            )}
           </TouchableOpacity>
         </View>
         
@@ -54,7 +118,7 @@ export default function HomeScreen() {
         <PersonalListStack 
           title="My Lists" 
           lists={personalLists}
-          containerStyle={{ marginTop:10 }}
+          containerStyle={{ marginTop: 10 }}
         />
       </ScrollView>
     </SafeAreaView>
@@ -88,5 +152,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  }
+  },
+  profileImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
 });

@@ -11,6 +11,7 @@ type User = {
   email: string;
   username: string;
   name?: string;
+  pfp?:string
 };
 
 type AuthContextType = {
