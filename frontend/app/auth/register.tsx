@@ -8,11 +8,15 @@ import {
   Alert,
   ActivityIndicator,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Image,
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING } from '../styles/theme';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -20,9 +24,32 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
+
+  const pickImage = async () => {
+    // Request permission
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Needed', 'We need access to your photos to set a profile picture.');
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets[0].uri) {
+      setProfilePicture(result.assets[0].uri);
+    }
+  };
 
   const handleRegister = async () => {
     // Form validation
@@ -45,14 +72,53 @@ export default function RegisterScreen() {
 
     try {
       setIsLoading(true);
-      const userData = {
-        email,
-        username,
-        name: name || username, // Use username as name if name is not provided
-        password
-      };
       
-      const response = await register(userData);
+      // Create form data to handle file upload
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('username', username);
+      formData.append('name', name || username);
+      formData.append('password', password);
+      
+      // Add profile picture if selected
+      if (profilePicture) {
+        try {
+          // Get the file extension
+          const uriParts = profilePicture.split('.');
+          const fileType = uriParts[uriParts.length - 1];
+          
+          // Log for debugging
+          console.log("Profile picture details:", {
+            uri: profilePicture,
+            fileType,
+            platform: Platform.OS
+          });
+          
+          // For web:
+          if (Platform.OS === 'web') {
+            try {
+              const response = await fetch(profilePicture);
+              const blob = await response.blob();
+              console.log("Web blob created:", blob.size, blob.type);
+              formData.append('profile_picture', blob, `profile-${username}.${fileType}`);
+            } catch (fetchError) {
+              console.error("Error creating blob:", fetchError);
+            }
+          } else {
+            // For native (add explicit typing):
+            formData.append('profile_picture', {
+              uri: profilePicture,
+              name: `profile-${username}.${fileType}`,
+              type: `image/${fileType.toLowerCase()}`
+            } as any);
+          }
+        } catch (imageError) {
+          console.error("Error processing profile image:", imageError);
+          // Continue without image if there's an error
+        }
+      }
+      
+      const response = await register(formData);
       if (response && response.user) {
         router.replace('/(tabs)');
       }
@@ -85,6 +151,22 @@ export default function RegisterScreen() {
         <View style={styles.formContainer}>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Sign up to get started</Text>
+
+          <View style={styles.profileImageContainer}>
+            <TouchableOpacity onPress={pickImage} style={styles.profileImageButton}>
+              {profilePicture ? (
+                <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+              ) : (
+                <View style={styles.profileImagePlaceholder}>
+                  <Ionicons name="person" size={40} color={COLORS.inactive} />
+                </View>
+              )}
+              <View style={styles.editIconContainer}>
+                <Ionicons name="camera" size={16} color="white" />
+              </View>
+            </TouchableOpacity>
+            <Text style={styles.profileImageText}>Add profile picture</Text>
+          </View>
 
           <TextInput
             style={styles.input}
@@ -185,6 +267,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text.secondary,
     marginBottom: SPACING.xl,
+  },
+  profileImageContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  profileImageButton: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    marginBottom: SPACING.md,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  profileImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: COLORS.cardDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileImageText: {
+    color: COLORS.text.secondary,
+    fontSize: 14,
   },
   input: {
     height: 56,

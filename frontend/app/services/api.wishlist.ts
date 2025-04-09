@@ -6,13 +6,49 @@ export const wishlistAPI = {
       return response.data;
     },
     
-    createItem: async (item: any) => {
-      const response = await api.post('/wishlist', item);
+    createItem: async (item: any, image?: File) => {
+      const formData = new FormData();
+      
+      // Add all item properties to form data
+      Object.keys(item).forEach(key => {
+        if (item[key] !== null && item[key] !== undefined) {
+          formData.append(key, item[key].toString());
+        }
+      });
+      
+      // Append image if it exists
+      if (image) {
+        formData.append('image', image);
+      }
+      
+      const response = await api.post('/wishlist', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     },
     
-    updateItem: async (id: string, item: any) => {
-      const response = await api.put(`/wishlist/${id}`, item);
+    updateItem: async (id: string, item: any, image?: File) => {
+      const formData = new FormData();
+      
+      // Add all item properties to form data
+      Object.keys(item).forEach(key => {
+        if (item[key] !== null && item[key] !== undefined) {
+          formData.append(key, item[key].toString());
+        }
+      });
+      
+      // Append image if it exists
+      if (image) {
+        formData.append('image', image);
+      }
+      
+      const response = await api.put(`/wishlist/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     },
     

@@ -1,5 +1,8 @@
 .env
 /venv
 
-.pycaches
+*.pyc
+
+test.py
+
 __pycache__/

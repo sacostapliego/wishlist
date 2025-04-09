@@ -23,6 +23,7 @@ class WishListItem(Base):
     description = Column(String)
     price = Column(Float)
     url = Column(String)
+    image = Column(String)
     is_purchased = Column(Boolean, default=False)
     priority = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -38,6 +39,7 @@ class WishListItemBase(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     url: Optional[str] = None
+    image: Optional[str] = None
     is_purchased: bool = False
     priority: int = 0
     wishlist_id: Optional[uuid.UUID] = None
@@ -50,6 +52,7 @@ class WishListItemUpdate(WishListItemBase):
     description: Optional[str] = None
     price: Optional[float] = None
     url: Optional[str] = None
+    image: Optional[str] = None
     is_purchased: Optional[bool] = None
     priority: Optional[int] = None
     wishlist_id: Optional[uuid.UUID] = None

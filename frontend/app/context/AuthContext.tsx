@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  const register = async (userData: any) => {
+  const register = async (userData: FormData) => {
     try {
       const response = await authAPI.register(userData);
       
