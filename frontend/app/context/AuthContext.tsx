@@ -91,7 +91,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid response from server');
       }
     } catch (error) {
-      console.error('Login failed', error);
       throw error;
     }
   };
