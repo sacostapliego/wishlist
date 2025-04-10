@@ -23,10 +23,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import items, users, auth, wishlists
 
-app = FastAPI(title='Wishlist API')
+app = FastAPI(
+    title='Wishlist API',
+    openapi_url='/openapi.json',)
 
 # CORS
 
+#TODO: Change to only allow certain origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],

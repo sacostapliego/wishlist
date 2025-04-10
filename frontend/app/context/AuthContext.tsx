@@ -55,7 +55,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         if (userData) {
-          console.log('Found cached user data');
           setUser(JSON.parse(userData));
         }
         

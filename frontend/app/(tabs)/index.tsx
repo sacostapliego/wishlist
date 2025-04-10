@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { wishlistAPI } from '../services/api.wishlist';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
+import { API_URL } from '../services/api';
 
 // Define the shape of your wishlist data from the API
 interface WishlistApiResponse {
@@ -29,8 +30,6 @@ interface WishlistData {
   itemCount: number;
   color: string;
 }
-
-console.log(process.env.EXPO_PUBLIC_API_URL, "API URL");
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -96,7 +95,7 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.profileButton}>
           {user?.id ? (
               <Image 
-                source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}users/${user.id}/profile-image` }} 
+                source={{ uri: `${API_URL}users/${user.id}/profile-image` }} 
                 style={styles.profileImage} 
                 onError={(e) => console.error("Image loading error:", e.nativeEvent.error)}
               />

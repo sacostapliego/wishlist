@@ -2,7 +2,7 @@ import api from "./api";
 
 export const wishlistAPI = {
     getItems: async () => {
-      const response = await api.get('/wishlist');
+      const response = await api.get('/wishlists/');
       return response.data;
     },
     
@@ -63,7 +63,7 @@ export const wishlistAPI = {
     },
 
     getWishlists: async () => {
-      const response = await api.get('/wishlists');
+      const response = await api.get('/wishlists/');
       return response.data;
     },
     
