@@ -5,17 +5,14 @@ import { Section } from '../layout/Section';
 import { COLORS, CARD_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
 import { ListItem } from '../../types/lists';
 import { commonStyles } from '../../styles/common';
-import { useSwipe } from '../../hooks/useSwipe';
 import { useRouter } from 'expo-router';
+import GestureRecognizer from 'react-native-swipe-gestures';
 
 interface PersonalListStackProps {
   title: string;
   lists: ListItem[];
-
   containerStyle?: object;
 }
-
-
 
 export default function PersonalListStack({ title, lists, containerStyle }: PersonalListStackProps) {
   // router
@@ -28,59 +25,75 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
   // Ensure lists is always an array, even if undefined is passed
   const safeListsArray = Array.isArray(lists) ? lists : [];
 
-  const indexRef = useRef(0);
-  
   // Clamp currentIndex within valid bounds
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Immediately correct the index if it's out of bounds
-  useEffect(() => {
-    indexRef.current = currentIndex;
-  }, [currentIndex]);
-
   // Setup animation constants
   const thirdCardScale = 0.85;
   const thirdCardOpacity = 0.5;
+  
+  // Animation values
+  const position = useRef(new Animated.ValueXY()).current;
+  const [isAnimating, setIsAnimating] = useState(false);
 
-    
   // Handle swipe left (next card)
-const handleSwipeLeft = useCallback(() => {
-  if (indexRef.current < safeListsArray.length - 1) {
-    // Normal case - go to next card
-    setCurrentIndex(prevIndex => prevIndex + 1);
-  } else if (safeListsArray.length > 1 || indexRef.current > safeListsArray.length - 1) {
-    // Circular navigation - go back to the first card
-    setCurrentIndex(0);
-  }
-}, [currentIndex, safeListsArray.length]);
+  const handleSwipeLeft = useCallback(() => {
+    console.log("Swipe left detected");
+    if (currentIndex < safeListsArray.length - 1) {
+      // Normal case - go to next card
+      animateSwipe(-200, () => setCurrentIndex(currentIndex + 1));
+    } else if (safeListsArray.length > 1) {
+      // Circular navigation - go back to the first card
+      animateSwipe(-200, () => setCurrentIndex(0));
+    } else {
+      resetPosition();
+    }
+  }, [currentIndex, safeListsArray.length]);
   
   // Handle swipe right (previous card)
   const handleSwipeRight = useCallback(() => {    
-    if (indexRef.current > 0) {
+    console.log("Swipe right detected");
+    if (currentIndex > 0) {
       // Normal behavior - go to previous card
-      setCurrentIndex(indexRef.current - 1);
+      animateSwipe(200, () => setCurrentIndex(currentIndex - 1));
     } else if (safeListsArray.length > 1) {
       // Option 1: Circular behavior - go to last card
-      setCurrentIndex(safeListsArray.length - 1);
+      animateSwipe(200, () => setCurrentIndex(safeListsArray.length - 1));
+    } else {
+      resetPosition();
     }
-  }, [safeListsArray.length]);
+  }, [currentIndex, safeListsArray.length]);
   
-  // Use custom swipe hook with modified settings
-  const { position, panHandlers, isAnimating, resetPosition } = useSwipe({
-    onSwipeLeft: handleSwipeLeft,
-    onSwipeRight: handleSwipeRight,
-    swipeThreshold: CARD_WIDTH * 0.3, // Lower threshold for more sensitivity
-    resetAfterSwipe: true
-  });
+  // Animation helpers
+  const animateSwipe = (toValue: number, callback?: () => void) => {
+    setIsAnimating(true);
+    Animated.timing(position, {
+      toValue: { x: toValue, y: 0 },
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      if (callback) callback();
+      resetPosition();
+    });
+  };
+  
+  const resetPosition = () => {
+    setIsAnimating(true);
+    Animated.timing(position, {
+      toValue: { x: 0, y: 0 },
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsAnimating(false);
+    });
+  };
   
   // Reset position when currentIndex changes
   useEffect(() => {
-    if (resetPosition) {
-      resetPosition();
-    }
-  }, [currentIndex, resetPosition]);
+    resetPosition();
+  }, [currentIndex]);
   
-  // Setup rotation and scale animations
+  // Setup rotation animations
   const rotate = position.x.interpolate({
     inputRange: [-CARD_WIDTH, 0, CARD_WIDTH],
     outputRange: ['-8deg', '0deg', '8deg'],
@@ -134,15 +147,22 @@ const handleSwipeLeft = useCallback(() => {
   const thirdColor = thirdList?.color || COLORS.card;
   const prevColor = prevList?.color || COLORS.card;
 
+  // Config for gesture recognizer
+  const gestureConfig = {
+    velocityThreshold: 0.3,
+    directionalOffsetThreshold: 80,
+    gestureIsClickThreshold: 5
+  };
+
   // See all link
-    const renderSectionHeader = () => (
-      <View style={styles.headerContainer}>
-        <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
-        <TouchableOpacity onPress={handleSeeAllPress}>
-          <Text style={styles.seeAllText}>Show all</Text>
-        </TouchableOpacity>
-      </View>
-    );
+  const renderSectionHeader = () => (
+    <View style={styles.headerContainer}>
+      <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
+      <TouchableOpacity onPress={handleSeeAllPress}>
+        <Text style={styles.seeAllText}>Show all</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <Section title={title} containerStyle={containerStyle} showTitle={false}>
@@ -222,31 +242,36 @@ const handleSwipeLeft = useCallback(() => {
           </Animated.View>
         )}
         
-        {/* Current card (front) */}
-        <Animated.View 
-          style={[
-            styles.listCard, 
-            { 
-              backgroundColor: currentColor,
-              width: CARD_WIDTH,
-              transform: [
-                { translateX: position.x },
-                { rotate }
-              ],
-              zIndex: 3
-            }
-          ]}
-          {...panHandlers}
+        {/* Current card (front) with gesture recognizer */}
+        <GestureRecognizer
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          config={gestureConfig}
+          style={{ zIndex: 3 }}
         >
-          <View style={styles.listHeader}>
-            <Text style={styles.listTitle}>{currentList.title}</Text>
-            <Text style={styles.itemCount}>{currentList.itemCount} items</Text>
-          </View>
-          
-          <View style={styles.listContent}>
-            <Ionicons name="gift" size={48} color="white" style={styles.icon} />
-          </View>
-        </Animated.View>
+          <Animated.View 
+            style={[
+              styles.listCard, 
+              { 
+                backgroundColor: currentColor,
+                width: CARD_WIDTH,
+                transform: [
+                  { translateX: position.x },
+                  { rotate }
+                ]
+              }
+            ]}
+          >
+            <View style={styles.listHeader}>
+              <Text style={styles.listTitle}>{currentList.title}</Text>
+              <Text style={styles.itemCount}>{currentList.itemCount} items</Text>
+            </View>
+            
+            <View style={styles.listContent}>
+              <Ionicons name="gift" size={48} color="white" style={styles.icon} />
+            </View>
+          </Animated.View>
+        </GestureRecognizer>
       </View>
     </Section>
   );
@@ -254,10 +279,9 @@ const handleSwipeLeft = useCallback(() => {
 
 const styles = StyleSheet.create({
   mainTitle: {
-      fontSize: TYPOGRAPHY.sectionTitle.fontSize,
-      marginBottom: 0,
-      
-    },
+    fontSize: TYPOGRAPHY.sectionTitle.fontSize,
+    marginBottom: 0,  
+  },
   cardsContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -294,7 +318,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.sm,
-    
   },
   seeAllText: {
     color: COLORS.text.primary,

@@ -10,6 +10,8 @@ export const ITEM_GAP = 10;
 export const ITEM_WIDTH = (GRID_WIDTH - ITEM_GAP) / 2;
 export const CARD_WIDTH = SCREEN_WIDTH - 40;
 
+export const PROFILE_RIGHT_MARGIN = SCREEN_WIDTH / 35;
+
 // Colors
 export const COLORS = {
   background: '#141414',

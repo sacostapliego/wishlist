@@ -24,17 +24,19 @@ export default function CreateWishlistScreen() {
     try {
       await wishlistAPI.createWishlist(wishlistData);
       
-      // First show the alert without navigation
+      //TODO: Go to the created wishlist screen
+
+      // Alert, than navigate
       Alert.alert(
         'Success', 
         'Wishlist created successfully!',
-        [{ text: 'OK' }]
+        [{ text: 'OK'
+          , onPress: () => {
+            // Navigate to the created wishlist screen
+            router.replace('/(tabs)');
+          }
+         }]
       );
-      
-      // Then handle navigation separately with a delay
-      setTimeout(() => {
-        router.push('/(tabs)');
-      }, 300); // Longer delay to ensure alert is seen
     } catch (error) {
       console.error('Error creating wishlist:', error);
       Alert.alert('Error', 'Failed to create wishlist. Please try again.');
@@ -48,7 +50,7 @@ export default function CreateWishlistScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => router.push('/(tabs)')}
+          onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>

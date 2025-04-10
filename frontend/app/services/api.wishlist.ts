@@ -74,7 +74,7 @@ export const wishlistAPI = {
     
     createWishlist: async (wishlist: any) => {
       try {
-        const response = await api.post('/wishlists', wishlist);
+        const response = await api.post('/wishlists/', wishlist);
         return response.data;
       } catch (error) {
         console.error('API Error in createWishlist:', error);

@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';
-import { COLORS } from '../styles/theme';
+import { COLORS, PROFILE_RIGHT_MARGIN } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { wishlistAPI } from '../services/api.wishlist';
 import { useAuth } from '../context/AuthContext';
@@ -37,6 +37,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [personalLists, setPersonalLists] = useState<WishlistData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   // display name
   const displayName = user?.name || user?.username || 'Guest';
@@ -93,11 +94,13 @@ export default function HomeScreen() {
         <View style={styles.headerContainer}>
           <Text style={styles.userName}>Welcome, {displayName}!</Text>
           <TouchableOpacity style={styles.profileButton}>
-          {user?.id ? (
+          {user?.id && !imageLoadError ? (
               <Image 
                 source={{ uri: `${API_URL}users/${user.id}/profile-image` }} 
                 style={styles.profileImage} 
-                onError={(e) => console.error("Image loading error:", e.nativeEvent.error)}
+                onError={(e) => {
+                  setImageLoadError(true);
+                }}
               />
             ) : (
               <Ionicons 
@@ -146,6 +149,8 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     padding: 7,
+    marginRight: PROFILE_RIGHT_MARGIN,
+
   },
   headerContainer: {
     flexDirection: 'row',
@@ -153,8 +158,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 55,
+    height: 55,
+    borderRadius: 202,
   },
 });
