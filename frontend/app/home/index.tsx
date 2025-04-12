@@ -1,57 +1,58 @@
 import { ScrollView, Text, StyleSheet, SafeAreaView, View, TouchableOpacity, Image} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';
 import { COLORS, PROFILE_RIGHT_MARGIN } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { wishlistAPI } from '../services/api.wishlist';
+import { wishlistAPI } from '../services/wishlist';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../services/api';
-
-// Define the shape of your wishlist data from the API
-interface WishlistApiResponse {
-  id: string;
-  title: string;
-  description?: string;
-  color?: string;
-  is_public: boolean;
-  item_count: number;
-  created_at: string;
-  updated_at?: string;
-  user_id: string;
-}
-
-// Define the shape of data used by the UI component
-interface WishlistData {
-  id: string;
-  title: string;
-  itemCount: number;
-  color: string;
-}
+import { WishlistApiResponse, WishlistData } from '../types/lists';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { refresh } = useLocalSearchParams();
   const [personalLists, setPersonalLists] = useState<WishlistData[]>([]);
+  const [friendsLists, setFriendsLists] = useState<WishlistData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
 
   // display name
   const displayName = user?.name || user?.username || 'Guest';
   
-  const friendsLists = [
-    { id: '1', title: "Sarah's Birthday", itemCount: 12, color: '#ff7f50' },
-    { id: '2', title: "John's Wedding", itemCount: 8, color: '#20b2aa' },
-    { id: '3', title: "Mom's Wish List", itemCount: 5, color: '#9370db' },
-    { id: '4', title: "D's Christmas", itemCount: 3, color: '#f08080' },
-    { id: '5', title: "S's Birthday", itemCount: 12, color: '#ff7f50' },
-    { id: '6', title: "L's Wedding", itemCount: 8, color: '#20b2aa' },
-    { id: '7', title: "M's Wish List", itemCount: 5, color: '#9370db' },
-    { id: '8', title: "Dad's Christmas", itemCount: 3, color: '#f08080' },
-  ];
+  // Friends lists
+  useEffect(() => {
+    async function fetchFriendsLists() {
+      if (!user) return;
+      
+      try {
+        // TODO: Replace this with actual API call to get friends' lists
+        // const friendsWishlists = await wishlistAPI.getFriendsWishlists();
+        
+        // For now, using empty array until API is implemented
+        setFriendsLists([]);
+        
+        // When API is ready:
+        /*
+        const formattedLists: WishlistData[] = friendsWishlists.map((list) => ({
+          id: list.id,
+          title: list.title,
+          itemCount: list.item_count || 0,
+          color: list.color || '#ff7f50'
+        }));
+        setFriendsLists(formattedLists);
+        */
+      } catch (error) {
+        console.error('Failed to fetch friends wishlists:', error);
+      }
+    }
+    
+    fetchFriendsLists();
+  }, [user, refresh]);
 
   // Personal lists
   useEffect(() => {
@@ -79,7 +80,7 @@ export default function HomeScreen() {
     }
     
     fetchWishlists();
-  }, [user]);
+  }, [user, refresh]);
 
 
   return (

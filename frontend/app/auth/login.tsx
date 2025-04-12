@@ -30,7 +30,7 @@ export default function LoginScreen() {
       setIsLoading(true);
       const response = await login(email, password);
       if (response && response.user) {
-        router.replace('/(tabs)');
+        router.replace('/home');
       }
     } catch (error: any) {
       let errorMessage = 'Unable to login. Please check your credentials.';

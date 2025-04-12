@@ -19,7 +19,7 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
   const router = useRouter();
 
   const handleSeeAllPress = () => {
-    router.push('/(tabs)/lists');
+    router.push('/home/lists');
   };
 
   // Ensure lists is always an array, even if undefined is passed

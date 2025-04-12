@@ -6,7 +6,7 @@ import AddModal from '../components/modals/AddItemModal';
 import { useState } from 'react';
 import { COLORS } from '../styles/theme';
 
-export default function AppLayout() {
+export default function HomeLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -37,7 +37,7 @@ export default function AppLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: '/home',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" size={size} color={color} />
             ),
@@ -70,6 +70,8 @@ export default function AppLayout() {
         {/* Don't feel like reconstructing the entire dir for the frontned, temp/permanent fix */}
         <Tabs.Screen name="friends" options={{ href: null }} />
         <Tabs.Screen name="lists" options={{ href: null }} />
+        <Tabs.Screen name="create-wishlist" options={{ href: null}} />
+        <Tabs.Screen name="add-item" options={{ href: null}} />
       </Tabs>
 
       <AddModal

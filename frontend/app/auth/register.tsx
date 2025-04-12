@@ -120,7 +120,7 @@ export default function RegisterScreen() {
       
       const response = await register(formData);
       if (response && response.user) {
-        router.replace('/(tabs)');
+        router.replace('/home');
       }
     } catch (error: any) {
       let errorMessage = 'Registration failed. Please try again.';

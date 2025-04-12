@@ -1,9 +1,9 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
-import authAPI from '../services/api.auth';
-import wishlistAPI from '../services/api.wishlist';
-import userAPI from '../services/api.user';
+import authAPI from '../services/auth';
+import wishlistAPI from '../services/wishlist';
+import userAPI from '../services/user';
 
 // Define types for context value
 type User = {

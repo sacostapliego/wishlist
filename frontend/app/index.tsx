@@ -12,7 +12,7 @@ export default function Index() {
     const timer = setTimeout(() => {
       if (!loading) {
         if (isLoggedIn) {
-          router.replace('/(tabs)');
+          router.replace('/home');
         } else {
           router.replace('/auth/login');
         }

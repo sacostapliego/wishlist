@@ -1,19 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from './context/AuthContext';
-import { COLORS, SPACING } from './styles/theme';
-import { wishlistAPI } from './services/api.wishlist';
+import { useAuth } from '../context/AuthContext';
+import { COLORS, SPACING } from '../styles/theme';
+import { wishlistAPI } from '../services/wishlist';
 import { Ionicons } from '@expo/vector-icons';
-import WishlistForm from './components/forms/WishListForm';
+import { WishlistFormData } from '../types/lists';
+import WishlistForm from '../components/forms/WishListForm';
+import Toast from 'react-native-toast-message';
 
-interface WishlistFormData {
-  title: string;
-  description: string;
-  color: string;
-  is_public: boolean;
-}
-  
 export default function CreateWishlistScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -27,19 +22,23 @@ export default function CreateWishlistScreen() {
       //TODO: Go to the created wishlist screen
 
       // Alert, than navigate
-      Alert.alert(
-        'Success', 
-        'Wishlist created successfully!',
-        [{ text: 'OK'
-          , onPress: () => {
-            // Navigate to the created wishlist screen
-            router.replace('/(tabs)');
-          }
-         }]
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Wishlist created successfully!'
+      });
+      
+      // Navigate to the home screen
+      router.replace({
+        pathname: '/home',
+        params: { refresh: Date.now()}});
     } catch (error) {
       console.error('Error creating wishlist:', error);
-      Alert.alert('Error', 'Failed to create wishlist. Please try again.');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to create wishlist. Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }

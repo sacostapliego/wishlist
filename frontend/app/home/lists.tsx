@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Button, StatusBar } from 'react-nativ
 const sampleLists = [
   { id: '1', name: 'Birthday Wishlist' },
   { id: '2', name: 'Christmas Ideas' },
-  { id: '3', name: 'Home Decor' },
+  { id: '3', name: '/home Decor' },
 ];
 
 export default function ListsScreen() {

@@ -48,10 +48,13 @@ interface ListGridProps {
 
 export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGridProps) {
   const router = useRouter();
-  const displayedLists = lists.slice(0, maxItems);
+  
+  // Ensure lists is always an array
+  const safeListsArray = Array.isArray(lists) ? lists : [];
+  const displayedLists = safeListsArray.slice(0, maxItems);
   
   const handleSeeAllPress = () => {
-    router.push('/(tabs)/friends');
+    router.push('/home/friends');
   };
 
   // Create rows with 2 items each
@@ -87,17 +90,23 @@ export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGrid
   const renderSectionHeader = () => (
     <View style={styles.headerContainer}>
       <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
-      <TouchableOpacity onPress={handleSeeAllPress}>
-        <Text style={styles.seeAllText}>Show all</Text>
-      </TouchableOpacity>
+      {safeListsArray.length > 0 && (
+        <TouchableOpacity onPress={handleSeeAllPress}>
+          <Text style={styles.seeAllText}>Show all</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
   
   return (
     <Section title={title} titleStyle={styles.mainTitle} showTitle={false}>
       {renderSectionHeader()}
-      <View style={styles.gridContainer}> 
-        {createRows()}
+      <View style={styles.gridContainer}>
+        {safeListsArray.length > 0 ? (
+          createRows()
+        ) : (
+          <Text style={commonStyles.emptyText}>No friends found</Text>
+        )}
       </View>
     </Section>
   );

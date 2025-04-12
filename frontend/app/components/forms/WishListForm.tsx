@@ -12,6 +12,7 @@ import {
 import { COLORS, SPACING } from '../../styles/theme';
 import { Button } from '../ui/Button';
 import { Ionicons } from '@expo/vector-icons';
+import { WishlistFormProps } from '@/app/types/lists';
 
 // Color options for wishlists
 const COLOR_OPTIONS = [
@@ -24,23 +25,6 @@ const COLOR_OPTIONS = [
   '#ffa07a', // light salmon
   '#ff6347', // tomato
 ];
-
-interface WishlistFormProps {
-  initialValues?: {
-    title?: string;
-    description?: string;
-    color?: string;
-    isPublic?: boolean;
-  };
-  onSubmit: (values: {
-    title: string;
-    description: string;
-    color: string;
-    is_public: boolean;
-  }) => Promise<void>;
-  isLoading: boolean;
-  submitLabel?: string;
-}
 
 export default function WishlistForm({
   initialValues = {},

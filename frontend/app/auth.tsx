@@ -18,7 +18,7 @@ export function useProtectedRoute(shouldBeAuthenticated = true) {
       }, 0);
     } else if (isLoggedIn && !shouldBeAuthenticated && inAuthGroup) {
       setTimeout(() => {
-        router.replace('/(tabs)');
+        router.replace('/home');
       }, 0);
     }
   }, [loading, isLoggedIn, segments, shouldBeAuthenticated]);
