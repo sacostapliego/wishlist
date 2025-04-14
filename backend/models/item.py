@@ -62,5 +62,6 @@ class WishListItemResponse(WishListItemBase):
     user_id: uuid.UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
+    image: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)

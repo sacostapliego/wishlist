@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
+import os
+from fastapi import APIRouter, Depends, HTTPException, Form, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
@@ -6,7 +7,9 @@ import uuid
 from models.base import get_db
 from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse
 from middleware.auth import get_current_user
-from services.s3_service import upload_file_to_s3, delete_file_from_s3
+from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
+
+BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
 router = APIRouter(prefix='/wishlist', tags=['wishlist'])
 
@@ -191,3 +194,32 @@ def read_user_wishlist(
     ).offset(skip).limit(limit).all()
     
     return items
+
+
+"""Get an item's image directly from S3"""
+@router.get('/{item_id}/image', response_class=Response)
+async def get_item_image(
+    item_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Get an item's image directly from S3"""
+    item = db.query(WishListItem).filter(WishListItem.id == item_id).first()
+    if not item or not item.image:
+        raise HTTPException(status_code=404, detail="Item image not found")
+    
+    try:
+        # Extract the key from the URL
+        # Format: https://bucket-name.s3.amazonaws.com/wishlist_images/image-id.jpg
+        s3_key = item.image.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
+        
+        # Get the object from S3
+        response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+        image_data = response['Body'].read()
+        
+        # Return the image with proper content type
+        content_type = response.get('ContentType', 'image/jpeg')
+        return Response(content=image_data, media_type=content_type)
+        
+    except Exception as e:
+        print(f"Error retrieving item image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve item image")
