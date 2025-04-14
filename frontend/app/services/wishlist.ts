@@ -1,8 +1,18 @@
 import api from "./api";
 
 export const wishlistAPI = {
+    getWishlistItems: async (wishlistId: string) => {
+      try {
+        const response = await api.get(`/wishlist/items/${wishlistId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching items for wishlist ${wishlistId}:`, error);
+        return []; 
+      }
+    },  
+    
     getItems: async () => {
-      const response = await api.get('/wishlists/');
+      const response = await api.get('/wishlist/'); 
       return response.data;
     },
     
@@ -21,7 +31,7 @@ export const wishlistAPI = {
         formData.append('image', image);
       }
       
-      const response = await api.post('/wishlist', formData, {
+      const response = await api.post('/wishlist/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

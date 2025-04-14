@@ -8,19 +8,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { WishlistFormData } from '../types/lists';
 import WishlistForm from '../components/forms/WishListForm';
 import Toast from 'react-native-toast-message';
+import { useRefresh } from '../context/RefreshContext';
 
 export default function CreateWishlistScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { triggerRefresh } = useRefresh();
+
   
   const handleCreateWishlist = async (wishlistData: WishlistFormData) => {
     setIsLoading(true);
     
     try {
-      await wishlistAPI.createWishlist(wishlistData);
-      
-      //TODO: Go to the created wishlist screen
-
+      const result = await wishlistAPI.createWishlist(wishlistData);      
       // Alert, than navigate
       Toast.show({
         type: 'success',
@@ -29,9 +29,11 @@ export default function CreateWishlistScreen() {
       });
       
       // Navigate to the home screen
+      triggerRefresh(); // Trigger refresh of all components using this context
       router.replace({
-        pathname: '/home',
-        params: { refresh: Date.now()}});
+        pathname: `/home/[id]`,
+        params: { id: result.id },
+      });
     } catch (error) {
       console.error('Error creating wishlist:', error);
       Toast.show({

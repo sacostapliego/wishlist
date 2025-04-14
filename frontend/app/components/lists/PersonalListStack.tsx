@@ -249,6 +249,14 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
           config={gestureConfig}
           style={{ zIndex: 3 }}
         >
+        <TouchableOpacity
+          onPress={() => {
+          router.push({
+            pathname: "/home/[id]",
+            params: { id: currentList.id }
+          });
+          }}
+        >
           <Animated.View 
             style={[
               styles.listCard, 
@@ -271,6 +279,7 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
               <Ionicons name="gift" size={48} color="white" style={styles.icon} />
             </View>
           </Animated.View>
+        </TouchableOpacity>
         </GestureRecognizer>
       </View>
     </Section>

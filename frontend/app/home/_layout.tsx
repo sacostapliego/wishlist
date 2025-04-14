@@ -72,8 +72,8 @@ export default function HomeLayout() {
         <Tabs.Screen name="lists" options={{ href: null }} />
         <Tabs.Screen name="create-wishlist" options={{ href: null}} />
         <Tabs.Screen name="add-item" options={{ href: null}} />
+        <Tabs.Screen name="[id]" options={{ href: null}}/>
       </Tabs>
-
       <AddModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}

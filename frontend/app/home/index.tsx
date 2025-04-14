@@ -10,12 +10,13 @@ import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../services/api';
 import { WishlistApiResponse, WishlistData } from '../types/lists';
+import { useRefresh } from '../context/RefreshContext';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { refresh } = useLocalSearchParams();
+  const { refreshTimestamp } = useRefresh(); // Use refresh context instead of params
   const [personalLists, setPersonalLists] = useState<WishlistData[]>([]);
   const [friendsLists, setFriendsLists] = useState<WishlistData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +35,9 @@ export default function HomeScreen() {
         // const friendsWishlists = await wishlistAPI.getFriendsWishlists();
         
         // For now, using empty array until API is implemented
-        setFriendsLists([]);
+        setFriendsLists([
+          
+        ]);
         
         // When API is ready:
         /*
@@ -52,7 +55,7 @@ export default function HomeScreen() {
     }
     
     fetchFriendsLists();
-  }, [user, refresh]);
+  }, [user, refreshTimestamp]);
 
   // Personal lists
   useEffect(() => {
@@ -80,7 +83,7 @@ export default function HomeScreen() {
     }
     
     fetchWishlists();
-  }, [user, refresh]);
+  }, [user, refreshTimestamp]);
 
 
   return (
@@ -114,7 +117,7 @@ export default function HomeScreen() {
         </View>
         
         <FriendsListGrid 
-          title="Your Friends Lists" 
+          title="Friends Lists" 
           lists={friendsLists}
           maxItems={6}
         />
