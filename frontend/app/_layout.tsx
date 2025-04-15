@@ -36,10 +36,6 @@ export default function RootLayout() {
                 name="auth" 
                 options={{ headerShown: false, gestureEnabled: false }} 
               />
-              <Stack.Screen 
-                name="shared" 
-                options={{ headerShown: false, gestureEnabled: false }} 
-              />
             </Stack>
           </DeviceFrame>
         </SafeAreaProvider>
