@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
 // Screen dimensions
 export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -8,9 +8,9 @@ export const CONTAINER_PADDING = 20;
 export const GRID_WIDTH = SCREEN_WIDTH - (CONTAINER_PADDING * 2);
 export const ITEM_GAP = 10;
 export const ITEM_WIDTH = (GRID_WIDTH - ITEM_GAP) / 2;
-export const CARD_WIDTH = SCREEN_WIDTH - 40;
+export const CARD_WIDTH = Platform.OS === 'web' ? 420 : SCREEN_WIDTH - 40;
 
-export const PROFILE_RIGHT_MARGIN = SCREEN_WIDTH / 35;
+export const PROFILE_RIGHT_MARGIN = Platform.OS === 'web' ? 0 : SCREEN_WIDTH / 35;
 
 // Colors
 export const COLORS = {

@@ -105,7 +105,29 @@ export const wishlistAPI = {
     getUserWishlists: async (userId: string) => {
       const response = await api.get(`/wishlists/user/${userId}`);
       return response.data;
-    }
+    },
+
+    getPublicWishlist: async (id: string) => {
+      try {
+        const response = await api.get(`/wishlists/public/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching public wishlist:', error);
+        throw error;
+      }
+    },
+    
+    getPublicWishlistItems: async (wishlistId: string) => {
+      try {
+        const response = await api.get(`/wishlist/public/${wishlistId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching items for public wishlist ${wishlistId}:`, error);
+        return []; 
+      }
+    },
   };
+
+  
 
 export default wishlistAPI;

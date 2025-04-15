@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
 
+from models.wishlist import Wishlist
 from models.base import get_db
 from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse
 from middleware.auth import get_current_user
@@ -223,3 +224,25 @@ async def get_item_image(
     except Exception as e:
         print(f"Error retrieving item image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve item image")
+    
+@router.get('/public/{wishlist_id}', response_model=List[WishListItemResponse])
+def read_public_wishlist_items(
+    wishlist_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Get items from a public wishlist without authentication"""
+    # First verify this is a public wishlist
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id,
+        Wishlist.is_public == True
+    ).first()
+    
+    if not db_wishlist:
+        raise HTTPException(status_code=404, detail="Wishlist not found or not public")
+    
+    # Get items for this wishlist
+    items = db.query(WishListItem).filter(
+        WishListItem.wishlist_id == wishlist_id
+    ).all()
+    
+    return items

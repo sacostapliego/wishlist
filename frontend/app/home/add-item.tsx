@@ -275,6 +275,7 @@ export default function AddItemScreen() {
         <Text style={styles.label}>Priority (0-5)</Text>
         <View style={styles.pickerContainer}>
           <Picker
+            
             selectedValue={priority}
             onValueChange={(value) => setPriority(value)}
             style={styles.picker}
@@ -380,6 +381,8 @@ const styles = StyleSheet.create({
   picker: {
     color: COLORS.text.primary,
     height: Platform.OS === 'ios' ? 150 : 50,
+    backgroundColor: COLORS.cardDark,
+    borderColor: COLORS.cardDark,
   },
   imageUploadButton: {
     width: '100%',

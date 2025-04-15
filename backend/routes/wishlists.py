@@ -168,3 +168,29 @@ def get_user_wishlists(
         result.append(wishlist_dict)
     
     return result
+
+# Public wishlist endpoint
+@router.get('/public/{wishlist_id}', response_model=WishlistResponse)
+def get_public_wishlist(
+    wishlist_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Get a public wishlist without authentication"""
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id,
+        Wishlist.is_public == True  # Only allow access to public wishlists
+    ).first()
+    
+    if not db_wishlist:
+        raise HTTPException(status_code=404, detail="Wishlist not found")
+    
+    # Count items
+    item_count = db.query(func.count(WishListItem.id)).filter(
+        WishListItem.wishlist_id == db_wishlist.id
+    ).scalar() or 0
+    
+    # Create response with item count
+    response_data = db_wishlist.__dict__.copy()
+    response_data['item_count'] = item_count
+    
+    return response_data
