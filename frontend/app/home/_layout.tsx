@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar, View } from 'react-native';
 import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
-import AddModal from '../components/modals/AddItemModal';
+import AddModal from '../components/modals/AddModal';
 import { useState } from 'react';
 import { COLORS } from '../styles/theme';
 

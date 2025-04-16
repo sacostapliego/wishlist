@@ -1,3 +1,19 @@
+/* 
+TODO:
+- Make it where when the user clicks add-item and it is in a wishlist, than remove the option to select a wishlist
+and when the item is created it is automatically added to the wishlist that the user clicked it on
+- Redesign the add-item, make it look more like pintrest, remove the tinted blues
+- Reogranize the add-item menu, in order, remove all (optional) and make it look more like a form:
+  - Select Wishlist (if not in a wishlist already)
+  - Name
+  - Image
+  - URL/Location
+  - Price (make sure to add $ sign)
+  - Priority (slider 0-5)
+  - Description 
+- Make form clean when the user selects create item (this applies to wishlist as well)
+*/
+
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -48,7 +64,6 @@ export default function AddItemScreen() {
     try {
       setLoadingWishlists(true);
       const response = await wishlistAPI.getWishlists();
-      console.log("Fetched wishlists:", response);
       setWishlists(response);
       
       // Set default wishlist if available

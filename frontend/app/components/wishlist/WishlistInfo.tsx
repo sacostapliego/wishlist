@@ -28,8 +28,6 @@ export const WishlistInfo = ({ username, description, profileImage }: WishlistIn
 const styles = StyleSheet.create({
   wishlistInfo: {
     padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   userInfo: {
     flexDirection: 'row',

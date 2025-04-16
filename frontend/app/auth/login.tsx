@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
-import { COLORS, SPACING } from '../styles/theme';
+import { AUTH_COLORS, COLORS, SPACING } from '../styles/theme';
+import GradientBorderInput from '../components/forms/GradientBorderInput';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -58,23 +59,23 @@ export default function LoginScreen() {
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
-        <TextInput
-          style={styles.input}
+        <GradientBorderInput
           placeholder="Email"
-          placeholderTextColor={COLORS.inactive}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+          placeholderTextColor={AUTH_COLORS.inactive}
         />
 
-        <TextInput
-          style={styles.input}
+        <GradientBorderInput
           placeholder="Password"
-          placeholderTextColor={COLORS.inactive}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+          placeholderTextColor={AUTH_COLORS.inactive}
         />
 
         <TouchableOpacity
@@ -105,7 +106,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: AUTH_COLORS.background,
   },
   formContainer: {
     flex: 1,
@@ -115,25 +116,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: COLORS.text.primary,
+    color: AUTH_COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.text.secondary,
+    color: AUTH_COLORS.text.secondary,
     marginBottom: SPACING.xl,
   },
   input: {
     height: 56,
-    backgroundColor: COLORS.cardDark,
+    backgroundColor: AUTH_COLORS.cardDark,
     borderRadius: 8,
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.md,
     fontSize: 16,
-    color: COLORS.text.primary,
+    color: AUTH_COLORS.text.primary,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: AUTH_COLORS.primary,
     height: 56,
     borderRadius: 8,
     alignItems: 'center',
@@ -153,11 +154,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerText: {
-    color: COLORS.text.secondary,
+    color: AUTH_COLORS.text.secondary,
     fontSize: 14,
   },
   registerTextBold: {
-    color: COLORS.primary,
+    color: AUTH_COLORS.primary,
     fontWeight: '600',
   },
 });

@@ -17,7 +17,7 @@ export const COLORS = {
   background: '#141414',
   card: '#f1f5f9',
   cardDark: '#1e293b',
-  primary: '#0891b2',
+  primary: '#C41E3A',
   secondary: '#7358e0',
   text: {
     primary: '#ffffff',
@@ -25,6 +25,21 @@ export const COLORS = {
     dark: '#334155'
   },
   inactive: '#64748b',
+  error: '#ef4444',
+};
+
+export const AUTH_COLORS = {
+background: '#141414',
+  card: '#f1f5f9',
+  cardDark: '#5e0e1c',
+  primary: '#C41E3A',
+  secondary: '#ee91a1',
+  text: {
+    primary: '#ffffff',
+    secondary: 'rgba(255, 255, 255, 0.8)',
+    dark: '#334155'
+  },
+  inactive: '#f9d5db',
   error: '#ef4444',
 };
 

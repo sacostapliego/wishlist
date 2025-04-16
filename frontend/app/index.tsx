@@ -14,7 +14,7 @@ export default function Index() {
         if (isLoggedIn) {
           router.replace('/home');
         } else {
-          router.replace('/auth/login');
+          router.replace('/auth/register');
         }
       }
     }, 0);

@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
 },
   frame: {
     width: 430,
-    height: 932,
+    height: '95%',
     overflow: 'hidden',
     borderColor: '#000',
   },

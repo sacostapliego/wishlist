@@ -14,9 +14,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
-import { COLORS, SPACING } from '../styles/theme';
+import { AUTH_COLORS, SPACING } from '../styles/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import GradientBorderInput from '../components/forms/GradientBorderInput';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -87,13 +88,6 @@ export default function RegisterScreen() {
           const uriParts = profilePicture.split('.');
           const fileType = uriParts[uriParts.length - 1];
           
-          // Log for debugging
-          console.log("Profile picture details:", {
-            uri: profilePicture,
-            fileType,
-            platform: Platform.OS
-          });
-          
           // For web:
           if (Platform.OS === 'web') {
             try {
@@ -149,7 +143,9 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Create Account</Text>
+          <View style= {styles.titleContainer}>
+            <Text style={styles.title}>Create your account!</Text>
+          </View>
           <Text style={styles.subtitle}>Sign up to get started</Text>
 
           <View style={styles.profileImageContainer}>
@@ -158,65 +154,69 @@ export default function RegisterScreen() {
                 <Image source={{ uri: profilePicture }} style={styles.profileImage} />
               ) : (
                 <View style={styles.profileImagePlaceholder}>
-                  <Ionicons name="person" size={40} color={COLORS.inactive} />
+                  <Ionicons name="person" size={40} color={AUTH_COLORS.inactive} />
                 </View>
               )}
-              <View style={styles.editIconContainer}>
-                <Ionicons name="camera" size={16} color="white" />
-              </View>
             </TouchableOpacity>
             <Text style={styles.profileImageText}>Add profile picture</Text>
           </View>
 
-          <TextInput
-            style={styles.input}
+          <GradientBorderInput
             placeholder="Email"
-            placeholderTextColor={COLORS.inactive}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
             textContentType="emailAddress"
+            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            placeholderTextColor={AUTH_COLORS.inactive}
           />
-
-          <TextInput
-            style={styles.input}
+          <GradientBorderInput
             placeholder="Username"
-            placeholderTextColor={COLORS.inactive}
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
             textContentType="username"
+            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            placeholderTextColor={AUTH_COLORS.inactive}
           />
-
-          <TextInput
-            style={styles.input}
+          <GradientBorderInput
             placeholder="Full Name (Optional)"
-            placeholderTextColor={COLORS.inactive}
             value={name}
             onChangeText={setName}
             textContentType="name"
+            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            placeholderTextColor={AUTH_COLORS.inactive}
           />
 
-          <TextInput
-            style={styles.input}
+          <GradientBorderInput
             placeholder="Password"
-            placeholderTextColor={COLORS.inactive}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             textContentType="newPassword"
+            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            placeholderTextColor={AUTH_COLORS.inactive}
           />
 
-          <TextInput
-            style={styles.input}
+          <GradientBorderInput
             placeholder="Confirm Password"
-            placeholderTextColor={COLORS.inactive}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
             textContentType="newPassword"
+            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            placeholderTextColor={AUTH_COLORS.inactive}
           />
+
+          <TouchableOpacity
+            style={styles.loginLink}
+            onPress={() => router.push('/auth/login')}
+          >
+            <Text style={styles.loginText}>
+              Already have an account? <Text style={styles.loginTextBold}>Sign In</Text>
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -229,15 +229,6 @@ export default function RegisterScreen() {
               <Text style={styles.buttonText}>Sign Up</Text>
             )}
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.loginLink}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.loginText}>
-              Already have an account? <Text style={styles.loginTextBold}>Sign In</Text>
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -247,7 +238,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: AUTH_COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -260,12 +251,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: COLORS.text.primary,
+    color: AUTH_COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.text.secondary,
+    color: AUTH_COLORS.text.secondary,
     marginBottom: SPACING.xl,
   },
   profileImageContainer: {
@@ -287,7 +278,7 @@ const styles = StyleSheet.create({
   profileImagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: COLORS.cardDark,
+    backgroundColor: AUTH_COLORS.cardDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -295,7 +286,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: COLORS.primary,
+    backgroundColor: AUTH_COLORS.primary,
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -303,20 +294,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   profileImageText: {
-    color: COLORS.text.secondary,
+    color: AUTH_COLORS.text.secondary,
     fontSize: 14,
   },
   input: {
     height: 56,
-    backgroundColor: COLORS.cardDark,
     borderRadius: 8,
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.md,
     fontSize: 16,
-    color: COLORS.text.primary,
+    color: AUTH_COLORS.text.primary,
+    borderWidth: 2,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: AUTH_COLORS.primary,
     height: 56,
     borderRadius: 8,
     alignItems: 'center',
@@ -336,11 +327,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginText: {
-    color: COLORS.text.secondary,
+    color: AUTH_COLORS.text.secondary,
     fontSize: 14,
   },
   loginTextBold: {
-    color: COLORS.primary,
+    color: AUTH_COLORS.primary,
     fontWeight: '600',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
   },
 });
