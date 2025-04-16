@@ -17,6 +17,7 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 # JWT Settings
 JWT_SECRET = os.getenv('JWT_SECRET')
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
+ACCESS_TOKEN_EXPIRE_DAYS = 7 # 1 week
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storage."""
@@ -37,7 +38,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
         
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm="HS256")
@@ -141,7 +142,7 @@ def login(form_data: UserLogin, db: Session = Depends(get_db)):
         )
     
     # Create access token with expiry
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
