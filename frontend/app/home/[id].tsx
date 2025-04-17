@@ -26,7 +26,10 @@ export default function WishlistDetailScreen() {
   const { wishlist, items, isLoading } = useWishlistDetail(id as string, refreshTimestamp);
 
   const handleAddItem = () => {
-    router.push('/home/add-item');
+    router.push({
+    pathname: '/home/add-item',
+    params: { wishlistId: id }
+    });
   };
 
   if (isLoading) {

@@ -105,7 +105,9 @@ export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGrid
         {safeListsArray.length > 0 ? (
           createRows()
         ) : (
-          <Text style={commonStyles.emptyText}>No friends found</Text>
+          <View style={commonStyles.centeredContent}>
+            <Text style={commonStyles.emptyText}>No friends found</Text>
+          </View>
         )}
       </View>
     </Section>
@@ -122,6 +124,7 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     paddingVertical: SPACING.xs,
+    minHeight: 250,
   },
   row: {
     flexDirection: 'row',

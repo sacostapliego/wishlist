@@ -3,14 +3,6 @@ TODO:
 - Make it where when the user clicks add-item and it is in a wishlist, than remove the option to select a wishlist
 and when the item is created it is automatically added to the wishlist that the user clicked it on
 - Redesign the add-item, make it look more like pintrest, remove the tinted blues
-- Reogranize the add-item menu, in order, remove all (optional) and make it look more like a form:
-  - Select Wishlist (if not in a wishlist already)
-  - Name
-  - Image
-  - URL/Location
-  - Price (make sure to add $ sign)
-  - Priority (slider 0-5)
-  - Description 
 - Make form clean when the user selects create item (this applies to wishlist as well)
 */
 
@@ -28,7 +20,7 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
@@ -38,27 +30,48 @@ import { wishlistAPI } from '../services/wishlist';
 import { WishlistApiResponse } from '../types/lists';
 import { useRefresh } from '../context/RefreshContext';
 
+import PrioritySlider from '../components/forms/PrioritySlider';
+
+import Slider from '@react-native-community/slider';
+
 export default function AddItemScreen() {
   const router = useRouter();
+
+  const { wishlistId: preSelectedWishlistId } = useLocalSearchParams<{ wishlistId: string }>();
+
   const [isLoading, setIsLoading] = useState(false);
   const [loadingWishlists, setLoadingWishlists] = useState(true);
   const [wishlists, setWishlists] = useState<WishlistApiResponse[]>([]);
 
-  // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [url, setUrl] = useState('');
-  const [priority, setPriority] = useState('0');
-  const [wishlistId, setWishlistId] = useState('');
+  const [priority, setPriority] = useState(0);
+  const [wishlistId, setWishlistId] = useState(preSelectedWishlistId || '');
   const [image, setImage] = useState<string | null>(null);
-  const { triggerRefresh } = useRefresh(); // Add this line to use the refresh context
+
+  const { triggerRefresh } = useRefresh(); 
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setPrice('');
+    setUrl('');
+    setPriority(0);
+    setImage(null);
+    // Note: We don't reset wishlistId to keep the user's list selection
+  };
 
 
   // Fetch user's wishlists on component mount
   useEffect(() => {
-    fetchWishlists();
-  }, []);
+    if (!preSelectedWishlistId) {
+      fetchWishlists();
+    } else {
+      setLoadingWishlists(false);
+    }
+  }, [preSelectedWishlistId]);
 
   const fetchWishlists = async () => {
     try {
@@ -132,7 +145,7 @@ export default function AddItemScreen() {
         description: description.trim() || null,
         price: price ? parseFloat(price) : null,
         url: url.trim() || null,
-        priority: parseInt(priority, 10),
+        priority: priority,
         wishlist_id: wishlistId,
         is_purchased: false
       };
@@ -168,6 +181,8 @@ export default function AddItemScreen() {
       
       // Trigger refresh to update all components using the refresh context
       triggerRefresh();
+
+      resetForm();
       
       Toast.show({
         type: 'success',
@@ -192,6 +207,18 @@ export default function AddItemScreen() {
     }
   };
 
+  const getPriorityLabel = (value: number) => {
+    switch(value) {
+      case 0: return "Low";
+      case 1: return "Low-Medium";
+      case 2: return "Medium";
+      case 3: return "Medium-High";
+      case 4: return "High";
+      case 5: return "Highest";
+      default: return "Low";
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -213,100 +240,50 @@ export default function AddItemScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Select Wishlist */}
-        <Text style={styles.label}>Select Wishlist</Text>
-        {loadingWishlists ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={COLORS.primary} />
-          </View>
-        ) : wishlists.length > 0 ? (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={wishlistId}
-              onValueChange={(value) => setWishlistId(value)}
-              style={styles.picker}
-              dropdownIconColor={COLORS.text.primary}
-            >
-              {wishlists.map((list) => (
-                <Picker.Item 
-                  key={list.id} 
-                  label={list.title} 
-                  value={list.id}
-                  color={Platform.OS === 'ios' ? COLORS.text.dark : undefined} 
-                />
-              ))}
-            </Picker>
-          </View>
-        ) : (
-          <Text style={styles.noListsText}>You don't have any wishlists yet. Create one first!</Text>
+        {!preSelectedWishlistId && (
+          <>
+            <Text style={styles.label}>Select Wishlist</Text>
+            {loadingWishlists ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              </View>
+            ) : wishlists.length > 0 ? (
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={wishlistId}
+                  onValueChange={(value) => setWishlistId(value)}
+                  style={styles.picker}
+                  dropdownIconColor={COLORS.text.primary}
+                >
+                  {wishlists.map((list) => (
+                    <Picker.Item 
+                      key={list.id} 
+                      label={list.title} 
+                      value={list.id}
+                      color={Platform.OS === 'ios' ? COLORS.text.dark : undefined} 
+                    />
+                  ))}
+                </Picker>
+              </View>
+            ) : (
+              <Text style={styles.noListsText}>You don't have any wishlists yet. Create one first!</Text>
+            )}
+          </>
         )}
 
         {/* Item Name */}
         <Text style={styles.label}>Item Name *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, styles.topAlignedInput]}
           value={name}
           onChangeText={setName}
           placeholder="Enter item name"
-          placeholderTextColor={COLORS.inactive}
-        />
-
-        {/* Description */}
-        <Text style={styles.label}>Description (Optional)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Add details about this item"
-          placeholderTextColor={COLORS.inactive}
-          multiline
+          placeholderTextColor={'fff'}
           textAlignVertical="top"
-          numberOfLines={4}
         />
-
-        {/* Price */}
-        <Text style={styles.label}>Price (Optional)</Text>
-        <TextInput
-          style={styles.input}
-          value={price}
-          onChangeText={(text) => setPrice(text.replace(/[^0-9.]/g, ''))}
-          placeholder="Enter price"
-          placeholderTextColor={COLORS.inactive}
-          keyboardType="decimal-pad"
-        />
-
-        {/* URL */}
-        <Text style={styles.label}>URL (Optional)</Text>
-        <TextInput
-          style={styles.input}
-          value={url}
-          onChangeText={setUrl}
-          placeholder="Enter item URL"
-          placeholderTextColor={COLORS.inactive}
-          keyboardType="url"
-          autoCapitalize="none"
-        />
-
-        {/* Priority */}
-        <Text style={styles.label}>Priority (0-5)</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            
-            selectedValue={priority}
-            onValueChange={(value) => setPriority(value)}
-            style={styles.picker}
-            dropdownIconColor={COLORS.text.primary}
-          >
-            <Picker.Item label="0 - Low" value="0" color={Platform.OS === 'ios' ? COLORS.text.primary : undefined} />
-            <Picker.Item label="1" value="1" color={Platform.OS === 'ios' ? COLORS.text.primary : undefined} />
-            <Picker.Item label="2" value="2" color={Platform.OS === 'ios' ? COLORS.text.primary : undefined} />
-            <Picker.Item label="3" value="3" color={Platform.OS === 'ios' ? COLORS.text.primary : undefined} />
-            <Picker.Item label="4" value="4" color={Platform.OS === 'ios' ? COLORS.text.primary : undefined} />
-            <Picker.Item label="5 - High" value="5" color={Platform.OS === 'ios' ? COLORS.text.primary : undefined} />
-          </Picker>
-        </View>
 
         {/* Image Upload */}
-        <Text style={styles.label}>Item Image (Optional)</Text>
+        <Text style={styles.label}>Image</Text>
         <TouchableOpacity style={styles.imageUploadButton} onPress={pickImage}>
           {image ? (
             <Image source={{ uri: image }} style={styles.previewImage} />
@@ -317,6 +294,47 @@ export default function AddItemScreen() {
             </View>
           )}
         </TouchableOpacity>
+
+        {/* Price */}
+        <Text style={styles.label}>Price</Text>
+        <TextInput
+          style={[styles.input, styles.topAlignedInput]}
+          value={price}
+          onChangeText={(text) => setPrice(text.replace(/[^0-9.]/g, ''))}
+          placeholder="Enter price"
+          placeholderTextColor={'fff'}
+          keyboardType="decimal-pad"
+          textAlignVertical="top"
+        />
+
+        {/* URL */}
+        <Text style={styles.label}>Where to find it?</Text>
+        <TextInput
+          style={[styles.input, styles.topAlignedInput]}
+          value={url}
+          onChangeText={setUrl}
+          placeholder="URL or location"
+          placeholderTextColor={'fff'}
+          keyboardType="url"
+          autoCapitalize="none"
+          textAlignVertical="top"
+        />
+
+        {/* Description */}
+        <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Add details about this item"
+            placeholderTextColor="rgba(255, 255, 255, 0.3)"
+            multiline
+            textAlignVertical="top"
+            numberOfLines={4}
+          />
+
+        {/* Priority */}
+        <PrioritySlider value={priority} onValueChange={setPriority} />
 
         {/* Submit Button */}
         <TouchableOpacity
@@ -375,35 +393,43 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: COLORS.text.primary,
     marginTop: SPACING.md,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   input: {
-    backgroundColor: COLORS.cardDark,
-    borderRadius: 8,
+    borderRadius: 15,
+    borderColor: '#fff',
+    borderWidth: 1,
     padding: SPACING.md,
     color: COLORS.text.primary,
     fontSize: 16,
     marginBottom: SPACING.sm,
+    paddingTop: SPACING.md,
   },
   textArea: {
-    minHeight: 100,
+    minHeight: 150,
+    fontSize: 14,
+    paddingTop: SPACING.sm,
   },
   pickerContainer: {
-    backgroundColor: COLORS.cardDark,
-    borderRadius: 8,
+    borderColor: '#fff',
+    borderWidth: 1,
+    borderRadius: 15,
     marginBottom: SPACING.md,
   },
   picker: {
     color: COLORS.text.primary,
     height: Platform.OS === 'ios' ? 150 : 50,
-    backgroundColor: COLORS.cardDark,
-    borderColor: COLORS.cardDark,
+    backgroundColor: COLORS.background,
+    borderColor: '#fff',
+    borderWidth: 1,
+    borderRadius: 15,
   },
   imageUploadButton: {
     width: '100%',
     height: 200,
-    backgroundColor: COLORS.cardDark,
-    borderRadius: 8,
+    borderRadius: 15,
+    borderColor: '#fff',
+    borderWidth: 1,
     marginBottom: SPACING.md,
     overflow: 'hidden',
   },
@@ -442,7 +468,6 @@ const styles = StyleSheet.create({
     marginRight: SPACING.xs,
   },
   loadingContainer: {
-    backgroundColor: COLORS.cardDark,
     borderRadius: 8,
     padding: SPACING.md,
     alignItems: 'center',
@@ -457,5 +482,30 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     textAlign: 'center',
     marginBottom: SPACING.md,
+  },
+  sliderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
+  },
+  slider: {
+    flex: 1,
+    height: 40,
+    marginHorizontal: SPACING.xs,
+  },
+  sliderLabel: {
+    color: COLORS.text.secondary,
+    width: 40,
+    textAlign: 'center',
+    fontSize: 12,
+  },
+  placeholder: {
+    fontSize: 16,
+  },
+  topAlignedInput: {
+    fontSize: 14,
+    textAlignVertical: 'top',
+    paddingTop: SPACING.sm,
   },
 });

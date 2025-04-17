@@ -36,6 +36,7 @@ export default function WishlistForm({
   const [description, setDescription] = useState(initialValues.description || '');
   const [isPublic, setIsPublic] = useState(initialValues.isPublic || false);
   const [selectedColor, setSelectedColor] = useState(initialValues.color || '#ff7f50');
+  const [privacy, setPrivacy] = useState('private');
   
   const handleSubmit = async () => {
     // Basic validation
