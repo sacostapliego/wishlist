@@ -1,8 +1,3 @@
-/* 
-TODO:
-- Make form clean when the user selects create item (this applies to wishlist as well)
-*/
-
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
