@@ -93,7 +93,6 @@ export default function RegisterScreen() {
             try {
               const response = await fetch(profilePicture);
               const blob = await response.blob();
-              console.log("Web blob created:", blob.size, blob.type);
               formData.append('profile_picture', blob, `profile-${username}.${fileType}`);
             } catch (fetchError) {
               console.error("Error creating blob:", fetchError);

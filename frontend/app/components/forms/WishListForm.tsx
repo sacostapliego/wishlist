@@ -24,6 +24,12 @@ const COLOR_OPTIONS = [
   '#6495ed', // cornflower blue
   '#ffa07a', // light salmon
   '#ff6347', // tomato
+  '#4682b4', // steel blue
+  '#ff4500', // orange red
+  '#da70d6', // orchid
+  '#ffd700', // gold
+  '#adff2f', // green yellow
+  '#faf9f6', // medium slate blue
 ];
 
 export default function WishlistForm({
@@ -123,7 +129,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    backgroundColor: COLORS.cardDark,
+    borderColor: 'white',
+    borderWidth: 1,
     borderRadius: 8,
     padding: SPACING.md,
     fontSize: 16,
@@ -158,5 +165,6 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: SPACING.xl,
     marginBottom: SPACING.xl,
+    backgroundColor: COLORS.primary,
   },
 });

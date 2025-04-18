@@ -1,8 +1,5 @@
 /* 
 TODO:
-- Make it where when the user clicks add-item and it is in a wishlist, than remove the option to select a wishlist
-and when the item is created it is automatically added to the wishlist that the user clicked it on
-- Redesign the add-item, make it look more like pintrest, remove the tinted blues
 - Make form clean when the user selects create item (this applies to wishlist as well)
 */
 
@@ -23,16 +20,13 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
 import { wishlistAPI } from '../services/wishlist';
 import { WishlistApiResponse } from '../types/lists';
 import { useRefresh } from '../context/RefreshContext';
-
+import { SelectList } from 'react-native-dropdown-select-list';
 import PrioritySlider from '../components/forms/PrioritySlider';
-
-import Slider from '@react-native-community/slider';
 
 export default function AddItemScreen() {
   const router = useRouter();
@@ -66,10 +60,12 @@ export default function AddItemScreen() {
 
   // Fetch user's wishlists on component mount
   useEffect(() => {
-    if (!preSelectedWishlistId) {
-      fetchWishlists();
-    } else {
+    // Always ensure the preSelectedWishlistId takes precedence
+    if (preSelectedWishlistId) {
+      setWishlistId(preSelectedWishlistId);
       setLoadingWishlists(false);
+    } else {
+      fetchWishlists();
     }
   }, [preSelectedWishlistId]);
 
@@ -207,18 +203,6 @@ export default function AddItemScreen() {
     }
   };
 
-  const getPriorityLabel = (value: number) => {
-    switch(value) {
-      case 0: return "Low";
-      case 1: return "Low-Medium";
-      case 2: return "Medium";
-      case 3: return "Medium-High";
-      case 4: return "High";
-      case 5: return "Highest";
-      default: return "Low";
-    }
-  };
-
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -227,7 +211,18 @@ export default function AddItemScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => router.back()}
+          onPress={() => {
+            if (preSelectedWishlistId) {
+              // If we came from a specific wishlist, navigate back to it
+              router.replace({
+                pathname: '/home/[id]',
+                params: { id: preSelectedWishlistId }
+              });
+            } else {
+              // Otherwise use default back behavior
+              router.back();
+            }
+          }}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
@@ -248,23 +243,21 @@ export default function AddItemScreen() {
                 <ActivityIndicator size="small" color={COLORS.primary} />
               </View>
             ) : wishlists.length > 0 ? (
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={wishlistId}
-                  onValueChange={(value) => setWishlistId(value)}
-                  style={styles.picker}
-                  dropdownIconColor={COLORS.text.primary}
-                >
-                  {wishlists.map((list) => (
-                    <Picker.Item 
-                      key={list.id} 
-                      label={list.title} 
-                      value={list.id}
-                      color={Platform.OS === 'ios' ? COLORS.text.dark : undefined} 
-                    />
-                  ))}
-                </Picker>
-              </View>
+              <SelectList
+                setSelected={(val: string) => setWishlistId(val)}
+                data={wishlists.map(list => ({ key: list.id, value: list.title, color: list.color}))}
+                save="key"
+                placeholder="Select wishlist"
+                boxStyles={{
+                  borderColor: '#fff',
+                  borderRadius: 15,
+                  padding: SPACING.md,
+                }}
+                inputStyles={{ color: COLORS.text.primary }}
+                dropdownStyles={{ borderColor: '#fff', borderRadius: 15}}
+                dropdownTextStyles={{ color: COLORS.text.primary }}
+                search={false}
+              />
             ) : (
               <Text style={styles.noListsText}>You don't have any wishlists yet. Create one first!</Text>
             )}

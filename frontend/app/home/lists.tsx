@@ -63,9 +63,8 @@ export default function ListsScreen() {
       return (
         <TouchableOpacity 
           key={item.id}
-          style={[styles.listItem, { borderLeftColor: itemColor, borderLeftWidth: 5 }]}
+          style={[styles.listItem, { borderColor: itemColor, borderWidth: 5, borderRadius: 16 }]}
           onPress={() => {
-            console.log("Navigating to wishlist:", item.id);
           router.push({
             pathname: "/home/[id]",
             params: { id: item.id }
@@ -99,10 +98,9 @@ export default function ListsScreen() {
         </TouchableOpacity>
         <Text style={styles.title}>My Lists</Text>
         <TouchableOpacity 
-          style={styles.addButton} 
           onPress={handleCreateWishlist}
         >
-          <Ionicons name="add-circle-outline" size={24} color={COLORS.primary} />
+          <Ionicons name="add-circle-outline" size={28} color={'#ffffffff'} />
         </TouchableOpacity>
       </View>
       
@@ -150,9 +148,6 @@ const styles = StyleSheet.create({
   backButton: {
     padding: SPACING.xs,
   },
-  addButton: {
-    padding: SPACING.xs,
-  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -172,7 +167,6 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   listItem: {
-    backgroundColor: COLORS.cardDark,
     borderRadius: 8,
     marginBottom: SPACING.md,
     overflow: 'hidden',

@@ -38,7 +38,6 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
 
   // Handle swipe left (next card)
   const handleSwipeLeft = useCallback(() => {
-    console.log("Swipe left detected");
     if (currentIndex < safeListsArray.length - 1) {
       // Normal case - go to next card
       animateSwipe(-200, () => setCurrentIndex(currentIndex + 1));
@@ -52,7 +51,6 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
   
   // Handle swipe right (previous card)
   const handleSwipeRight = useCallback(() => {    
-    console.log("Swipe right detected");
     if (currentIndex > 0) {
       // Normal behavior - go to previous card
       animateSwipe(200, () => setCurrentIndex(currentIndex - 1));

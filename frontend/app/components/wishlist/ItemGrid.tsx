@@ -17,6 +17,8 @@ type ItemGridProps = {
   baseSize: number;
   onItemPress?: (item: WishlistItem) => void;
   showPrice?: boolean;
+  selectedItems?: string[];
+  selectionMode?: boolean;
 };
 
 export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: ItemGridProps) => {
@@ -28,7 +30,6 @@ export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: Ite
       case 2: return 1.1;
       case 3: return 1.15;
       case 4: return 1.2;
-      case 5: return 1.3;  // largest
       default: return 1;
     }
   };
@@ -48,6 +49,8 @@ export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: Ite
     <View style={styles.itemsGrid}>
       {items.map((item) => {
         const itemSize = getItemSize(item.priority);
+        const hasImage = item.id && item.image;
+        
         return (
           <TouchableOpacity
             key={item.id}
@@ -55,28 +58,33 @@ export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: Ite
               styles.itemCard,
               { 
                 width: itemSize,
-                height: itemSize,
+                height: hasImage ? itemSize : Math.min(itemSize * 0.4, 80), // Reduced height for items without images
               }
             ]}
             onPress={() => onItemPress?.(item)}
           >
-            {item.id && item.image ? (
-              <Image 
-                source={{ uri: `${API_URL}wishlist/${item.id}/image` }} 
-                style={styles.itemImage}
-                resizeMode="cover"
-              />
+            {hasImage ? (
+              <>
+                <Image 
+                  source={{ uri: `${API_URL}wishlist/${item.id}/image` }} 
+                  style={styles.itemImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                  {showPrice && item.price !== undefined && (
+                    <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+                  )}
+                </View>
+              </>
             ) : (
-              <View style={styles.noImage}>
-                <Ionicons name="image-outline" size={32} color={COLORS.inactive} />
+              <View style={styles.textOnlyContainer}>
+                <Text style={styles.textOnlyName} numberOfLines={1}>{item.name}</Text>
+                {showPrice && item.price !== undefined && (
+                  <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
+                )}
               </View>
             )}
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-              {showPrice && item.price !== undefined && (
-                <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
-              )}
-            </View>
           </TouchableOpacity>
         );
       })}
@@ -101,15 +109,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '70%',
   },
-  noImage: {
-    width: '100%',
-    height: '70%',
-    backgroundColor: COLORS.cardDark,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   itemInfo: {
-    padding: SPACING.xs,
+    padding: SPACING.sm,
     height: '30%',
     justifyContent: 'space-between',
   },
@@ -119,6 +120,22 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
   },
   itemPrice: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+  },
+  textOnlyContainer: {
+    padding: SPACING.md,
+    flex: 1,
+    justifyContent: 'center',
+
+  },
+  textOnlyName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: 2,
+  },
+  textOnlyPrice: {
     fontSize: 12,
     color: COLORS.text.secondary,
   },

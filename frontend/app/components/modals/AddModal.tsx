@@ -26,21 +26,23 @@ export default function AddModal({ visible, onClose }: AddModalProps) {
   return (
     <Pressable style={styles.overlay} onPress={onClose}>
       <View style={styles.modalContent}>
-        <TouchableOpacity 
-          style={styles.option}
-          onPress={handleCreateWishlist}
-        >
-          <Ionicons name="add-circle" size={24} color="#0891b2" />
-          <Text style={styles.optionText}>Create New List</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.option}
-          onPress={handleAddItem}
-        >
-          <Ionicons name="gift" size={24} color="#0891b2" />
-          <Text style={styles.optionText}>Add Item to List</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity 
+            style={styles.squareOption}
+            onPress={handleCreateWishlist}
+          >
+            <Ionicons name="add-circle" size={36} color="white" />
+            <Text style={styles.optionText}>Create List</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.squareOption}
+            onPress={handleAddItem}
+          >
+            <Ionicons name="gift" size={36} color="white" />
+            <Text style={styles.optionText}>Add Item</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Pressable>
   );
@@ -61,23 +63,34 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: COLORS.background, 
     padding: 20,
-    borderRadius: 12,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     width: '100%',
-    borderColor: COLORS.cardDark,
-    borderWidth: 1,
   },
-  option: {
+  buttonsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.cardDark, 
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    justifyContent: 'space-around',
     width: '100%',
+    height: '90%',
+  },
+  squareOption: {
+    alignItems: 'center',
+    justifyContent: 'center', 
+    padding: 20,
+    borderRadius: 12,
+    width: '35%',
+    aspectRatio: 1,
+    borderColor: 'white',
+    borderWidth: 1,
+    backgroundColor: '#282828',
   },
   optionText: {
-    fontSize: 18,
-    marginLeft: 12,
-    color: COLORS.text.primary, 
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 12,
+    color: COLORS.text.primary,
+    textAlign: 'center',
   },
 });
