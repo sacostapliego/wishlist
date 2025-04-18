@@ -19,9 +19,19 @@ type ItemGridProps = {
   showPrice?: boolean;
   selectedItems?: string[];
   selectionMode?: boolean;
+  wishlistColor?: string;
 };
 
-export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: ItemGridProps) => {
+export const ItemGrid = ({ 
+  items, 
+  baseSize, 
+  onItemPress, 
+  showPrice = true, 
+  selectedItems = [], 
+  selectionMode = false, 
+  wishlistColor 
+}: ItemGridProps) => {
+
   // Size multiplier based on priority (0-5)
   const getSizeMultiplier = (priority: number) => {
     switch(priority) {
@@ -45,12 +55,19 @@ export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: Ite
     return `$${price.toFixed(2)}`;
   };
 
+  // get wishlist color
+  const getCardColor = () => {
+    return  wishlistColor ? wishlistColor : COLORS.cardDark;
+  }
+
   return (
     <View style={styles.itemsGrid}>
       {items.map((item) => {
         const itemSize = getItemSize(item.priority);
         const hasImage = item.id && item.image;
-        
+        const isSelected = selectedItems?.includes(item.id);
+        const cardColor = getCardColor();
+
         return (
           <TouchableOpacity
             key={item.id}
@@ -58,11 +75,23 @@ export const ItemGrid = ({ items, baseSize, onItemPress, showPrice = true }: Ite
               styles.itemCard,
               { 
                 width: itemSize,
-                height: hasImage ? itemSize : Math.min(itemSize * 0.4, 80), // Reduced height for items without images
-              }
+                height: hasImage ? itemSize : Math.min(itemSize * 0.4, 80), 
+                backgroundColor: cardColor,
+              },
+              isSelected && styles.selectedCard,
             ]}
             onPress={() => onItemPress?.(item)}
           >
+             {selectionMode && (
+              <View style={styles.selectionIndicator}>
+                <Ionicons 
+                  name={isSelected ? "checkmark-circle" : "ellipse-outline"} 
+                  size={24} 
+                  color={isSelected ? COLORS.primary : COLORS.text.secondary} 
+                />
+              </View>
+            )}
+
             {hasImage ? (
               <>
                 <Image 
@@ -100,7 +129,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   itemCard: {
-    backgroundColor: COLORS.cardDark,
     borderRadius: 12,
     marginBottom: SPACING.md,
     overflow: 'hidden',
@@ -138,5 +166,18 @@ const styles = StyleSheet.create({
   textOnlyPrice: {
     fontSize: 12,
     color: COLORS.text.secondary,
+  },
+  selectedCard: {
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  selectionIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+    padding: 2,
   },
 });

@@ -21,6 +21,7 @@ interface WishlistContentProps {
   onItemPress: (item: WishlistItem) => void;
   onAddItem: () => void;
   onCancelSelection: () => void;
+  wishlistColor?: string;
 }
 
 export const WishlistContent = ({
@@ -30,7 +31,8 @@ export const WishlistContent = ({
   selectedItems,
   onItemPress,
   onAddItem,
-  onCancelSelection
+  onCancelSelection,
+  wishlistColor,
 }: WishlistContentProps) => {
   return (
     <ScrollView 
@@ -56,6 +58,7 @@ export const WishlistContent = ({
           onItemPress={onItemPress}
           selectedItems={selectedItems}
           selectionMode={isSelectionMode}
+          wishlistColor={wishlistColor}
         />
       )}
     </ScrollView>
@@ -65,6 +68,7 @@ export const WishlistContent = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+
   },
   content: {
     padding: SPACING.md,

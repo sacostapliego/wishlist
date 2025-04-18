@@ -99,6 +99,7 @@ export default function WishlistDetailScreen() {
         onItemPress={handleItemPress}
         onAddItem={handleAddItem}
         onCancelSelection={cancelSelection}
+        wishlistColor={wishlist?.color}
       />
 
       <WishlistActions

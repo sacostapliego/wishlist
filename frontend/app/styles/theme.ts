@@ -78,3 +78,21 @@ export const SPACING = {
   xl: 24,
   xxl: 32,
 };
+
+// Wishlist Colors Main
+export const WISHLIST_COLORS = {
+  coral: '#ff7f50',             // coral
+  lightseagreen: '#20b2aa',     // light sea green
+  purple: '#9370db',            // purple
+  ligtCoral: '#f08080',         // light coral
+  seaGreen: '#3cb371',          // sea green (change)
+  cornflowerBlue: '#6495ed',    // cornflower blue
+  lightSalmon: '#ffa07a',       // light salmon
+  tomato: '#ff6347',            // tomato
+  steelBlue: '#4682b4',         // steel blue
+  orangeRed: '#ff4500',         // orange red
+  orchid: '#da70d6',            // orchid
+  gold: '#ffd700',              // gold
+  greenYellow: '#adff2f',       // green yellow
+  offWhite: '#faf9f6',          // offWhite
+};

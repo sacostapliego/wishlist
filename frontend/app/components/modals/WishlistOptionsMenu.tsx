@@ -66,10 +66,12 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     width: CARD_WIDTH,
-    backgroundColor: COLORS.cardDark,
     borderRadius: 12,
     overflow: 'hidden',
     padding: SPACING.md,
+    borderColor: 'white',
+    borderWidth: 1,
+    backgroundColor: COLORS.background,
   },
   menuItem: {
     flexDirection: 'row',
