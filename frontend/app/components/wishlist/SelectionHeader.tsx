@@ -46,8 +46,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.cardDark,
-  },
+    borderColor: 'white',
+    borderWidth: 1,
+    borderRadius: 16,
+    },
   selectionText: {
     color: COLORS.text.primary,
     fontSize: 16,

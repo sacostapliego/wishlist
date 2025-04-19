@@ -81,18 +81,18 @@ export const SPACING = {
 
 // Wishlist Colors Main
 export const WISHLIST_COLORS = {
-  coral: '#ff7f50',             // coral
-  lightseagreen: '#20b2aa',     // light sea green
-  purple: '#9370db',            // purple
-  ligtCoral: '#f08080',         // light coral
-  seaGreen: '#3cb371',          // sea green (change)
-  cornflowerBlue: '#6495ed',    // cornflower blue
-  lightSalmon: '#ffa07a',       // light salmon
-  tomato: '#ff6347',            // tomato
-  steelBlue: '#4682b4',         // steel blue
-  orangeRed: '#ff4500',         // orange red
-  orchid: '#da70d6',            // orchid
-  gold: '#ffd700',              // gold
-  greenYellow: '#adff2f',       // green yellow
-  offWhite: '#faf9f6',          // offWhite
+  coral: 'rgb(255, 127, 80)',             // coral
+  lightseagreen: 'rgb(32, 178, 170)',     // light sea green
+  purple: 'rgb(147, 112, 219)',           // purple
+  ligtCoral: 'rgb(240, 128, 128)',        // light coral
+  seaGreen: 'rgb(60, 179, 113)',          // sea green
+  cornflowerBlue: 'rgb(100, 149, 237)',   // cornflower blue
+  lightSalmon: 'rgb(255, 160, 122)',      // light salmon
+  tomato: 'rgb(255, 99, 71)',             // tomato
+  steelBlue: 'rgb(70, 130, 180)',         // steel blue
+  orangeRed: 'rgb(255, 69, 0)',           // orange red
+  orchid: 'rgb(218, 112, 214)',           // orchid
+  gold: 'rgb(255, 215, 0)',               // gold
+  greenYellow: 'rgb(173, 255, 47)',       // green yellow (change)
+  offWhite: 'rgb(250, 249, 246)',         // offWhite
 };

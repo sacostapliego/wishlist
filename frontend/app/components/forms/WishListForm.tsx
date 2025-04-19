@@ -9,28 +9,13 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, SPACING } from '../../styles/theme';
+import { COLORS, SPACING, WISHLIST_COLORS } from '../../styles/theme';
 import { Button } from '../ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { WishlistFormProps } from '@/app/types/lists';
 
 // Color options for wishlists
-const COLOR_OPTIONS = [
-  '#ff7f50', // coral
-  '#20b2aa', // light sea green
-  '#9370db', // medium purple
-  '#f08080', // light coral
-  '#3cb371', // medium sea green
-  '#6495ed', // cornflower blue
-  '#ffa07a', // light salmon
-  '#ff6347', // tomato
-  '#4682b4', // steel blue
-  '#ff4500', // orange red
-  '#da70d6', // orchid
-  '#ffd700', // gold
-  '#adff2f', // green yellow
-  '#faf9f6', // medium slate blue
-];
+const COLOR_OPTIONS = Object.values(WISHLIST_COLORS);
 
 export default function WishlistForm({
   initialValues = {},

@@ -11,14 +11,12 @@ type EmptyStateProps = {
 };
 
 export const EmptyState = ({
-  icon = "gift-outline",
   message,
   actionText,
   onAction
 }: EmptyStateProps) => {
   return (
     <View style={styles.emptyContainer}>
-      <Ionicons name="gift-outline" size={64} color={COLORS.inactive} />
       <Text style={styles.emptyText}>{message}</Text>
       {actionText && onAction && (
         <TouchableOpacity style={styles.actionButton} onPress={onAction}>

@@ -40,7 +40,7 @@ export const WishlistContent = ({
       contentContainerStyle={styles.content}
     >
       <SectionHeader 
-        title="Items" 
+        title="" 
         actionIcon={isSelectionMode ? "close-circle" : "add-circle"} 
         onAction={isSelectionMode ? onCancelSelection : onAddItem} 
       />

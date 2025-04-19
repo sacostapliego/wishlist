@@ -89,6 +89,8 @@ export default function WishlistDetailScreen() {
         username={user?.username || user?.name} 
         description={wishlist?.description}
         profileImage={user?.id ? `${API_URL}users/${user.id}/profile-image` : undefined}
+        onAddPress={handleAddItem} 
+        showAddButton={false}
       />
 
       <WishlistContent

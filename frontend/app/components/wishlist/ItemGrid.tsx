@@ -32,6 +32,27 @@ export const ItemGrid = ({
   wishlistColor 
 }: ItemGridProps) => {
 
+  // Get lighter version of wishlist color
+  const getLightColor = (wishlistColor: string) => {
+    if (!wishlistColor) return 'rgba(255, 255, 255, 0.1)';
+    
+    // Parse RGB values from the string
+    const rgbMatch = wishlistColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (!rgbMatch) return wishlistColor;
+    
+    // Extract RGB values
+    const r = parseInt(rgbMatch[1], 10);
+    const g = parseInt(rgbMatch[2], 10);
+    const b = parseInt(rgbMatch[3], 10);
+    
+    // Make lighter by moving 40% toward white (255,255,255)
+    const lighterR = Math.min(255, r + Math.floor((255 - r) * 0.4));
+    const lighterG = Math.min(255, g + Math.floor((255 - g) * 0.4));
+    const lighterB = Math.min(255, b + Math.floor((255 - b) * 0.4));
+    
+    return `rgb(${lighterR}, ${lighterG}, ${lighterB})`;
+  };
+
   // Size multiplier based on priority (0-5)
   const getSizeMultiplier = (priority: number) => {
     switch(priority) {
@@ -66,7 +87,11 @@ export const ItemGrid = ({
         const itemSize = getItemSize(item.priority);
         const hasImage = item.id && item.image;
         const isSelected = selectedItems?.includes(item.id);
+
+
         const cardColor = getCardColor();
+        const lighterCardColor = getLightColor(cardColor);
+        console.log('Item:', item.name, 'Card color:', cardColor, 'Lighter color:', lighterCardColor);
 
         return (
           <TouchableOpacity
@@ -75,8 +100,6 @@ export const ItemGrid = ({
               styles.itemCard,
               { 
                 width: itemSize,
-                height: hasImage ? itemSize : Math.min(itemSize * 0.4, 80), 
-                backgroundColor: cardColor,
               },
               isSelected && styles.selectedCard,
             ]}
@@ -92,14 +115,16 @@ export const ItemGrid = ({
               </View>
             )}
 
-            {hasImage ? (
+           {hasImage ? (
               <>
-                <Image 
-                  source={{ uri: `${API_URL}wishlist/${item.id}/image` }} 
-                  style={styles.itemImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.itemInfo}>
+                <View style={[styles.imageWrapper, { backgroundColor: cardColor }]}>
+                  <Image 
+                    source={{ uri: `${API_URL}wishlist/${item.id}/image` }} 
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                  />
+                </View>
+                <View style={[styles.itemInfo, { backgroundColor: lighterCardColor }]}>
                   <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                   {showPrice && item.price !== undefined && (
                     <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
@@ -107,7 +132,7 @@ export const ItemGrid = ({
                 </View>
               </>
             ) : (
-              <View style={styles.textOnlyContainer}>
+              <View style={[styles.textOnlyContainer, { backgroundColor: cardColor }]}>
                 <Text style={styles.textOnlyName} numberOfLines={1}>{item.name}</Text>
                 {showPrice && item.price !== undefined && (
                   <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
@@ -135,12 +160,23 @@ const styles = StyleSheet.create({
   },
   itemImage: {
     width: '100%',
-    height: '70%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageWrapper: {
+    aspectRatio: 1,
+    width: '100%',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: 'hidden',
   },
   itemInfo: {
+    width: '100%',
     padding: SPACING.sm,
-    height: '30%',
-    justifyContent: 'space-between',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    minHeight: 50,
+    justifyContent: 'center',
   },
   itemName: {
     fontSize: 14,
