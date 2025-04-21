@@ -54,8 +54,6 @@ export default function WishlistDetailScreen() {
     if (isSelectionMode) {
       toggleItemSelection(item.id);
     } else {
-      console.log('View item:', item.id);
-      // Future implementation: view item details
     }
   };
 
@@ -90,7 +88,7 @@ export default function WishlistDetailScreen() {
         description={wishlist?.description}
         profileImage={user?.id ? `${API_URL}users/${user.id}/profile-image` : undefined}
         onAddPress={handleAddItem} 
-        showAddButton={false}
+        hasItems={items && items.length > 0}
       />
 
       <WishlistContent

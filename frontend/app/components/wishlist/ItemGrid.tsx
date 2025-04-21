@@ -91,7 +91,6 @@ export const ItemGrid = ({
 
         const cardColor = getCardColor();
         const lighterCardColor = getLightColor(cardColor);
-        console.log('Item:', item.name, 'Card color:', cardColor, 'Lighter color:', lighterCardColor);
 
         return (
           <TouchableOpacity

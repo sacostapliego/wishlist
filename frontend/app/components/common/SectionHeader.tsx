@@ -5,7 +5,7 @@ import { COLORS, SPACING } from '../../styles/theme';
 
 type SectionHeaderProps = {
   title: string;
-  actionIcon?: string;
+  actionIcon?: keyof typeof Ionicons.glyphMap;
   onAction?: () => void;
 };
 

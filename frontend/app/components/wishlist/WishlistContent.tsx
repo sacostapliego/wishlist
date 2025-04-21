@@ -1,9 +1,9 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { SectionHeader } from '../common/SectionHeader';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../layout/EmptyState';
 import { ItemGrid } from './ItemGrid';
-import { SPACING } from '../../styles/theme';
+import { COLORS, SPACING } from '../../styles/theme';
 
 interface WishlistItem {
   id: string;
@@ -39,11 +39,14 @@ export const WishlistContent = ({
       style={styles.container}
       contentContainerStyle={styles.content}
     >
-      <SectionHeader 
-        title="" 
-        actionIcon={isSelectionMode ? "close-circle" : "add-circle"} 
-        onAction={isSelectionMode ? onCancelSelection : onAddItem} 
-      />
+      {/* Only show cancel button when in selection mode */}
+      {isSelectionMode && (
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={onCancelSelection} style={styles.actionButton}>
+            <Ionicons name="close-circle" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
       
       {!items || items.length === 0 ? (
         <EmptyState 
@@ -68,10 +71,17 @@ export const WishlistContent = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
   },
   content: {
     padding: SPACING.md,
     paddingBottom: 50, // Extra padding at bottom for scrolling
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: SPACING.md,
+  },
+  actionButton: {
+    padding: SPACING.xs,
   }
 });
