@@ -27,6 +27,8 @@ export function Section({
   );
 }
 
+export default Section;
+
 const styles = StyleSheet.create({
   container: {
     marginVertical: SPACING.md,

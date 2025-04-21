@@ -98,6 +98,8 @@ export const WishlistActions = ({
   );
 };
 
+export default WishlistActions;
+
 const styles = StyleSheet.create({
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

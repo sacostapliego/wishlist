@@ -167,3 +167,5 @@ export const useAuth = (): AuthContextType => {
 
 // Re-export the services
 export { api, authAPI, wishlistAPI, userAPI };
+
+export default AuthContext;

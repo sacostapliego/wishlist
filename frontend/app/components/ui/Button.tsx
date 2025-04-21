@@ -141,6 +141,8 @@ export function Button({
   );
 }
 
+export default Button;
+
 const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',

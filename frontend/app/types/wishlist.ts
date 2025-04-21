@@ -5,3 +5,6 @@ export interface WishlistInfoProps {
   onAddPress?: () => void;
   hasItems?: boolean;
 }
+
+export default function wishlists() {
+}

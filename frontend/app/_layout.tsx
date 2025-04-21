@@ -29,7 +29,7 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen 
-                name="/home" 
+                name="home" 
                 options={{ headerShown: false, gestureEnabled: false }} 
               />
               <Stack.Screen 

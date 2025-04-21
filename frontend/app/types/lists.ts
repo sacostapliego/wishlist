@@ -52,3 +52,6 @@ export interface WishlistFormProps {
   isLoading: boolean;
   submitLabel?: string;
 }
+
+export default function lists() {
+}

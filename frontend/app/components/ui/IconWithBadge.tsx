@@ -35,6 +35,8 @@ export function IconWithBadge({
   );
 }
 
+export default IconWithBadge;
+
 const styles = StyleSheet.create({
   container: {
     position: 'relative',

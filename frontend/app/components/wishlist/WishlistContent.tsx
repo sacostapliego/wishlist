@@ -68,6 +68,8 @@ export const WishlistContent = ({
   );
 };
 
+export default WishlistContent;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

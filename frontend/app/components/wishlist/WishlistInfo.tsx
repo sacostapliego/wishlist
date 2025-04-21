@@ -42,6 +42,8 @@ export const WishlistInfo = ({
   );
 };
 
+export default WishlistInfo;
+
 const styles = StyleSheet.create({
   wishlistInfo: {
     padding: SPACING.md,

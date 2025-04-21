@@ -39,6 +39,8 @@ export const SelectionHeader = ({
   );
 };
 
+export default SelectionHeader;
+
 const styles = StyleSheet.create({
   selectionHeader: {
     flexDirection: 'row',

@@ -145,6 +145,8 @@ export const ItemGrid = ({
   );
 };
 
+export default ItemGrid;
+
 const styles = StyleSheet.create({
   itemsGrid: {
     flexDirection: 'row',

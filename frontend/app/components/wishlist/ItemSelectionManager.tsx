@@ -77,6 +77,8 @@ export const ItemSelectionManager = ({
   );
 };
 
+export default ItemSelectionManager;
+
 const styles = StyleSheet.create({
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

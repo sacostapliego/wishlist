@@ -27,6 +27,8 @@ export function Card({ children, style, color = COLORS.card }: CardProps) {
   );
 }
 
+export default Card;
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,

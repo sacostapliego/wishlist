@@ -28,3 +28,5 @@ export const useRefresh = () => {
   }
   return context;
 };
+
+export default RefreshContext;

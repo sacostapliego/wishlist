@@ -22,6 +22,8 @@ export const SectionHeader = ({ title, actionIcon, onAction }: SectionHeaderProp
   );
 };
 
+export default SectionHeader;
+
 const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',

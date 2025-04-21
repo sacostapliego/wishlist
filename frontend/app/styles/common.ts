@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { COLORS, SPACING, TYPOGRAPHY } from './theme';
 
 export const commonStyles = StyleSheet.create({
@@ -43,3 +43,6 @@ export const commonStyles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 });
+
+export default function CommonStyles() {
+}

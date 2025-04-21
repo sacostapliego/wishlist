@@ -96,3 +96,6 @@ export const WISHLIST_COLORS = {
   greenYellow: 'rgb(173, 255, 47)',       // green yellow (change)
   offWhite: 'rgb(250, 249, 246)',         // offWhite
 };
+
+export default function theme() {
+}

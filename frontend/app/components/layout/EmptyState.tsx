@@ -27,6 +27,8 @@ export const EmptyState = ({
   );
 };
 
+export default EmptyState;
+
 const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',

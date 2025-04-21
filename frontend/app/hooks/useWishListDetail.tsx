@@ -55,3 +55,5 @@ export const useWishlistDetail = (wishlistId: string, shouldRefresh?: number) =>
 
   return { wishlist, items, isLoading, error, refetch: fetchWishlistDetails };
 };
+
+export default useWishlistDetail;
