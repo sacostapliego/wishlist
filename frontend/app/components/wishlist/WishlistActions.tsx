@@ -30,7 +30,11 @@ export const WishlistActions = ({
 
   const handleEditWishlist = () => {
     onMenuClose();
-    router.back();
+    triggerRefresh();
+    router.push({
+      pathname: '/home/edit-wishlist',
+      params: { id: wishlistId }
+    });
   };
 
   const handleDeleteWishlist = async () => {

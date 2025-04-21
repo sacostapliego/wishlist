@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
@@ -6,7 +6,7 @@ import { COLORS, SPACING } from '../styles/theme';
 import { wishlistAPI } from '../services/wishlist';
 import { Ionicons } from '@expo/vector-icons';
 import { WishlistFormData } from '../types/lists';
-import WishlistForm from '../components/forms/WishListForm';
+import WishlistForm, { WishlistFormRef } from '../components/forms/WishListForm';
 import Toast from 'react-native-toast-message';
 import { useRefresh } from '../context/RefreshContext';
 
@@ -14,13 +14,18 @@ export default function CreateWishlistScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { triggerRefresh } = useRefresh();
-
+  const formRef = useRef<WishlistFormRef>(null);
   
   const handleCreateWishlist = async (wishlistData: WishlistFormData) => {
     setIsLoading(true);
     
     try {
       const result = await wishlistAPI.createWishlist(wishlistData);      
+
+      if (formRef.current) {
+        formRef.current.resetForm();
+      }
+
       // Alert, than navigate
       Toast.show({
         type: 'success',
@@ -59,6 +64,7 @@ export default function CreateWishlistScreen() {
       </View>
       
       <WishlistForm
+        ref={formRef}
         onSubmit={handleCreateWishlist}
         isLoading={isLoading}
         submitLabel="Create Wishlist"

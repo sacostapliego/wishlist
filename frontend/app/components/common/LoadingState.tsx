@@ -20,6 +20,8 @@ export const LoadingState = ({
   );
 };
 
+export default LoadingState;
+
 const styles = StyleSheet.create({
   loadingContainer: {
     justifyContent: 'center',

@@ -21,6 +21,9 @@ export default function WishlistDetailScreen() {
   const { user } = useAuth();
   const { refreshTimestamp } = useRefresh();
 
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+
+
   // UI state
   const [menuVisible, setMenuVisible] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -35,6 +38,12 @@ export default function WishlistDetailScreen() {
       pathname: '/home/add-item',
       params: { wishlistId: id }
     });
+  };
+
+  const handleShowDeleteConfirmation = () => {
+    if (selectedItems.length > 0) {
+      setDeleteConfirmVisible(true);
+    }
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -79,7 +88,7 @@ export default function WishlistDetailScreen() {
         <SelectionHeader
           selectedCount={selectedItems.length}
           onCancelSelection={cancelSelection}
-          onDeleteSelected={() => setSelectedItems([])}
+          onDeleteSelected={handleShowDeleteConfirmation}          
         />
       )}
       
@@ -114,6 +123,8 @@ export default function WishlistDetailScreen() {
         selectedItems={selectedItems}
         onItemsDeleted={cancelSelection}
         refetchItems={refetch}
+        confirmDeleteVisible={deleteConfirmVisible} 
+        setConfirmDeleteVisible={setDeleteConfirmVisible}
       />
     </SafeAreaView>
   );

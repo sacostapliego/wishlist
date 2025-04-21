@@ -1,11 +1,12 @@
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../styles/theme';
-import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING } from '../styles/theme';
+import { useAuth } from '../context/AuthContext';
 
 export default function SettingsScreen() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -18,18 +19,36 @@ export default function SettingsScreen() {
     }
   };
 
+  const navigateToEditProfile = () => {
+    router.replace('/auth/edit-user');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       
       <View style={styles.settingsList}>
-        <TouchableOpacity 
-          style={[styles.settingItem, styles.logoutItem]} 
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out" size={24} color="#ef4444" />
-          <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
-        </TouchableOpacity>
+        {/* Profile Settings Section */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.settingItem} 
+            onPress={navigateToEditProfile}
+          >
+            <Ionicons name="person" size={24} color={COLORS.text.primary} />
+            <Text style={styles.settingText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Account Actions Section */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={[styles.settingItem, styles.logoutItem]} 
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out" size={24} color="#ef4444" />
+            <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -39,32 +58,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    padding: 20,
+    padding: SPACING.md,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 24,
-    marginTop: 12,
-    textAlign: 'center',
     color: COLORS.text.primary,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.lg,
   },
   settingsList: {
-    width: '100%',
+    marginTop: SPACING.md,
+  },
+  section: {
+    marginBottom: SPACING.lg,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.sm,
+    paddingLeft: SPACING.xs,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.cardDark,
-    padding: 16,
+    padding: SPACING.md,
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: SPACING.sm,
   },
   settingText: {
-    fontSize: 18,
-    marginLeft: 12,
-    flex: 1,
+    fontSize: 16,
     color: COLORS.text.primary,
+    marginLeft: SPACING.md,
   },
   arrow: {
     marginLeft: 'auto',

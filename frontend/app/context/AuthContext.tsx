@@ -21,6 +21,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<any>;
   register: (userData: any) => Promise<any>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 // Storage keys
@@ -128,6 +129,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
     }
   };
+
+  const refreshUser = async () => {
+    try {
+      const userData = await userAPI.getProfile();
+      setUser(userData);
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    }
+  };
   
   return (
     <AuthContext.Provider 
@@ -137,7 +147,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout, 
         register, 
         isLoggedIn: !!user,
-        loading 
+        loading,
+        refreshUser
       }}
     >
       {children}

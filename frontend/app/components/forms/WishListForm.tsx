@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useImperativeHandle, forwardRef} from 'react';
 import { 
   View, 
   Text, 
@@ -11,18 +11,21 @@ import {
 } from 'react-native';
 import { COLORS, SPACING, WISHLIST_COLORS } from '../../styles/theme';
 import { Button } from '../ui/Button';
-import { Ionicons } from '@expo/vector-icons';
 import { WishlistFormProps } from '@/app/types/lists';
 
 // Color options for wishlists
 const COLOR_OPTIONS = Object.values(WISHLIST_COLORS);
 
-export default function WishlistForm({
+export type WishlistFormRef = {
+  resetForm: () => void;
+};
+
+const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
   initialValues = {},
   onSubmit,
   isLoading,
   submitLabel = "Save Wishlist"
-}: WishlistFormProps) {
+}, ref) => {
   const [title, setTitle] = useState(initialValues.title || '');
   const [description, setDescription] = useState(initialValues.description || '');
   const [isPublic, setIsPublic] = useState(initialValues.isPublic || false);
@@ -40,6 +43,18 @@ export default function WishlistForm({
       is_public: isPublic
     });
   };
+
+   // Create a function to reset the form state
+   const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setIsPublic(false);
+  };
+  
+  // Expose the resetForm method to parent components
+  useImperativeHandle(ref, () => ({
+    resetForm
+  }));
   
   return (
     <ScrollView contentContainerStyle={styles.formContainer}>
@@ -100,7 +115,9 @@ export default function WishlistForm({
       />
     </ScrollView>
   );
-}
+});
+
+export default WishlistForm;
 
 const styles = StyleSheet.create({
   formContainer: {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import { COLORS, SPACING } from '../../styles/theme';
+import { CARD_WIDTH, COLORS, SPACING } from '../../styles/theme';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -72,10 +72,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dialogContainer: {
-    width: '80%',
-    backgroundColor: COLORS.cardDark,
+    width: CARD_WIDTH,
+    borderColor: 'white',
+    borderWidth: 1,
     borderRadius: 12,
     padding: SPACING.lg,
+    backgroundColor: COLORS.background,
   },
   title: {
     fontSize: 18,
@@ -110,6 +112,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '500',
+    color: COLORS.text.primary,
   },
   confirmButtonText: {
     color: '#fff',

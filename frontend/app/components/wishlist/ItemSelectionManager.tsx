@@ -10,16 +10,19 @@ interface ItemSelectionManagerProps {
   selectedItems: string[];
   onItemsDeleted: () => void;
   refetchItems: () => void;
+  confirmDeleteVisible: boolean;
+  setConfirmDeleteVisible: (visible: boolean) => void;
 }
 
 export const ItemSelectionManager = ({
   selectedItems,
   onItemsDeleted,
-  refetchItems
+  refetchItems,
+  confirmDeleteVisible,
+  setConfirmDeleteVisible
 }: ItemSelectionManagerProps) => {
   const { triggerRefresh } = useRefresh();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   const handleDeleteSelectedItems = async () => {
     setConfirmDeleteVisible(false);

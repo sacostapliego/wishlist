@@ -28,3 +28,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useProtectedRoute(true);
   return <>{children}</>;
 }
+
+export default function Auth() {
+  return (
+    <AuthGuard>
+      <></>
+    </AuthGuard>
+  );
+}
