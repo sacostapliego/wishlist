@@ -7,10 +7,12 @@ import { WishlistInfoProps } from '@/app/types/wishlist';
 export const WishlistInfo = ({ 
   username, 
   description, 
-  profileImage, 
-  showAddButton,
-  onAddPress 
+  profileImage,
+  onAddPress,
+  hasItems = false,
 }: WishlistInfoProps) => {
+  const hasDescription = description && description.trim().length > 0;
+  
   return (
     <View style={styles.wishlistInfo}>
       <View style={styles.topRow}>
@@ -25,16 +27,17 @@ export const WishlistInfo = ({
           <Text style={styles.username}>{username || 'User'}</Text>
         </View>
         
-        {showAddButton && onAddPress && (
-          <TouchableOpacity onPress={onAddPress} style={styles.addButton}>
+        {/* Add button - only shown when there are items */}
+        {onAddPress && hasItems ? (
+          <TouchableOpacity onPress={onAddPress} style={styles.actionButton}>
             <Ionicons name="add-circle" size={28} color={COLORS.primary} />
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
       
-      {description && (
+      {hasDescription ? (
         <Text style={styles.description}>{description}</Text>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     marginTop: SPACING.xs,
   },
-  addButton: {
-    padding: 4,
+  actionButton: {
+    padding: SPACING.xs,
   }
 });
