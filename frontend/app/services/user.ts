@@ -29,12 +29,15 @@ export const userAPI = {
   updateProfileImage: async (imageFile: any) => {
     const formData = new FormData();
     formData.append('profile_picture', imageFile);
+
+    const userId = userAPI.getCurrentUserId();
     
-    const response = await api.put('/users/' + userAPI.getCurrentUserId(), formData, {
+    const response = await api.put(`/users/${userId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-      },
+      }
     });
+
     return response.data;
   },
 
@@ -50,16 +53,21 @@ export const userAPI = {
   },
 
   removeProfileImage: async (userId: string) => {
-    const formData = new FormData();
-    formData.append('profile_picture', '');
-    
-    const response = await api.put(`/users/${userId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
-    });
-    return response.data;
-  }
+    try {
+      const formData = new FormData();
+      formData.append('remove_profile_picture', 'true');
+      
+      const response = await api.put(`/users/${userId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      throw error;
+    }
+  },
 };
 
 export default userAPI;

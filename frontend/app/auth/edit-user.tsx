@@ -56,9 +56,35 @@ export default function EditProfileScreen() {
     }
   };
   
-  const handleRemoveProfilePicture = () => {
-    setProfileImage(null);
-    setNewImageSelected(true);
+  const handleRemoveProfilePicture = async () => {
+    // Show loading indicator
+    setIsLoading(true);
+    
+    try {
+      await userAPI.removeProfileImage(user?.id || '');
+      
+      setProfileImage(null);
+      setNewImageSelected(false);
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Profile picture removed'
+      });
+      
+      router.push('/auth/edit-user');
+      await refreshUser();
+      
+    } catch (error) {
+      console.error('Failed to remove profile picture:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to remove profile picture'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleUpdateProfile = async () => {
@@ -87,20 +113,24 @@ export default function EditProfileScreen() {
       if (newImageSelected) {
         if (profileImage) {
           let imageFile;
-          
-          if (Platform.OS === 'web') {
-            const response = await fetch(profileImage);
-            imageFile = await response.blob();
-          } else {
-            const uriParts = profileImage.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-            
-            imageFile = {
-              uri: profileImage,
-              name: `profile-${new Date().getTime()}.${fileType}`,
-              type: `image/${fileType.toLowerCase()}`
-            };
-          }
+  
+            if (Platform.OS === 'web') {
+              const response = await fetch(profileImage);
+              const blob = await response.blob();
+              imageFile = new File([blob], `profile-${Date.now()}.jpg`, {
+                type: 'image/jpeg'
+              });
+            } else {
+              // For React Native on mobile
+              const uriParts = profileImage.split('.');
+              const fileType = uriParts[uriParts.length - 1];
+              
+              imageFile = {
+                uri: profileImage,
+                name: `profile-${new Date().getTime()}.${fileType}`,
+                type: `image/${fileType.toLowerCase()}`
+              };
+            }
           
           await userAPI.updateProfileImage(imageFile as any);
         } else {

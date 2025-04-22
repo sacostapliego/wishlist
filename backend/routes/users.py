@@ -103,7 +103,8 @@ async def update_user(
     name: Optional[str] = Form(None),
     profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    remove_profile_picture: bool = Form(False)
 ):
     # Only allow users to update their own profile
     if str(user_id) != str(current_user["user_id"]):
@@ -125,6 +126,11 @@ async def update_user(
             db_user.pfp = pfp_url
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error uploading profile picture: {str(e)}")
+        
+    elif remove_profile_picture:
+        if db_user.pfp:
+            delete_file_from_s3(db_user.pfp)
+            db_user.pfp = None
     
     # Update other fields if provided
     if email is not None:
