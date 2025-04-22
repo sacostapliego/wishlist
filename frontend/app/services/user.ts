@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
 
 export const userAPI = {
@@ -30,7 +31,7 @@ export const userAPI = {
     const formData = new FormData();
     formData.append('profile_picture', imageFile);
 
-    const userId = userAPI.getCurrentUserId();
+    const userId = await userAPI.getCurrentUserId();
     
     const response = await api.put(`/users/${userId}`, formData, {
       headers: {
@@ -41,11 +42,14 @@ export const userAPI = {
     return response.data;
   },
 
-  getCurrentUserId: () => {
-    // Get the current user ID from localStorage or state management
+  getCurrentUserId: async () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-      return userData.id || '';
+      const userData = await AsyncStorage.getItem('user_data');
+      if (userData) {
+        const parsedData = JSON.parse(userData);
+        return parsedData.id || '';
+      }
+      return '';
     } catch (e) {
       console.error('Error getting user ID:', e);
       return '';

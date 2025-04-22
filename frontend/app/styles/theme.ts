@@ -39,7 +39,7 @@ background: '#141414',
     secondary: 'rgba(255, 255, 255, 0.8)',
     dark: '#334155'
   },
-  inactive: '#f9d5db',
+  inactive: '#FAF9F6',
   error: '#ef4444',
 };
 

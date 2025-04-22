@@ -17,6 +17,8 @@ import { useAuth, userAPI } from '../context/AuthContext';
 import { API_URL } from '../services/api';
 import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
+import Header from '../components/layout/Header';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -31,6 +33,9 @@ export default function EditProfileScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [newImageSelected, setNewImageSelected] = useState(false);
   
+  const insets = useSafeAreaInsets();
+  
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -161,16 +166,12 @@ export default function EditProfileScreen() {
   };
   
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.replace('/home/settings')}
-        >
-          <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-      </View>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <Header 
+              title={''} 
+              onBack={() => router.push('/home')} 
+              rightIcon="ellipsis-vertical"
+            />
       
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.profileImageContainer}>

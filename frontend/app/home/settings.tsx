@@ -29,7 +29,7 @@ export default function SettingsScreen() {
       
       <View style={styles.settingsList}>
         {/* Profile Settings Section */}
-        <View style={styles.section}>
+        <View>
           <TouchableOpacity 
             style={styles.settingItem} 
             onPress={navigateToEditProfile}
@@ -40,7 +40,7 @@ export default function SettingsScreen() {
         </View>
         
         {/* Account Actions Section */}
-        <View style={styles.section}>
+        <View>
           <TouchableOpacity 
             style={[styles.settingItem, styles.logoutItem]} 
             onPress={handleLogout}
@@ -69,9 +69,6 @@ const styles = StyleSheet.create({
   },
   settingsList: {
     marginTop: SPACING.md,
-  },
-  section: {
-    marginBottom: SPACING.lg,
   },
   sectionTitle: {
     fontSize: 16,
