@@ -75,6 +75,7 @@ export default function EditProfileScreen() {
     
     try {
       const userData = {
+        id: user?.id,
         name: name.trim(),
         username: username.trim(),
         email: email.trim()
@@ -104,8 +105,8 @@ export default function EditProfileScreen() {
           await userAPI.updateProfileImage(imageFile as any);
         } else {
           // If profileImage is null, it means the user wants to remove their profile picture
-          await userAPI.removeProfileImage();
-        }
+          await userAPI.removeProfileImage(user?.id || '');
+         }
       }
       
       Toast.show({
@@ -113,11 +114,10 @@ export default function EditProfileScreen() {
         text1: 'Success',
         text2: 'Profile updated successfully'
       });
-      
-      // Refresh the user data in context
+
+      router.push('/home');
       await refreshUser();
       
-      router.back();
     } catch (error) {
       console.error('Error updating profile:', error);
       Toast.show({
@@ -152,9 +152,6 @@ export default function EditProfileScreen() {
                 <Ionicons name="person" size={50} color={COLORS.text.secondary} />
               </View>
             )}
-            <View style={styles.editIconContainer}>
-              <Ionicons name="camera" size={18} color="#fff" />
-            </View>
           </TouchableOpacity>
           
           {profileImage && (
@@ -164,7 +161,7 @@ export default function EditProfileScreen() {
           )}
         </View>
         
-        <Text style={styles.label}>Name *</Text>
+        <Text style={styles.label}>Username</Text>
         <TextInput
           style={styles.input}
           value={name}
@@ -173,7 +170,7 @@ export default function EditProfileScreen() {
           placeholderTextColor={COLORS.inactive}
         />
         
-        <Text style={styles.label}>Username</Text>
+        <Text style={styles.label}>Name </Text>
         <TextInput
           style={styles.input}
           value={username}
