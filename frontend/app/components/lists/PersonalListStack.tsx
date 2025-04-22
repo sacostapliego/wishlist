@@ -250,7 +250,7 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
         <TouchableOpacity
           onPress={() => {
           router.push({
-            pathname: "/home/[id]",
+            pathname: "/home/lists/[id]",
             params: { id: currentList.id }
           });
           }}

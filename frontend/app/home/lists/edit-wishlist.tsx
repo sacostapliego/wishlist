@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../styles/theme';
-import { wishlistAPI } from '../services/wishlist';
-import WishlistForm, { WishlistFormRef } from '../components/forms/WishListForm';
+import { COLORS, SPACING } from '../../styles/theme';
+import { wishlistAPI } from '../../services/wishlist';
+import WishlistForm, { WishlistFormRef } from '../../components/forms/WishListForm';
 import Toast from 'react-native-toast-message';
-import { useRefresh } from '../context/RefreshContext';
-import { WishlistFormData } from '../types/lists';
+import { useRefresh } from '../../context/RefreshContext';
+import { WishlistFormData } from '../../types/lists';
 
 export default function EditWishlistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,7 +56,7 @@ export default function EditWishlistScreen() {
       
       triggerRefresh();
       router.replace({
-        pathname: `/home/[id]`,
+        pathname: `/home/lists/[id]`,
         params: { id }
       });
     } catch (error) {

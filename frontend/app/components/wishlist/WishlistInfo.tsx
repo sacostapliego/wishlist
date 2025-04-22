@@ -30,7 +30,7 @@ export const WishlistInfo = ({
         {/* Add button - only shown when there are items */}
         {onAddPress && hasItems ? (
           <TouchableOpacity onPress={onAddPress} style={styles.actionButton}>
-            <Ionicons name="add-circle" size={28} color={COLORS.primary} />
+            <Ionicons name="add-circle-outline" size={28} color={'white'} />
           </TouchableOpacity>
         ) : null}
       </View>

@@ -7,7 +7,6 @@ interface DeviceFrameProps {
 }
 
 export default function DeviceFrame({ children }: DeviceFrameProps) {
-  // Only apply the frame on web platform
   if (Platform.OS !== 'web') {
     return <>{children}</>;
   }

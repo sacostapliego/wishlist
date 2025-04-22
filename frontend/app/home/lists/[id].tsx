@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { SafeAreaView, useWindowDimensions, StyleSheet, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
-import { COLORS, SPACING } from '../styles/theme';
-import { API_URL } from '../services/api';
-import { Header } from '../components/layout/Header';
-import { WishlistInfo } from '../components/wishlist/WishlistInfo';
-import { LoadingState } from '../components/common/LoadingState';
-import { useWishlistDetail } from '../hooks/useWishListDetail';
-import { useRefresh } from '../context/RefreshContext';
-import { SelectionHeader } from '../components/wishlist/SelectionHeader';
-import { WishlistActions } from '../components/wishlist/WishlistActions';
-import { ItemSelectionManager } from '../components/wishlist/ItemSelectionManager';
-import { WishlistContent } from '../components/wishlist/WishlistContent';
+import { useAuth } from '../../context/AuthContext';
+import { COLORS, SPACING } from '../../styles/theme';
+import { API_URL } from '../../services/api';
+import { Header } from '../../components/layout/Header';
+import { WishlistInfo } from '../../components/wishlist/WishlistInfo';
+import { LoadingState } from '../../components/common/LoadingState';
+import { useWishlistDetail } from '../../hooks/useWishListDetail';
+import { useRefresh } from '../../context/RefreshContext';
+import { SelectionHeader } from '../../components/wishlist/SelectionHeader';
+import { WishlistActions } from '../../components/wishlist/WishlistActions';
+import { ItemSelectionManager } from '../../components/wishlist/ItemSelectionManager';
+import { WishlistContent } from '../../components/wishlist/WishlistContent';
 
 export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

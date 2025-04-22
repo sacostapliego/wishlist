@@ -32,7 +32,7 @@ export const WishlistActions = ({
     onMenuClose();
     triggerRefresh();
     router.push({
-      pathname: '/home/edit-wishlist',
+      pathname: '/home/lists/edit-wishlist',
       params: { id: wishlistId }
     });
   };

@@ -36,7 +36,7 @@ export default function CreateWishlistScreen() {
       // Navigate to the home screen
       triggerRefresh(); // Trigger refresh of all components using this context
       router.replace({
-        pathname: `/home/[id]`,
+        pathname: `/home/lists/[id]`,
         params: { id: result.id },
       });
     } catch (error) {

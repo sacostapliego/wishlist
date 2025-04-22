@@ -97,7 +97,7 @@ export default function AddItemScreen() {
 
     // Launch image picker
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'].Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -183,7 +183,7 @@ export default function AddItemScreen() {
       
       // Navigate back or to the wishlist
       router.replace({
-        pathname: '/home/[id]',
+        pathname: '/home/lists/[id]',
         params: { id: wishlistId }
       });
     } catch (error) {
@@ -210,7 +210,7 @@ export default function AddItemScreen() {
             if (preSelectedWishlistId) {
               // If we came from a specific wishlist, navigate back to it
               router.replace({
-                pathname: '/home/[id]',
+                pathname: '/home/lists/[id]',
                 params: { id: preSelectedWishlistId }
               });
             } else {

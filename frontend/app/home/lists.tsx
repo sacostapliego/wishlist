@@ -66,7 +66,7 @@ export default function ListsScreen() {
           style={[styles.listItem, { borderColor: itemColor, borderWidth: 5, borderRadius: 16 }]}
           onPress={() => {
           router.push({
-            pathname: "/home/[id]",
+            pathname: "/home/lists/[id]",
             params: { id: item.id }
           });
           }}
