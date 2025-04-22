@@ -44,5 +44,7 @@ export const commonStyles = StyleSheet.create({
   },
 });
 
+export const WEB_FRAME_WIDTH = 430;
+
 export default function CommonStyles() {
 }

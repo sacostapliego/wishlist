@@ -1,9 +1,10 @@
-import React from 'react';
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../layout/EmptyState';
 import { ItemGrid } from './ItemGrid';
 import { COLORS, SPACING } from '../../styles/theme';
+import BentoGrid, { getBentoGridWidth } from './BentoGrid';
 
 interface WishlistItem {
   id: string;
@@ -34,11 +35,31 @@ export const WishlistContent = ({
   onCancelSelection,
   wishlistColor,
 }: WishlistContentProps) => {
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Effect to scroll to the middle when items are loaded
+  useEffect(() => {
+    if (items.length > 0 && scrollViewRef.current) {
+      const containerWidth = getBentoGridWidth();
+      const viewportWidth = Platform.OS === 'web' ? 
+        430 :
+        Dimensions.get('window').width;
+      
+      const scrollToOffset = (containerWidth - viewportWidth) / 2;
+      
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ 
+          x: scrollToOffset, 
+          y: 0, 
+          animated: false 
+        });
+      }, 100);
+    }
+  }, [items]);
+  
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.content}
-    >
+    <View style={styles.container}>
       {/* Only show cancel button when in selection mode */}
       {isSelectionMode && (
         <View style={styles.headerContainer}>
@@ -55,16 +76,23 @@ export const WishlistContent = ({
           onAction={onAddItem}
         />
       ) : (
-        <ItemGrid 
-          items={items} 
-          baseSize={baseSize} 
-          onItemPress={onItemPress}
-          selectedItems={selectedItems}
-          selectionMode={isSelectionMode}
-          wishlistColor={wishlistColor}
-        />
+        <ScrollView 
+          ref={scrollViewRef}
+          horizontal={true}
+          showsHorizontalScrollIndicator={true}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <BentoGrid 
+            items={items} 
+            baseSize={baseSize} 
+            onItemPress={onItemPress}
+            selectedItems={selectedItems}
+            selectionMode={isSelectionMode}
+            wishlistColor={wishlistColor}
+          />
+        </ScrollView>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -85,5 +113,10 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: SPACING.xs,
+  },
+  scrollContent: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    minHeight: Dimensions.get('window').height * 0.5,
   }
 });
