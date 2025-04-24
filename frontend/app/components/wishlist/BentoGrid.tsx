@@ -89,7 +89,7 @@ export const BentoGrid = ({
     // Calculate sizes based on grid dimensions
     const cardBaseSize = Platform.OS === 'web' 
       ? (WEB_FRAME_WIDTH / 3) // Base size for web is around 1/3 of frame
-      : baseSize * 1.2;
+      : baseSize * 0.5;
       
     const smallSize = cardBaseSize * 0.8;
     const mediumSize = cardBaseSize;
@@ -102,6 +102,7 @@ export const BentoGrid = ({
     
     // Center point for the first item
     const centerX = gridWidth / 2;
+    const centerY = getGridHeight() / 4;
     
     if (items.length > 0) {
       // Position the first item in the center
@@ -109,7 +110,7 @@ export const BentoGrid = ({
         item: items[0],
         width: largeSize,
         height: largeSize,
-        top: gapSize,
+        top: centerY,
         left: centerX - largeSize / 2,
         isFeatured: true
       });
