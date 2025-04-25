@@ -3,6 +3,7 @@ export interface ListItem {
     title: string;
     itemCount: number;
     color?: string;
+    image?: string;
   }
   
 export interface ListDisplayProps {
@@ -15,6 +16,7 @@ export interface WishlistFormData {
     description: string;
     color: string;
     is_public: boolean;
+    image: string;
   }
 
 export interface WishlistApiResponse {
@@ -27,6 +29,7 @@ export interface WishlistApiResponse {
     created_at: string;
     updated_at?: string;
     user_id: string;
+    image?: string;
   }
 
 export interface WishlistData {
@@ -34,6 +37,7 @@ export interface WishlistData {
   title: string;
   itemCount: number;
   color: string;
+  image: string;
 }
 
 export interface WishlistFormProps {
@@ -42,12 +46,14 @@ export interface WishlistFormProps {
     description?: string;
     color?: string;
     isPublic?: boolean;
+    image?: string;
   };
   onSubmit: (values: {
     title: string;
     description: string;
     color: string;
     is_public: boolean;
+    image: string;
   }) => Promise<void>;
   isLoading: boolean;
   submitLabel?: string;

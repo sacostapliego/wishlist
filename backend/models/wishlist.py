@@ -18,6 +18,7 @@ class Wishlist(Base):
     description = Column(Text)
     color = Column(String(7))  # HEX color code
     is_public = Column(Boolean, default=False)
+    image = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -35,6 +36,7 @@ class WishlistBase(BaseModel):
     description: Optional[str] = None
     color: Optional[str] = None
     is_public: bool = False
+    image: Optional[str] = None
 
 class WishlistCreate(WishlistBase):
     pass

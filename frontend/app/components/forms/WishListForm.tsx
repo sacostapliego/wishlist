@@ -12,9 +12,14 @@ import {
 import { COLORS, SPACING, WISHLIST_COLORS } from '../../styles/theme';
 import { Button } from '../ui/Button';
 import { WishlistFormProps } from '@/app/types/lists';
+import { ICONS } from '@/app/styles/icons';
+import { Ionicons } from '@expo/vector-icons';
 
 // Color options for wishlists
 const COLOR_OPTIONS = Object.values(WISHLIST_COLORS);
+
+// Icon options for wishlists
+const ICON_OPTIONS = Object.values(ICONS);
 
 export type WishlistFormRef = {
   resetForm: () => void;
@@ -31,7 +36,8 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
   const [isPublic, setIsPublic] = useState(initialValues.isPublic || false);
   const [selectedColor, setSelectedColor] = useState(initialValues.color || '#ff7f50');
   const [privacy, setPrivacy] = useState('private');
-  
+  const [selectedImage, setSelectedImage] = useState(initialValues.image || "gift-outline");
+
   const handleSubmit = async () => {
     // Basic validation
     if (!title.trim()) return;
@@ -40,7 +46,8 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
       title: title.trim(),
       description: description.trim(),
       color: selectedColor,
-      is_public: isPublic
+      is_public: isPublic,
+      image: selectedImage,
     });
   };
 
@@ -49,6 +56,7 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
     setTitle('');
     setDescription('');
     setIsPublic(false);
+    setSelectedImage("gift-outline");
   };
   
   // Expose the resetForm method to parent components
@@ -103,6 +111,26 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
           onValueChange={setIsPublic}
           value={isPublic}
         />
+      </View>
+
+      <Text style={styles.label}>Icon</Text>
+      <View style={styles.imageContainer}>
+        {ICON_OPTIONS.map((icon) => (
+          <TouchableOpacity
+            key={icon}
+            style={[
+              styles.imageOption,
+              selectedImage === icon && styles.selectedImage
+            ]}
+            onPress={() => setSelectedImage(icon)}
+          >
+            <Ionicons 
+              name={icon as any} 
+              size={24} 
+              color={selectedImage === icon ? 'white' : COLORS.text.primary} 
+            />
+          </TouchableOpacity>
+        ))}
       </View>
       
       <Button
@@ -168,5 +196,25 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     marginBottom: SPACING.xl,
     backgroundColor: COLORS.primary,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
+  },
+  imageOption: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    margin: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  selectedImage: {
+    backgroundColor: COLORS.primary,
+    borderColor: 'white',
   },
 });

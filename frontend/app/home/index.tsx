@@ -71,7 +71,8 @@ export default function HomeScreen() {
           id: list.id,
           title: list.title,
           itemCount: list.item_count || 0,
-          color: list.color || '#ff7f50' // Default color if none is specified
+          color: list.color || '#ff7f50', // Default color if none is specified
+          image: list.image || "gift-outline", // Default image if none is specified
         }));
         
         setPersonalLists(formattedLists);

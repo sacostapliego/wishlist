@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Image} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Section } from '../layout/Section';
 import { COLORS, CARD_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
@@ -162,6 +162,27 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
     </View>
   );
 
+  const renderImageOrIcon = (source: string | null | undefined) => {
+    if (!source) {
+      // Default fallback
+      return <Ionicons name="gift-outline" size={48} color="white" style={styles.icon} />;
+    }
+    
+    // If it starts with http(s), it's a URL
+    if (source.startsWith('http')) {
+      return (
+        <Image 
+          source={{ uri: source }} 
+          style={{ width: 48, height: 48, tintColor: 'white' }} 
+          resizeMode="contain"
+        />
+      );
+    }
+    
+    // Otherwise it's an icon name
+    return <Ionicons name={source as any} size={48} color="white" style={styles.icon} />;
+  };
+
   return (
     <Section title={title} containerStyle={containerStyle} showTitle={false}>
       {renderSectionHeader()}
@@ -184,6 +205,10 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>{prevList.title}</Text>
               <Text style={styles.itemCount}>{prevList.itemCount} items</Text>
+            </View>
+
+            <View style={styles.listContent}>
+              {renderImageOrIcon(prevList.image)}
             </View>
           </Animated.View>
         )}
@@ -209,7 +234,7 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
             </View>
             
             <View style={styles.listContent}>
-              <Ionicons name="gift" size={48} color="white" style={styles.icon} />
+              {renderImageOrIcon(thirdList.image)}
             </View>
           </Animated.View>
         )}
@@ -235,7 +260,7 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
             </View>
             
             <View style={styles.listContent}>
-              <Ionicons name="gift" size={48} color="white" style={styles.icon} />
+              {renderImageOrIcon(nextList.image)}
             </View>
           </Animated.View>
         )}
@@ -274,7 +299,7 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
             </View>
             
             <View style={styles.listContent}>
-              <Ionicons name="gift" size={48} color="white" style={styles.icon} />
+              {renderImageOrIcon(currentList.image)}
             </View>
           </Animated.View>
         </TouchableOpacity>

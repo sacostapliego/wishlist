@@ -31,9 +31,6 @@ export const BentoGrid = ({
   selectionMode = false,
   wishlistColor
 }: BentoGridProps) => {
-
-  const [imageDimensions, setImageDimensions] = useState<Record<string, {original: {width: number, height: number}, rendered: {width: number, height: number}}>>({});
-
   
   // Get lighter version of wishlist color for text container
   const getLightColor = (color: string) => {
