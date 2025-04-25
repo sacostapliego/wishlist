@@ -58,6 +58,12 @@ export const WishlistContent = ({
     }
   }, [items]);
   
+  const getGridContentHeight = () => {
+    return Platform.OS === 'web' 
+      ? Dimensions.get('window').height * 1
+      : Dimensions.get('window').height * 1.8;
+  };
+
   return (
     <View style={styles.container}>
       {/* Only show cancel button when in selection mode */}
@@ -80,7 +86,10 @@ export const WishlistContent = ({
           ref={scrollViewRef}
           horizontal={true}
           showsHorizontalScrollIndicator={true}
-          contentContainerStyle={styles.scrollContent}
+          nestedScrollEnabled={true}
+            contentContainerStyle={[styles.horizontalScrollContent, {
+              height: getGridContentHeight()
+            }]}
         >
           <BentoGrid 
             items={items} 
@@ -118,5 +127,10 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
     minHeight: Dimensions.get('window').height * 0.5,
+  },
+  horizontalScrollContent: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    minHeight: Dimensions.get('window').height * 0.8,
   }
 });

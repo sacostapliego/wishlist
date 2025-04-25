@@ -69,32 +69,32 @@ export const BentoGrid = ({
     if (Platform.OS === 'web') {
       return WEB_FRAME_WIDTH * 1.2; // Provide horizontal scrolling space
     }
-    return Dimensions.get('window').width * 1.5;
+    return Dimensions.get('window').width * 3;
   };
 
   // Get appropriate grid height based on platform
   const getGridHeight = () => {
     if (Platform.OS === 'web') {
-      return Dimensions.get('window').height * 0.6;
+      return Dimensions.get('window').height * 1.2;
     }
-    return Dimensions.get('window').height * 0.6;
+    return Dimensions.get('window').height * 1.2;
   };
 
   // Size multiplier based on priority (0-5) - same as ItemGrid
   const getSizeMultiplier = (priority: number) => {
     switch(priority) {
-      case 0: return 0.75;    // base size
-      case 1: return 0.85; // slightly larger
-      case 2: return 0.95;
-      case 3: return 1;
-      case 4: return 1.1;
+      case 0: return Platform.OS === 'web' ? 0.75 : 0.66;
+      case 1: return Platform.OS === 'web' ? 0.85 : 0.68;
+      case 2: return Platform.OS === 'web' ? 0.95 : 0.70;
+      case 3: return Platform.OS === 'web' ? 1 : 0.72;
+      case 4: return Platform.OS === 'web' ? 1.1 : 0.74;
       default: return 1;
     }
   };
 
   // Font size based on priority
   const getFontSize = (priority: number, isTitle = true) => {
-    const baseFontSize = isTitle ? 14 : 12;
+    const baseFontSize = isTitle ? 20 : 16;
     return baseFontSize * getSizeMultiplier(priority);
   };
 
@@ -113,7 +113,7 @@ export const BentoGrid = ({
     
     // Center point for the grid
     const centerX = gridWidth / 2;
-    const centerY = gridHeight / 1.8;
+    const centerY = gridHeight / 2.5;
     
     // Common spacing between items
     const gapSize = SPACING.md;
