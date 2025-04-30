@@ -83,11 +83,11 @@ export const BentoGrid = ({
   // Size multiplier based on priority (0-5) - same as ItemGrid
   const getSizeMultiplier = (priority: number) => {
     switch(priority) {
-      case 0: return Platform.OS === 'web' ? 0.75 : 0.66;
-      case 1: return Platform.OS === 'web' ? 0.85 : 0.68;
-      case 2: return Platform.OS === 'web' ? 0.95 : 0.70;
+      case 0: return Platform.OS === 'web' ? 0.75 : 0.60;
+      case 1: return Platform.OS === 'web' ? 0.85 : 0.64;
+      case 2: return Platform.OS === 'web' ? 0.95 : 0.68;
       case 3: return Platform.OS === 'web' ? 1 : 0.72;
-      case 4: return Platform.OS === 'web' ? 1.1 : 0.74;
+      case 4: return Platform.OS === 'web' ? 1.1 : 0.76;
       default: return 1;
     }
   };
