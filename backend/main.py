@@ -32,7 +32,14 @@ app = FastAPI(
 #TODO: Change to only allow certain origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=[
+        'http://localhost:3000',                        # Local development
+        'http://localhost:8000',                        # 
+        'http://localhost:8081',                        # 
+        'https://cardinal-wishlist.onrender.com',       # Production frontend
+        'https://cardinal-wishlist-api.onrender.com',   # Production API
+        
+    ],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*']
