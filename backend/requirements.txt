@@ -19,5 +19,6 @@ pydantic
 pydantic[email]
 python-dotenv
 requests
+boto3
 
 sqlalchemy-utils
