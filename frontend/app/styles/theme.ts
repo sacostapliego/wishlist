@@ -95,6 +95,7 @@ export const WISHLIST_COLORS = {
   gold: 'rgb(255, 215, 0)',               // gold
   greenYellow: 'rgb(173, 255, 47)',       // green yellow (change)
   offWhite: 'rgb(250, 249, 246)',         // offWhite
+  cardinal: 'rgb(196, 30, 58)',           // cardinal
 };
 
 export default function theme() {
