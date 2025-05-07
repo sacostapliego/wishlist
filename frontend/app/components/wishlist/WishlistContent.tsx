@@ -91,14 +91,16 @@ export const WishlistContent = ({
               height: getGridContentHeight()
             }]}
         >
-          <BentoGrid 
-            items={items} 
-            baseSize={baseSize} 
-            onItemPress={onItemPress}
-            selectedItems={selectedItems}
-            selectionMode={isSelectionMode}
-            wishlistColor={wishlistColor}
-          />
+          <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
+            <BentoGrid 
+              items={items} 
+              baseSize={baseSize} 
+              onItemPress={onItemPress}
+              selectedItems={selectedItems}
+              selectionMode={isSelectionMode}
+              wishlistColor={wishlistColor}
+            />
+          </ScrollView>
         </ScrollView>
       )}
     </View>
