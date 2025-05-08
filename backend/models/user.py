@@ -55,3 +55,11 @@ class UserResponse(UserBase):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    
+class PublicUserResponse(BaseModel):
+    id: uuid.UUID
+    username: str 
+    name: Optional[str] = None
+    pfp: Optional[HttpUrl] = None # pfp is the direct S3 URL
+
+    model_config = ConfigDict(from_attributes=True)

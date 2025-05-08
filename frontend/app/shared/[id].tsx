@@ -1,71 +1,45 @@
 import React, { useState } from 'react';
-import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text } from 'react-native'; // Added View, TouchableOpacity, Text
+import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING } from '../styles/theme';
-import { API_URL } from '../services/api';
+import { API_URL } from '../services/api'; // Keep for image URLs if items have them
 import { Header } from '../components/layout/Header';
 import { WishlistInfo } from '../components/wishlist/WishlistInfo';
 import { LoadingState } from '../components/common/LoadingState';
-import { useWishlistDetail } from '../hooks/useWishListDetail';
-import { useRefresh } from '../context/RefreshContext';
-import { SelectionHeader } from '../components/wishlist/SelectionHeader';
-import { WishlistActions } from '../components/wishlist/WishlistActions';
-import { ItemSelectionManager } from '../components/wishlist/ItemSelectionManager';
+import { usePublicWishlistDetail } from '../hooks/usePublicWishlistDetail'; // Adjust path if needed
+import { useRefresh } from '../context/RefreshContext'; // Keep if manual refresh is desired
 import { WishlistContent } from '../components/wishlist/WishlistContent';
 import { WishlistListView } from '../components/wishlist/WishlistListView';
 import { EmptyState } from '../components/layout/EmptyState';
 
+type WishlistItem = {
+  id: string;
+  name: string;
+  image?: string;
+  price?: number;
+  priority: number;
+};
 export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { user } = useAuth();
-  const { refreshTimestamp } = useRefresh();
+  const { refreshTimestamp } = useRefresh(); // For potential manual refresh
 
-  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'bento' | 'list'>('bento'); // State for view mode
+  const [viewMode, setViewMode] = useState<'bento' | 'list'>('bento');
+
+  // Use the new hook for public data
+  const { wishlist, items, ownerDisplayInfo, isLoading, refetch } = usePublicWishlistDetail(id as string, refreshTimestamp);
 
   const baseSize = Platform.OS === 'web' ? (420 / 2) : (width - (SPACING.md * 3) / 2);
-  const { wishlist, items, isLoading, refetch } = useWishlistDetail(id as string, refreshTimestamp);
-
   const activeColor = wishlist?.color || COLORS.cardDark;
 
-  const handleAddItem = () => {
-    router.push({
-      pathname: '/home/add-item',
-      params: { wishlistId: id }
-    });
-  };
+  console.log('Wishlist:', ownerDisplayInfo?.profileImageUrl);
 
-  const handleShowDeleteConfirmation = () => {
-    if (selectedItems.length > 0) {
-      setDeleteConfirmVisible(true);
-    }
-  };
-
-  const toggleItemSelection = (itemId: string) => {
-    if (selectedItems.includes(itemId)) {
-      setSelectedItems(selectedItems.filter(i => i !== itemId));
-    } else {
-      setSelectedItems([...selectedItems, itemId]);
-    }
-  };
-
-  const cancelSelection = () => {
-    setIsSelectionMode(false);
-    setSelectedItems([]);
-  };
-
-  const handleItemPress = (item: any) => {
-    if (isSelectionMode) {
-      toggleItemSelection(item.id);
-    } else {
-    }
+  // Simplified item press (does nothing in shared view for now)
+  const handleItemPress = (item: WishlistItem) => {
+    // In a shared view, pressing an item might open a detail modal or do nothing.
+    // For now, it does nothing.
   };
 
   if (isLoading) {
@@ -76,13 +50,26 @@ export default function WishlistDetailScreen() {
     );
   }
 
+  if (!wishlist && !isLoading) {
+    return (
+        <SafeAreaView style={styles.container}>
+            <Header
+                title="Not Found"
+                onBack={() => router.canGoBack() ? router.back() : router.replace('/')}
+            />
+            <EmptyState
+                message="This wishlist could not be loaded. It might be private or no longer available."
+            />
+        </SafeAreaView>
+    );
+  }
+
   const renderMainContent = () => {
     if (!items || items.length === 0) {
       return (
         <EmptyState
-          message="No items in this wishlist yet"
-          actionText="Add an item"
-          onAction={handleAddItem}
+          message="This wishlist is empty."
+          // No actionText or onAction for public view
         />
       );
     }
@@ -92,21 +79,21 @@ export default function WishlistDetailScreen() {
         <WishlistContent
           items={items}
           baseSize={baseSize}
-          isSelectionMode={isSelectionMode}
-          selectedItems={selectedItems}
+          isSelectionMode={false} 
+          selectedItems={[]}    
           onItemPress={handleItemPress}
-          onAddItem={handleAddItem}
-          onCancelSelection={cancelSelection}
           wishlistColor={wishlist?.color}
+          onAddItem={() => {}} // Pass empty function instead of undefined
+          onCancelSelection={() => {}} // Pass empty function
         />
       );
     } else {
       return (
         <WishlistListView
           items={items}
-          onItemPress={handleItemPress}
-          isSelectionMode={isSelectionMode}
-          selectedItems={selectedItems}
+          onItemPress={handleItemPress} // Or undefined
+          isSelectionMode={false} // Not in selection mode
+          selectedItems={[]}    // No selected items
           wishlistColor={wishlist?.color}
         />
       );
@@ -116,35 +103,25 @@ export default function WishlistDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Header
-        title={wishlist?.title || 'Wishlist'}
-        onBack={() => router.replace('/home/lists')}
-        showOptions={!isSelectionMode}
-        onOptionsPress={() => setMenuVisible(true)}
-        rightIcon="ellipsis-vertical"
+        title={wishlist?.title || 'Shared Wishlist'}
+        onBack={() => router.canGoBack() ? router.back() : router.replace('/')} // Generic back or home
       />
-
-      {isSelectionMode && (
-        <SelectionHeader
-          selectedCount={selectedItems.length}
-          onCancelSelection={cancelSelection}
-          onDeleteSelected={handleShowDeleteConfirmation}
-        />
-      )}
 
       <WishlistInfo
-        username={user?.name || user?.username}
+        // Pass owner's public info if available from the hook, otherwise WishlistInfo should handle undefined
+        username={ownerDisplayInfo?.name || wishlist?.title || "Someone's Wishlist"} // Fallback username
         description={wishlist?.description}
-        profileImage={user?.id ? `${API_URL}users/${user.id}/profile-image` : undefined}
-        onAddPress={handleAddItem}
+        profileImage={ownerDisplayInfo?.profileImageUrl} // WishlistInfo needs to handle undefined
+        
         hasItems={items && items.length > 0}
       />
-
-      {!isSelectionMode && items && items.length > 0 && (
+      {/* View toggle can remain if items exist */}
+      {items && items.length > 0 && (
         <View style={styles.viewToggleContainer}>
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'bento' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },
+              viewMode === 'bento' && {backgroundColor: activeColor, borderColor: activeColor },
             ]}
             onPress={() => setViewMode('bento')}
           >
@@ -154,7 +131,7 @@ export default function WishlistDetailScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'list' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },,
+              viewMode === 'list' && {backgroundColor: activeColor, borderColor: activeColor },
             ]}
             onPress={() => setViewMode('list')}
           >
@@ -165,23 +142,8 @@ export default function WishlistDetailScreen() {
       )}
 
       {renderMainContent()}
-
-      <WishlistActions
-        wishlistId={id as string}
-        menuVisible={menuVisible}
-        onMenuClose={() => setMenuVisible(false)}
-        onEnterSelectionMode={() => setIsSelectionMode(true)}
-        refetchItems={refetch}
-      />
-
-      <ItemSelectionManager
-        selectedItems={selectedItems}
-        onItemsDeleted={cancelSelection}
-        refetchItems={refetch}
-        confirmDeleteVisible={deleteConfirmVisible}
-        setConfirmDeleteVisible={setDeleteConfirmVisible}
-      />
     </SafeAreaView>
+    
   );
 }
 
@@ -211,10 +173,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.text.secondary,
     marginHorizontal: SPACING.sm / 2,
-  },
-  activeToggleButton: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
   },
   toggleButtonText: {
     marginLeft: SPACING.xs,

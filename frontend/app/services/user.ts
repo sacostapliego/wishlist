@@ -1,6 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
 
+export interface PublicUserDetailsResponse {
+  id: string;
+  name?: string;
+  username: string; // Matches backend Pydantic model
+  pfp?: string; // This will be the direct S3 URL
+}
+
 export const userAPI = {
   getProfile: async () => {
     const response = await api.get('/users/me');
@@ -72,6 +79,18 @@ export const userAPI = {
       throw error;
     }
   },
+
+  getPublicUserDetails: async (userId: string): Promise<PublicUserDetailsResponse> => {
+    try {
+      const response = await api.get<PublicUserDetailsResponse>(`/users/public/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching public user details for ${userId}:`, error);
+      throw error; // Rethrow or handle as per your app's error strategy
+    }
+  },
 };
+
+
 
 export default userAPI;

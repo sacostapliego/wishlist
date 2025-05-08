@@ -9,6 +9,7 @@ interface WishlistOptionsMenuProps {
   onDelete: () => void;
   onEdit: () => void;
   onSelectItems: () => void;
+  onShare: () => void;
 }
 
 export default function WishlistOptionsMenu({ 
@@ -16,7 +17,8 @@ export default function WishlistOptionsMenu({
   onClose,
   onDelete,
   onEdit,
-  onSelectItems
+  onSelectItems,
+  onShare,
 }: WishlistOptionsMenuProps) {
   
   return (
@@ -28,6 +30,7 @@ export default function WishlistOptionsMenu({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <View style={styles.menuContainer}>
+          {/* Edit button */}
           <TouchableOpacity 
             style={styles.menuItem} 
             onPress={onEdit}
@@ -36,12 +39,22 @@ export default function WishlistOptionsMenu({
             <Text style={styles.menuText}>Edit Wishlist</Text>
           </TouchableOpacity>
           
+          {/* Select button | for deleting items */}
           <TouchableOpacity 
             style={styles.menuItem} 
             onPress={onSelectItems}
           >
             <Ionicons name="checkbox-outline" size={24} color={COLORS.text.primary} />
             <Text style={styles.menuText}>Select Items</Text>
+          </TouchableOpacity>
+
+          {/* Share button */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={onShare}
+          >
+            <Ionicons name="share-social-outline" size={24} color={COLORS.text.primary} />
+            <Text style={styles.menuText}>Share Wishlist</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 

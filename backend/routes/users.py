@@ -5,7 +5,7 @@ from typing import List, Optional
 import uuid
 
 from models.base import get_db
-from models.user import User, UserCreate, UserResponse, UserUpdate
+from models.user import PublicUserResponse, User, UserCreate, UserResponse, UserUpdate
 from middleware.auth import get_current_user
 from routes.auth import get_password_hash
 
@@ -208,3 +208,20 @@ async def get_user_profile_image(
     except Exception as e:
         print(f"Error retrieving profile image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve profile image")
+    
+@router.get("/public/{user_id}", response_model=PublicUserResponse)
+def get_public_user_details(user_id: uuid.UUID, db: Session = Depends(get_db)):
+    """
+    Get public details for a specific user.
+    Does not require authentication.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return PublicUserResponse(
+        id=user.id,
+        name=user.name,
+        username=user.username,
+        pfp=user.pfp 
+    )

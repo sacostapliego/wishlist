@@ -27,6 +27,7 @@ export const WishlistActions = ({
   const { triggerRefresh } = useRefresh();
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const handleEditWishlist = () => {
     onMenuClose();
@@ -62,6 +63,38 @@ export const WishlistActions = ({
     }
   };
 
+  const handleShareWishlist = async () => {
+    onMenuClose();
+    setIsSharing(true);
+    try {
+      // 1. Make the wishlist public
+      await wishlistAPI.updateWishlist(wishlistId, { is_public: true });
+      triggerRefresh(); // Refresh data to reflect public status
+
+      // 2. Generate the shareable URL
+      const webBaseUrl = process.env.EXPO_PUBLIC_APP_URL || 'http://localhost:8081';
+      const shareUrl = `${webBaseUrl}/shared/${wishlistId}`;
+
+      console.log('Shareable URL:', shareUrl);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Link Copied!',
+        text2: 'Wishlist is now public and link is copied to clipboard.',
+      });
+
+    } catch (error) {
+      console.error('Failed to share wishlist:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Sharing Failed',
+        text2: 'Could not make the wishlist public or copy the link.',
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <>
       <WishlistOptionsMenu
@@ -76,6 +109,7 @@ export const WishlistActions = ({
           onMenuClose();
           onEnterSelectionMode();
         }}
+        onShare={handleShareWishlist}
       />
 
       <ConfirmDialog
@@ -89,7 +123,7 @@ export const WishlistActions = ({
         isDestructive={true}
       />
 
-      {isDeleting && (
+      {(isDeleting || isSharing) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
