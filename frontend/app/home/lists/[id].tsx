@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text } from 'react-native'; // Added View, TouchableOpacity, Text
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons'; // Ensure Ionicons is imported
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
@@ -14,8 +14,8 @@ import { SelectionHeader } from '../../components/wishlist/SelectionHeader';
 import { WishlistActions } from '../../components/wishlist/WishlistActions';
 import { ItemSelectionManager } from '../../components/wishlist/ItemSelectionManager';
 import { WishlistContent } from '../../components/wishlist/WishlistContent';
-import { WishlistListView } from '../../components/wishlist/WishlistListView'; // New import
-import { EmptyState } from '../../components/layout/EmptyState'; // New import
+import { WishlistListView } from '../../components/wishlist/WishlistListView';
+import { EmptyState } from '../../components/layout/EmptyState';
 
 export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,6 +32,8 @@ export default function WishlistDetailScreen() {
 
   const baseSize = Platform.OS === 'web' ? (420 / 2) : (width - (SPACING.md * 3) / 2);
   const { wishlist, items, isLoading, refetch } = useWishlistDetail(id as string, refreshTimestamp);
+
+  const activeColor = wishlist?.color || COLORS.cardDark;
 
   const handleAddItem = () => {
     router.push({
@@ -142,7 +144,7 @@ export default function WishlistDetailScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'bento' && styles.activeToggleButton,
+              viewMode === 'bento' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },
             ]}
             onPress={() => setViewMode('bento')}
           >
@@ -152,7 +154,7 @@ export default function WishlistDetailScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'list' && styles.activeToggleButton,
+              viewMode === 'list' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },,
             ]}
             onPress={() => setViewMode('list')}
           >

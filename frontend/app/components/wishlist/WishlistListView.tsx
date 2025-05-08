@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
+import { getLightColor } from '../ui/LightColor';
 
 type WishlistItem = {
   id: string;
@@ -30,7 +31,7 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
   onItemPress,
   isSelectionMode,
   selectedItems,
-  wishlistColor, // Destructure wishlistColor
+  wishlistColor, 
 }) => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -38,6 +39,8 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
         const isSelected = selectedItems.includes(item.id);
         const hasImage = item.id && item.image;
         const itemBackgroundColor = wishlistColor || COLORS.cardDark; // Use wishlistColor or default
+        const lighterCardColor = getLightColor(itemBackgroundColor);
+        
 
         return (
           <TouchableOpacity
@@ -46,6 +49,7 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
               styles.itemRow,
               { backgroundColor: itemBackgroundColor }, // Apply dynamic background color
               isSelected && styles.selectedItemRow,
+              !hasImage && styles.textOnlyItemRow, // Added style for text-only items
             ]}
             onPress={() => onItemPress?.(item)}
             disabled={!onItemPress && !isSelectionMode}
@@ -59,24 +63,29 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
                 />
               </View>
             )}
-            <View style={styles.imageContainer}>
-              {hasImage ? (
-                <Image
-                  source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
-                  style={styles.itemImage}
-                />
-              ) : (
-                <View style={styles.noImagePlaceholder}>
-                  <Ionicons name="image-outline" size={30} color={COLORS.inactive} />
+            {hasImage ? (
+              <>
+                <View style={[styles.imageContainer, { backgroundColor: lighterCardColor }]}>
+                  <Image
+                    source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
+                    style={styles.itemImage}
+                  />
                 </View>
-              )}
-            </View>
-            <View style={styles.itemDetails}>
-              <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-              {item.price !== undefined && (
-                <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
-              )}
-            </View>
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                  {item.price !== undefined && (
+                    <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+                  )}
+                </View>
+              </>
+            ) : (
+              <View style={styles.textOnlyContainer}>
+                <Text style={styles.textOnlyName} numberOfLines={2}>{item.name}</Text>
+                {item.price !== undefined && (
+                  <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
+                )}
+              </View>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -100,6 +109,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     borderWidth: 1,
     borderColor: 'transparent',
+    minHeight: 80,
+  },
+  textOnlyItemRow: {
+    justifyContent: 'flex-start',
   },
   selectedItemRow: {
     borderColor: COLORS.primary,
@@ -114,7 +127,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginRight: SPACING.md,
-    backgroundColor: COLORS.background,
   },
   itemImage: {
     width: '100%',
@@ -140,5 +152,23 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 14,
     color: COLORS.text.secondary,
+  },
+  textOnlyContainer: {
+    flex: 1, // Take up available space
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start', 
+    paddingHorizontal: SPACING.md, // Add some padding if selection indicator is not present
+  },
+  textOnlyName: {
+    fontSize: 18, // Slightly larger for emphasis
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    textAlign: 'center',
+    marginBottom: SPACING.xs,
+  },
+  textOnlyPrice: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
   },
 });
