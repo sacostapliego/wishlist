@@ -7,6 +7,7 @@ import WishlistOptionsMenu from '../modals/WishlistOptionsMenu';
 import ConfirmDialog from '../modals/Confirm';
 import { useRouter } from 'expo-router';
 import { useRefresh } from '../../context/RefreshContext';
+import ShareLinkModal from '../modals/ShareLinkModal';
 
 interface WishlistActionsProps {
   wishlistId: string;
@@ -28,6 +29,8 @@ export const WishlistActions = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareLinkModalVisible, setShareLinkModalVisible] = useState(false);
+  const [generatedShareUrl, setGeneratedShareUrl] = useState<string | null>(null);
 
   const handleEditWishlist = () => {
     onMenuClose();
@@ -45,53 +48,34 @@ export const WishlistActions = ({
     try {
       await wishlistAPI.deleteWishlist(wishlistId);
       triggerRefresh();
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Wishlist deleted successfully'
-      });
       router.replace('/home/lists');
     } catch (error) {
       console.error('Failed to delete wishlist:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to delete wishlist'
-      });
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleShareWishlist = async () => {
+    console.log('[handleShareWishlist] Called');
     onMenuClose();
     setIsSharing(true);
+    setGeneratedShareUrl(null);
+    setShareLinkModalVisible(false); 
+
+    let shareUrlResult: string | null = null;
+
     try {
-      // 1. Make the wishlist public
       await wishlistAPI.updateWishlist(wishlistId, { is_public: true });
-      triggerRefresh(); // Refresh data to reflect public status
 
-      // 2. Generate the shareable URL
-      const webBaseUrl = process.env.EXPO_PUBLIC_APP_URL || 'http://localhost:8081';
-      const shareUrl = `${webBaseUrl}/shared/${wishlistId}`;
-
-      console.log('Shareable URL:', shareUrl);
-
-      Toast.show({
-        type: 'success',
-        text1: 'Link Copied!',
-        text2: 'Wishlist is now public and link is copied to clipboard.',
-      });
-
+      let webBaseUrl = process.env.EXPO_PUBLIC_APP_URL;
+      shareUrlResult = `${webBaseUrl}shared/${wishlistId}`;
     } catch (error) {
-      console.error('Failed to share wishlist:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Sharing Failed',
-        text2: 'Could not make the wishlist public or copy the link.',
-      });
+      shareUrlResult = null; 
     } finally {
-      setIsSharing(false);
+      setIsSharing(false); // Hide loading indicator for primary operations
+      setGeneratedShareUrl(shareUrlResult);
+      setShareLinkModalVisible(true); 
     }
   };
 
@@ -123,11 +107,20 @@ export const WishlistActions = ({
         isDestructive={true}
       />
 
-      {(isDeleting || isSharing) && (
+      {(isDeleting || isSharing) && ( // This loading overlay is for delete and share link generation
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       )}
+
+      <ShareLinkModal
+        visible={shareLinkModalVisible}
+        shareUrl={generatedShareUrl}
+        onClose={() => {
+          setShareLinkModalVisible(false);
+          setGeneratedShareUrl(null); // Reset for next time
+        }}
+      />
     </>
   );
 };

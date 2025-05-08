@@ -16,7 +16,7 @@ export const PROFILE_RIGHT_MARGIN = Platform.OS === 'web' ? 0 : SCREEN_WIDTH / 3
 export const COLORS = {
   background: '#141414',
   card: '#f1f5f9',
-  cardDark: '#1e293b',
+  cardDark: '#141414',
   primary: '#C41E3A',
   secondary: '#7358e0',
   text: {

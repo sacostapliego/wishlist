@@ -36,10 +36,7 @@ export default function WishlistDetailScreen() {
 
   console.log('Wishlist:', ownerDisplayInfo?.profileImageUrl);
 
-  // Simplified item press (does nothing in shared view for now)
   const handleItemPress = (item: WishlistItem) => {
-    // In a shared view, pressing an item might open a detail modal or do nothing.
-    // For now, it does nothing.
   };
 
   if (isLoading) {
