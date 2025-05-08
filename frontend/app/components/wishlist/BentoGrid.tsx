@@ -119,7 +119,7 @@ export const BentoGrid = ({
     
     // Center point for the grid
     const centerX = gridWidth / 2;
-    const centerY = gridHeight / 2.5; // Adjust this factor as needed for vertical centering of items
+    const centerY = gridHeight / 2.6; // Adjust this factor as needed for vertical centering of items
     
     // Common spacing between items
     const gapSize = SPACING.md;

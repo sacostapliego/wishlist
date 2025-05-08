@@ -51,7 +51,7 @@ export const WishlistContent = ({
       const horizontalScrollToOffset = (bentoContainerWidth - horizontalViewportWidth) / 2;
       
       // Vertical centering
-      const bentoGridActualRenderedHeight = getBentoGridRenderedHeight() / 1.25;
+      const bentoGridActualRenderedHeight = getBentoGridRenderedHeight() ;
       const verticalScrollViewportHeight = getGridContentHeight(); 
 
       let verticalScrollToOffset = (bentoGridActualRenderedHeight - verticalScrollViewportHeight) / 2;
@@ -85,7 +85,7 @@ export const WishlistContent = ({
   const getGridContentHeight = () => {
     // This should be the height of the ScrollView that contains the BentoGrid vertically
     if (Platform.OS === 'web') {
-        return Dimensions.get('window').height * 0.7; 
+        return Dimensions.get('window').height;
     }
     // For native, it might be a larger portion or a calculated value based on other elements
     return Dimensions.get('window').height * 0.8;
@@ -119,7 +119,7 @@ export const WishlistContent = ({
           style={styles.horizontalScrollView} // Added for potential outer styling
         >
           <ScrollView 
-            ref={verticalScrollViewRef} // Ref for vertical scroll
+            ref={verticalScrollViewRef}
             nestedScrollEnabled={true} 
             showsVerticalScrollIndicator={false} 
             contentContainerStyle={styles.verticalScrollContent} 
