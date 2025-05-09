@@ -46,7 +46,8 @@ export default WishlistInfo;
 
 const styles = StyleSheet.create({
   wishlistInfo: {
-    padding: SPACING.md,
+    padding: SPACING.sm,
+    marginLeft: SPACING.sm,
   },
   topRow: {
     flexDirection: 'row',
