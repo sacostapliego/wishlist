@@ -101,11 +101,10 @@ export default function WishlistDetailScreen() {
     <SafeAreaView style={styles.container}>
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
-        onBack={() => router.canGoBack() ? router.back() : router.replace('/')} // Generic back or home
+        onBack={() => router.canGoBack() ? router.back() : router.replace('/auth/login')} // Generic back or home
       />
 
       <WishlistInfo
-        // Pass owner's public info if available from the hook, otherwise WishlistInfo should handle undefined
         username={ownerDisplayInfo?.name || wishlist?.title || "Someone's Wishlist"} // Fallback username
         description={wishlist?.description}
         profileImage={ownerDisplayInfo?.profileImageUrl} // WishlistInfo needs to handle undefined

@@ -82,3 +82,5 @@ export const usePublicWishlistDetail = (wishlistId: string, refreshTimestamp?: n
 
   return { wishlist, items, ownerDisplayInfo, isLoading, error, refetch: fetchPublicWishlistDetails };
 };
+
+export default usePublicWishlistDetail;

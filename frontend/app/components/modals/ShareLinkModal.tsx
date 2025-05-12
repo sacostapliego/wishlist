@@ -133,12 +133,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  // loaderContainer and loadingText can be removed if not used by other logic in this modal
-  loaderContainer: { // Kept for completeness if you decide to re-add internal loading
+  loaderContainer: {
     alignItems: 'center',
     paddingVertical: SPACING.lg,
   },
-  loadingText: { // Kept for completeness
+  loadingText: {
     marginTop: SPACING.md,
     fontSize: 16,
     color: COLORS.text.secondary,

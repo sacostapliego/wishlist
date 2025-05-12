@@ -14,7 +14,7 @@ export function useProtectedRoute(shouldBeAuthenticated = true) {
     
     if (!isLoggedIn && shouldBeAuthenticated && !inAuthGroup) {
       setTimeout(() => {
-        router.replace('/auth/register');
+        router.replace('/auth/login');
       }, 0);
     } else if (isLoggedIn && !shouldBeAuthenticated && inAuthGroup) {
       setTimeout(() => {

@@ -93,6 +93,8 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
   );
 };
 
+export default WishlistListView;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -154,13 +156,13 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
   textOnlyContainer: {
-    flex: 1, // Take up available space
+    flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'flex-start', 
-    paddingHorizontal: SPACING.md, // Add some padding if selection indicator is not present
+    paddingHorizontal: SPACING.md,
   },
   textOnlyName: {
-    fontSize: 18, // Slightly larger for emphasis
+    fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text.primary,
     textAlign: 'center',

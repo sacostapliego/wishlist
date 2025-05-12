@@ -76,7 +76,7 @@ export default function EditWishlistScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/')}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>

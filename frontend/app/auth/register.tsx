@@ -176,7 +176,7 @@ export default function RegisterScreen() {
             onChangeText={setUsername}
             autoCapitalize="none"
             textContentType="username"
-            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            colors={[AUTH_COLORS.secondary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
           />
           <GradientBorderInput
@@ -194,7 +194,7 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             secureTextEntry
             textContentType="newPassword"
-            colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+            colors={[AUTH_COLORS.secondary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
           />
 

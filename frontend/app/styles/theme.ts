@@ -8,7 +8,6 @@ export const CONTAINER_PADDING = 20;
 export const GRID_WIDTH = SCREEN_WIDTH - (CONTAINER_PADDING * 2);
 export const ITEM_GAP = 10;
 export const ITEM_WIDTH = (GRID_WIDTH - ITEM_GAP) / 2;
-export const CARD_WIDTH = Platform.OS === 'web' ? 420 : SCREEN_WIDTH - 40;
 
 export const PROFILE_RIGHT_MARGIN = Platform.OS === 'web' ? 0 : SCREEN_WIDTH / 35;
 
@@ -34,7 +33,7 @@ background: '#141414',
   card: '#f1f5f9',
   cardDark: '#5e0e1c',
   primary: '#C41E3A',
-  secondary: '#ee91a1',
+  secondary: '#dd6f73',
   text: {
     primary: '#ffffff',
     secondary: 'rgba(255, 255, 255, 0.8)',
@@ -98,6 +97,24 @@ export const WISHLIST_COLORS = {
   offWhite: 'rgb(250, 249, 246)',         // offWhite
   cardinal: 'rgb(196, 30, 58)',           // cardinal
 };
+
+let calculatedCardWidth;
+if (Platform.OS === 'web') {
+  const webScreenWidth = typeof window !== 'undefined' ? window.innerWidth : SCREEN_WIDTH;
+  // If the screen is narrow 
+  if (webScreenWidth < 768) { 
+    // Make CARD_WIDTH responsive, e.g., screen width minus some padding
+    calculatedCardWidth = webScreenWidth - 40; // Adjust 40 as needed (e.g., 20px padding on each side)
+    calculatedCardWidth = Math.max(calculatedCardWidth, 300); // Example minimum
+  } else {
+    // For larger web screens
+    calculatedCardWidth = 420;
+  }
+} else {
+  // Native platforms
+  calculatedCardWidth = SCREEN_WIDTH - 40;
+}
+export const CARD_WIDTH = calculatedCardWidth;
 
 export default function theme() {
 }

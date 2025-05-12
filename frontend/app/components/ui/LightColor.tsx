@@ -15,3 +15,5 @@ export const getLightColor = (color: string) => {
     const lighterB = Math.min(255, b + Math.floor((255 - b) * 0.17));
     return `rgb(${lighterR}, ${lighterG}, ${lighterB})`;
   };
+
+export default getLightColor;
