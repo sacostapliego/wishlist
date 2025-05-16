@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../styles/theme'; // Adjust path as needed
@@ -8,6 +8,8 @@ import { Header } from '../../../components/layout/Header'; // Adjust path as ne
 import wishlistAPI from '@/app/services/wishlist';
 import { LoadingState } from '../../../components/common/LoadingState'; // Adjust path as needed
 import getLightColor from '@/app/components/ui/LightColor';
+import * as Clipboard from 'expo-clipboard';
+
 
 interface WishlistItemDetails {
     id: string;
@@ -41,6 +43,13 @@ export default function WishlistItemScreen() {
             router.push(`/home/lists/${wishlistId}`);
         } else {
             router.push('/home');
+        }
+    };
+
+    const handleCopyUrl = async () => {
+        if (item?.url) {
+            await Clipboard.setStringAsync(item.url);
+            Alert.alert("Copied", "URL copied to clipboard!");
         }
     };
 
@@ -149,19 +158,25 @@ export default function WishlistItemScreen() {
 
                 <View style={styles.detailsContainer}>
 
-                    {item.description && (
-                        <Text style={styles.description}>{item.description}</Text>
-                    )}
-
                     {item.price !== undefined && item.price !== null && (
                         <Text style={styles.price}>${item.price.toFixed(2)}</Text>
                     )}
 
+                    {item.description && (
+                        <Text style={styles.description}>{item.description}</Text>
+                    )}
+
                     {item.url && (
-                        <TouchableOpacity onPress={handleOpenUrl} style={styles.urlButton}>
-                            <Ionicons name="link-outline" size={20} color={COLORS.primary} style={styles.urlIcon} />
-                            <Text style={styles.urlText}>View Product</Text>
-                        </TouchableOpacity>
+                         <View style={styles.urlDisplayContainer}>
+                            <TouchableOpacity onPress={handleOpenUrl} style={styles.urlLinkTouchable}>
+                                <Text style={styles.urlLinkText} numberOfLines={1} ellipsizeMode="middle">
+                                    {item.url}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleCopyUrl} style={styles.copyIconTouchable}>
+                                <Ionicons name="copy-outline" size={24} color={COLORS.text.primary} />
+                            </TouchableOpacity>
+                        </View>
                     )}
                 </View>
             </ScrollView>
@@ -214,6 +229,7 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
+        minHeight: 200,
         color: COLORS.text.secondary,
         marginBottom: SPACING.md,
         lineHeight: 22,
@@ -224,23 +240,28 @@ const styles = StyleSheet.create({
         color: COLORS.text.primary,
         marginBottom: SPACING.md,
     },
-    urlButton: {
+    urlDisplayContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.error, // Changed from COLORS.error
-        paddingVertical: SPACING.sm,
-        paddingHorizontal: SPACING.md,
+        backgroundColor: COLORS.background || COLORS.card, // Use a suitable background color
         borderRadius: 8,
-        alignSelf: 'flex-start',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
         marginBottom: SPACING.md,
+        borderWidth: 1,
+        borderColor: COLORS.background || COLORS.inactive, // Use a suitable border color
     },
-    urlIcon: {
-        marginRight: SPACING.sm,
+    urlLinkTouchable: {
+        flex: 1, 
+        marginRight: SPACING.sm, 
     },
-    urlText: {
-        fontSize: 16,
-        color: COLORS.primary,
-        fontWeight: '500',
+    urlLinkText: {
+        fontSize: 15,
+        color: COLORS.text.primary, 
+        // textDecorationLine: 'underline', // Optional: if you want underline
+    },
+    copyIconTouchable: {
+        padding: SPACING.xs, 
     },
     centeredMessage: {
         flex: 1,
