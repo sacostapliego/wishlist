@@ -156,7 +156,12 @@ export default function PersonalListStack({ title, lists, containerStyle }: Pers
   const renderSectionHeader = () => (
     <View style={styles.headerContainer}>
       <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
-      <TouchableOpacity onPress={handleSeeAllPress}>
+      <TouchableOpacity onPress={() => {
+          // This is the direct push to the specific wishlist
+          router.push({
+            pathname: "/home/lists", // Use the parameterized path pattern
+          });
+          }}>
         <Text style={styles.seeAllText}>Show all</Text>
       </TouchableOpacity>
     </View>

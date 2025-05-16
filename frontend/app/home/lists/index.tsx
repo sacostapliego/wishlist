@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { COLORS, SPACING } from '../styles/theme';
-import { wishlistAPI } from '../services/wishlist';
-import { WishlistApiResponse } from '../types/lists';
+import { SPACING, COLORS } from '@/app/styles/theme';
+import { wishlistAPI } from '@/app/services/wishlist';
+import { WishlistApiResponse } from '@/app/types/lists';
 import Toast from 'react-native-toast-message';
-import { useRefresh } from '../context/RefreshContext';
+import { useRefresh } from '@/app/context/RefreshContext';
 
 export default function ListsScreen() {
   const router = useRouter();
@@ -51,7 +51,7 @@ export default function ListsScreen() {
     router.push('/home/create-wishlist');
   };
 
-   const handleOpenMenu = (wishlist: WishlistApiResponse) => {
+  const handleOpenMenu = (wishlist: WishlistApiResponse) => {
     setSelectedWishlist(wishlist);
     setShowMenu(true);
   };
@@ -65,10 +65,7 @@ export default function ListsScreen() {
           key={item.id}
           style={[styles.listItem, { borderColor: itemColor, borderWidth: 5, borderRadius: 16 }]}
           onPress={() => {
-          router.push({
-            pathname: "/home/lists/[id]",
-            params: { id: item.id }
-          });
+          router.push(`/home/lists/${item.id}`);
           }}
 
         >

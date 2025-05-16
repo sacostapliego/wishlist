@@ -25,7 +25,6 @@ import PrioritySlider from '../components/forms/PrioritySlider';
 
 export default function AddItemScreen() {
   const router = useRouter();
-
   const { wishlistId: preSelectedWishlistId } = useLocalSearchParams<{ wishlistId: string }>();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -198,6 +197,20 @@ export default function AddItemScreen() {
     }
   };
 
+  const handleBackButtonPress = () => {
+    console.log('[AddItemScreen] Back button pressed. preSelectedWishlistId:', preSelectedWishlistId, 'canGoBack:', router.canGoBack());
+
+    if (preSelectedWishlistId) {
+      router.push(`/home/lists/${preSelectedWishlistId}`);
+    } else {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.push('/home/lists'); // Or router.push('/home');
+      }
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -206,18 +219,7 @@ export default function AddItemScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => {
-            if (preSelectedWishlistId) {
-              // If we came from a specific wishlist, navigate back to it
-              router.replace({
-                pathname: '/home/lists/[id]',
-                params: { id: preSelectedWishlistId }
-              });
-            } else {
-              // Otherwise use default back behavior
-              router.back();
-            }
-          }}
+          onPress={handleBackButtonPress}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>

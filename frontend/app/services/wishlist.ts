@@ -126,6 +126,15 @@ export const wishlistAPI = {
         return []; 
       }
     },
+    getWisihlistItem: async (itemId: string) => {
+      try {
+        const response = await api.get(`/wishlist/${itemId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching item ${itemId}:`, error);
+        throw error;
+      }
+    }
   };
 
   

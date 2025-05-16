@@ -48,7 +48,7 @@ export const WishlistActions = ({
     try {
       await wishlistAPI.deleteWishlist(wishlistId);
       triggerRefresh();
-      router.replace('/home/lists');
+      router.push('/home/lists');
     } catch (error) {
       console.error('Failed to delete wishlist:', error);
     } finally {

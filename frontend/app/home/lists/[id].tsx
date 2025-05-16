@@ -65,6 +65,10 @@ export default function WishlistDetailScreen() {
     if (isSelectionMode) {
       toggleItemSelection(item.id);
     } else {
+      router.push({
+        pathname: `/home/lists/[id]/[item]`, // Dynamic path
+        params: { id: id, item: item.id } // Pass wishlistId as 'id' and itemId as 'item'
+      });
     }
   };
 
@@ -117,7 +121,7 @@ export default function WishlistDetailScreen() {
     <SafeAreaView style={styles.container}>
       <Header
         title={wishlist?.title || 'Wishlist'}
-        onBack={() => router.replace('/home/lists')}
+        onBack={() => router.back()}
         showOptions={!isSelectionMode}
         onOptionsPress={() => setMenuVisible(true)}
         rightIcon="ellipsis-vertical"
