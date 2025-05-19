@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, View, Text, Alert, Platform, Linking } from 'react-native';
+import Head from "expo-router/head";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../../../styles/theme';
 import { Header } from '../../../components/layout/Header';
@@ -68,6 +69,9 @@ export default function WishlistItemScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: COLORS.background }]}>
+                <Head>
+                    <meta name="theme-color" content={getLightColor(COLORS.background)} />
+                </Head>
                 <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
                 <LoadingState />
             </SafeAreaView>
@@ -77,6 +81,9 @@ export default function WishlistItemScreen() {
     if (error || !item) { // Combined error and no item check
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
+                <Head>
+                    <meta name="theme-color" content={headerBackgroundColor} />
+                </Head>
                 <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={headerBackgroundColor} />
                 <View style={styles.centeredMessageContainer}>
                     <Text style={styles.errorText}>{error || "The requested item could not be found."}</Text>
@@ -87,6 +94,9 @@ export default function WishlistItemScreen() {
     
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
+            <Head>
+                <meta name="theme-color" content={headerBackgroundColor} />
+            </Head>
             <StatusBar
                 style={statusBarTextColor}
                 backgroundColor={headerBackgroundColor}
