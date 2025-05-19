@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, SafeAreaView, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, SafeAreaView, Alert, Dimensions, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../styles/theme';
@@ -12,7 +12,7 @@ import * as Clipboard from 'expo-clipboard';
 import { ItemActionsMenu } from '@/app/components/item/ItemActionsMenu';
 import Toast from 'react-native-toast-message';
 import { useRefresh } from '@/app/context/RefreshContext';
-
+import { StatusBar } from 'expo-status-bar';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -158,6 +158,11 @@ export default function WishlistItemScreen() {
 
     return (
         <SafeAreaView style={dynamicPageStyle}>
+            <StatusBar 
+                style={Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light')} // Heuristic for text color
+                backgroundColor={headerBackgroundColor} 
+                translucent={false}
+            />
             <Header 
                 title=''
                 onBack={handleCustomBack} 
