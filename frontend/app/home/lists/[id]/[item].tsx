@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, ActivityIndicator, SafeAreaView, Alert, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../styles/theme'; // Adjust path as needed
@@ -10,6 +10,7 @@ import { LoadingState } from '../../../components/common/LoadingState'; // Adjus
 import getLightColor from '@/app/components/ui/LightColor';
 import * as Clipboard from 'expo-clipboard';
 
+const screenHeight = Dimensions.get('window').height; // Get screen height
 
 interface WishlistItemDetails {
     id: string;
@@ -18,14 +19,12 @@ interface WishlistItemDetails {
     price?: number;
     url?: string;
     image?: string;
-    // Add any other relevant fields like is_purchased, priority, etc.
 }
 
 interface WishlistDetails { // Added interface for wishlist details
     id: string;
     title: string;
     color?: string;
-    // other wishlist properties
 }
 
 export default function WishlistItemScreen() {
@@ -35,6 +34,8 @@ export default function WishlistItemScreen() {
     const [wishlistColor, setWishlistColor] = useState<string | undefined>(COLORS.background); // State for wishlist color
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [menuVisible, setMenuVisible] = useState(false);
+
 
     const handleCustomBack = () => {
         if (router.canGoBack()) {
@@ -104,9 +105,12 @@ export default function WishlistItemScreen() {
         backgroundColor: wishlistColor || COLORS.background,
     };
 
+    const dynamicImageHeight = screenHeight * 0.35;
+
     const imageContainerDynamicStyle = {
         ...styles.imageContainer,
-        backgroundColor: getLightColor(wishlistColor || COLORS.cardDark), // Use cardDark as fallback
+        backgroundColor: getLightColor(wishlistColor || COLORS.cardDark),
+        height: dynamicImageHeight,
     };
 
 
@@ -142,14 +146,12 @@ export default function WishlistItemScreen() {
     }
 
     const itemImageUri = item.image ? `${API_URL}wishlist/${item.id}/image` : null;
+    const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
 
     return (
         <SafeAreaView style={styles.container}>
-            <Header title='' onBack={handleCustomBack} />
+            <Header title='' onBack={handleCustomBack} backgroundColor={headerBackgroundColor} onOptionsPress={() => setMenuVisible(true)}/>
             <ScrollView  style={dynamicPageStyle} contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                    {error && <Text style={styles.errorTextSmall}>{error}</Text>}
-
                 {itemImageUri && (
                     <View style={imageContainerDynamicStyle}>
                         <Image source={{ uri: itemImageUri }} style={styles.image} resizeMode='contain'/>
@@ -157,6 +159,9 @@ export default function WishlistItemScreen() {
                 )}
 
                 <View style={styles.detailsContainer}>
+
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    {error && <Text style={styles.errorTextSmall}>{error}</Text>}
 
                     {item.price !== undefined && item.price !== null && (
                         <Text style={styles.price}>${item.price.toFixed(2)}</Text>
@@ -193,16 +198,12 @@ const styles = StyleSheet.create({
         paddingBottom: SPACING.lg,
     },
     imageContainer: { // Added a container for the image/placeholder
-        width: '90%',
+        width: '100%',
         height: 300,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: SPACING.md,
-        borderRadius: 8,
-        borderColor: COLORS.background,
-        borderWidth: 4,
-        marginTop: SPACING.sm,
         alignSelf: 'center',
+        paddingBottom: SPACING.xxl,
     },
     image: {
         width: '100%', 

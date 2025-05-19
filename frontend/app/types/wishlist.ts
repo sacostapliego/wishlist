@@ -6,5 +6,14 @@ export interface WishlistInfoProps {
   hasItems?: boolean;
 }
 
+export interface WishlistItemDetails {
+    id: string;
+    name: string;
+    description?: string;
+    price?: number;
+    url?: string;
+    image?: string;
+}
+
 export default function wishlists() {
 }

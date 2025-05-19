@@ -17,7 +17,7 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 # JWT Settings
 JWT_SECRET = os.getenv('JWT_SECRET')
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
-ACCESS_TOKEN_EXPIRE_DAYS = 7 # 1 week
+ACCESS_TOKEN_EXPIRE_DAYS = ACCESS_TOKEN_EXPIRE_MINUTES * 7 # 7 days
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storage."""
