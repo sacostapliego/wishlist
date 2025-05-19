@@ -20,12 +20,8 @@ export default function ListsScreen() {
   const router = useRouter();
   const [wishlists, setWishlists] = useState<WishlistApiResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedWishlist, setSelectedWishlist] = useState<WishlistApiResponse | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const { refreshTimestamp, triggerRefresh } = useRefresh(); // Use refresh context
+  const { refreshTimestamp, triggerRefresh } = useRefresh();
 
-  // Fetch wishlists on component mount
   useEffect(() => {
     fetchWishlists();
   }, [refreshTimestamp]);
@@ -51,15 +47,9 @@ export default function ListsScreen() {
     router.push('/home/create-wishlist');
   };
 
-  const handleOpenMenu = (wishlist: WishlistApiResponse) => {
-    setSelectedWishlist(wishlist);
-    setShowMenu(true);
-  };
-
-
   const renderWishlists = () => {
     return wishlists.map((item) => {
-      const itemColor = item.color || '#ff7f50'; // Default color if none specified
+      const itemColor = item.color || '#ff7f50';
       return (
         <TouchableOpacity 
           key={item.id}

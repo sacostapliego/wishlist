@@ -29,6 +29,7 @@ interface ItemFormProps {
   onWishlistChange?: (wishlistId: string) => void;
   loadingWishlists?: boolean;
   isEditMode?: boolean; // To conditionally show wishlist selector
+  hideWishlistSelector?: boolean;
 }
 
 export interface ItemFormRef {
@@ -48,6 +49,7 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       onWishlistChange,
       loadingWishlists = false,
       isEditMode = false,
+      hideWishlistSelector = false,
     },
     ref
   ) => {
@@ -105,7 +107,7 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
         Alert.alert("Validation Error", "Item name is required.");
         return;
       }
-      if (!isEditMode && !selectedWishlistId) {
+      if (!isEditMode && !hideWishlistSelector && !selectedWishlistId) {
         Alert.alert("Validation Error", "Please select a wishlist.");
         return;
       }
@@ -141,7 +143,7 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
     return (
       <View style={styles.formContainer}>
         {/* Select Wishlist - Conditionally render if not in edit mode and wishlists are provided */}
-        {!isEditMode && onWishlistChange && (
+        {!isEditMode && !hideWishlistSelector && onWishlistChange && (
           <>
             <Text style={styles.label}>Select Wishlist *</Text>
             {loadingWishlists ? (
@@ -225,10 +227,10 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
         <TouchableOpacity
           style={[
             styles.submitButton, 
-            (isLoading || !name || (!isEditMode && !selectedWishlistId)) && styles.disabledButton
+            (isLoading || !name || (!isEditMode && !hideWishlistSelector && !selectedWishlistId)) && styles.disabledButton
           ]}
           onPress={handleSubmit}
-          disabled={isLoading || !name || (!isEditMode && !selectedWishlistId)}
+          disabled={isLoading || !name || (!isEditMode && !hideWishlistSelector && !selectedWishlistId)}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color={COLORS.white} />

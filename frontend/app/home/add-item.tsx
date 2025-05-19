@@ -8,25 +8,21 @@ import {
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
-  // Alert // Alert is now handled by ItemForm
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
-// import * as ImagePicker from 'expo-image-picker'; // ImagePicker is now handled by ItemForm
 import Toast from 'react-native-toast-message';
 import { wishlistAPI } from '../services/wishlist';
 import { WishlistApiResponse } from '../types/lists';
 import { useRefresh } from '../context/RefreshContext';
-// import { SelectList } from 'react-native-dropdown-select-list'; // SelectList is now in ItemForm
-// import PrioritySlider from '../components/forms/PrioritySlider'; // PrioritySlider is now in ItemForm
-import ItemForm, { ItemFormData, ItemFormRef } from '../components/forms/ItemForm'; // Import the ItemForm
+import ItemForm, { ItemFormData, ItemFormRef } from '../components/forms/ItemForm';
 
 export default function AddItemScreen() {
   const router = useRouter();
   const { wishlistId: preSelectedWishlistId } = useLocalSearchParams<{ wishlistId: string }>();
 
-  const [isSubmitting, setIsSubmitting] = useState(false); // Renamed from isLoading for clarity
+  const [isSubmitting, setIsSubmitting] = useState(false); 
   const [loadingWishlists, setLoadingWishlists] = useState(true);
   const [wishlists, setWishlists] = useState<WishlistApiResponse[]>([]);
   const [selectedWishlistId, setSelectedWishlistId] = useState(preSelectedWishlistId || '');
@@ -34,11 +30,10 @@ export default function AddItemScreen() {
   const itemFormRef = useRef<ItemFormRef>(null);
   const { triggerRefresh } = useRefresh(); 
 
-  // Fetch user's wishlists on component mount
   useEffect(() => {
     if (preSelectedWishlistId) {
       setSelectedWishlistId(preSelectedWishlistId);
-      setLoadingWishlists(false); // No need to fetch if pre-selected
+      setLoadingWishlists(false); 
     } else {
       fetchWishlists();
     }
@@ -51,7 +46,7 @@ export default function AddItemScreen() {
       setWishlists(response);
       
       if (!preSelectedWishlistId && response && response.length > 0) {
-        setSelectedWishlistId(response[0].id); // Set default if not pre-selected
+        setSelectedWishlistId(response[0].id);
       }
     } catch (error) {
       console.error('Failed to fetch wishlists:', error);
@@ -74,11 +69,11 @@ export default function AddItemScreen() {
         price: formData.price ? parseFloat(formData.price) : null,
         url: formData.url?.trim() || null,
         priority: formData.priority,
-        wishlist_id: selectedWishlistId, // Use selectedWishlistId from state
-        is_purchased: false // Default value
+        wishlist_id: selectedWishlistId,
+        is_purchased: false
       };
 
-      await wishlistAPI.createItem(itemDataPayload, imageFile as any); // API handles imageFile
+      await wishlistAPI.createItem(itemDataPayload, imageFile as any);
       
       triggerRefresh();
       itemFormRef.current?.resetForm();
@@ -158,6 +153,7 @@ export default function AddItemScreen() {
           onWishlistChange={setSelectedWishlistId}
           loadingWishlists={loadingWishlists}
           isEditMode={false}
+          hideWishlistSelector={!!preSelectedWishlistId}
         />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -189,7 +185,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     paddingBottom: SPACING.xl,
   },
-  formScrollView: { // Renamed from formContainer to avoid confusion
+  formScrollView: {
     flex: 1,
   },
 });

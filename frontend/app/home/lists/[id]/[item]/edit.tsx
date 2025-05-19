@@ -84,13 +84,11 @@ export default function EditItemScreen() {
         text1: 'Success',
         text2: 'Item updated successfully!',
       });
-      triggerRefresh(); // Ensure this is called
+      triggerRefresh(); 
 
-      // Navigate back to the previous screen (WishlistItemScreen)
       if (router.canGoBack()) {
         router.back();
       } else {
-        // Fallback, though typically router.back() should be sufficient here
         router.replace(`/home/lists/${wishlistId}/${itemId}`);
       }
       
@@ -128,7 +126,7 @@ export default function EditItemScreen() {
     }
   };
 
-  if (isLoading && !Object.keys(initialValues).length) { // Show loading only if initialValues are not yet set
+  if (isLoading && !Object.keys(initialValues).length) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <Header title="Loading Item..." onBack={handleBack} />
@@ -141,7 +139,7 @@ export default function EditItemScreen() {
     <KeyboardAvoidingView
       style={styles.safeArea}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust offset if header is part of KAV
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} 
     >
       <Header title="Edit Item" onBack={handleBack} />
       <ScrollView
@@ -149,12 +147,12 @@ export default function EditItemScreen() {
         contentContainerStyle={styles.scrollContentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        {isLoading && Object.keys(initialValues).length > 0 && ( // Show subtle loading over form if refetching
+        {isLoading && Object.keys(initialValues).length > 0 && (
             <View style={styles.formLoadingOverlay}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         )}
-        {!isLoading && Object.keys(initialValues).length === 0 && !itemId && ( // Error case if itemID was initially missing
+        {!isLoading && Object.keys(initialValues).length === 0 && !itemId && (
              <View style={styles.centeredMessage}>
                 <Text style={styles.errorText}>Item ID is missing. Cannot load details.</Text>
             </View>
