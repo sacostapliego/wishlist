@@ -10,7 +10,9 @@ import Toast from 'react-native-toast-message';
 import { StatusBar } from 'expo-status-bar';
 import { useItemDetail } from '../../hooks/useItemDetail'; // Reusing the same hook
 import ItemDetailContent from '../../components/item/ItemDetailContent'; // Reusing the same component
-// import { useRefresh } from '../../context/RefreshContext'; // Likely not needed for shared view
+
+//TODO:
+// 1. Remove scrolling form description
 
 export default function SharedWishlistItemScreen() {
     const router = useRouter();

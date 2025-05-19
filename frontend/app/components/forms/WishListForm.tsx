@@ -9,7 +9,8 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, SPACING, WISHLIST_COLORS } from '../../styles/theme';
+import { COLORS, SPACING } from '../../styles/theme';
+import { WISHLIST_COLORS } from '@/app/styles/colors';
 import { Button } from '../ui/Button';
 import { WishlistFormProps } from '@/app/types/lists';
 import { ICONS } from '@/app/styles/icons';
