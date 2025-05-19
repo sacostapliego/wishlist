@@ -20,6 +20,7 @@ type WishlistItem = {
   price?: number;
   priority: number;
 };
+
 export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -36,7 +37,15 @@ export default function WishlistDetailScreen() {
 
   console.log('Wishlist:', ownerDisplayInfo?.profileImageUrl);
 
-  const handleItemPress = (item: WishlistItem) => {
+  const handleItemPress = (pressedItem: WishlistItem) => {
+    if (id && pressedItem && pressedItem.id) {
+      router.push({
+        pathname: `/shared/[id]/[item]`,
+        params: { id: id, item: pressedItem.id }
+      });
+    } else {
+      console.warn("Missing id or item.id for navigation in shared view");
+    }
   };
 
   if (isLoading) {

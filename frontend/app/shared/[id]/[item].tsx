@@ -1,33 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { SafeAreaView, StyleSheet, View, Text, Alert, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { COLORS, SPACING } from '../../../styles/theme';
-import { Header } from '../../../components/layout/Header';
-import { LoadingState } from '../../../components/common/LoadingState';
-import getLightColor from '@/app/components/ui/LightColor';
+import { COLORS, SPACING } from '../../styles/theme'; // Adjust path
+import { Header } from '../../components/layout/Header'; // Adjust path
+import { LoadingState } from '../../components/common/LoadingState'; // Adjust path
+import getLightColor from '../../components/ui/LightColor'; // Adjust path
 import * as Clipboard from 'expo-clipboard';
-import { ItemActionsMenu } from '@/app/components/item/ItemActionsMenu';
 import Toast from 'react-native-toast-message';
-import { useRefresh } from '@/app/context/RefreshContext';
 import { StatusBar } from 'expo-status-bar';
-import { useItemDetail } from '../../../hooks/useItemDetail';
-import ItemDetailContent from '../../../components/item/ItemDetailContent'; 
+import { useItemDetail } from '../../hooks/useItemDetail'; // Reusing the same hook
+import ItemDetailContent from '../../components/item/ItemDetailContent'; // Reusing the same component
+// import { useRefresh } from '../../context/RefreshContext'; // Likely not needed for shared view
 
-export default function WishlistItemScreen() {
+export default function SharedWishlistItemScreen() {
     const router = useRouter();
     const { id: wishlistId, item: itemId } = useLocalSearchParams<{ id: string, item: string }>();
-    const { triggerRefresh, refreshTimestamp } = useRefresh();
-    const [menuVisible, setMenuVisible] = useState(false);
+    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, true);
 
-    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, refreshTimestamp);
 
     const handleCustomBack = () => {
         if (router.canGoBack()) {
             router.back();
         } else if (wishlistId) {
-            router.push(`/home/lists/${wishlistId}`);
+            router.push(`/shared/${wishlistId}`);
         } else {
-            router.push('/home');
+            router.push('/'); // Fallback to a generic public page
         }
     };
 
@@ -47,20 +44,6 @@ export default function WishlistItemScreen() {
         }
     };
 
-    const handleItemDeleted = () => {
-        Toast.show({
-            type: 'success',
-            text1: 'Item Deleted',
-            text2: `${item?.name || 'The item'} has been deleted.`,
-        });
-        triggerRefresh(); 
-        if (wishlistId) {
-            router.replace(`/home/lists/${wishlistId}`);
-        } else {
-            router.replace('/home/lists');
-        }
-    };
-    
     const pageBackgroundColor = wishlistColor || COLORS.background;
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
@@ -68,13 +51,13 @@ export default function WishlistItemScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: COLORS.background }]}>
-                <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
+                 <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
                 <LoadingState />
             </SafeAreaView>
         );
     }
 
-    if (error || !item) { // Combined error and no item check
+    if (error || !item) {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
                 <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={headerBackgroundColor} />
@@ -84,7 +67,7 @@ export default function WishlistItemScreen() {
             </SafeAreaView>
         );
     }
-    
+
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
             <StatusBar
@@ -96,8 +79,7 @@ export default function WishlistItemScreen() {
                 title=""
                 onBack={handleCustomBack}
                 backgroundColor={headerBackgroundColor}
-                showOptions={true}
-                onOptionsPress={() => setMenuVisible(true)}
+                showOptions={false} // No options menu for shared items
             />
             <ItemDetailContent
                 item={item}
@@ -105,16 +87,7 @@ export default function WishlistItemScreen() {
                 onOpenUrl={handleOpenUrl}
                 onCopyUrl={handleCopyUrl}
             />
-            {itemId && wishlistId && item && (
-                <ItemActionsMenu
-                    itemId={itemId}
-                    wishlistId={wishlistId}
-                    itemName={item.name}
-                    menuVisible={menuVisible}
-                    onMenuClose={() => setMenuVisible(false)}
-                    onItemDeleted={handleItemDeleted}
-                />
-            )}
+            {/* No ItemActionsMenu for shared view */}
         </SafeAreaView>
     );
 }
@@ -131,7 +104,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 16,
-        color: COLORS.error,
+        color: COLORS.error, 
         textAlign: 'center',
     },
 });
