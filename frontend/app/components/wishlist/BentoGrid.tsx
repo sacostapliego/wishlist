@@ -1,11 +1,9 @@
-import React from 'react'; // Removed useEffect, useState as they are not used directly in the provided snippet
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../../styles/theme';
-import { API_URL } from '../../services/api';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { COLORS } from '../../styles/theme';
 import { getLightColor } from '../ui/LightColor';
-
-const WEB_FRAME_WIDTH = 900; // Assumed max width for web
+import { BentoGridItem } from './BentoGridItem';
+import { useBentoLayout, getBentoGridWidthExport, getBentoGridRenderedHeightExport } from '../../hooks/useBentoLayout'; // Adjust path
 
 type WishlistItem = {
   id: string;
@@ -24,417 +22,63 @@ type BentoGridProps = {
   wishlistColor?: string;
 };
 
-// This function defines the explicit height of the BentoGrid container
-// It's defined once here and used by both the component and the exported helper.
-const calculateBentoGridHeight = () => {
-  if (Platform.OS === 'web') {
-    return Dimensions.get('window').height * 1.5;
-  }
-  return Dimensions.get('window').height * 1.2; // Or any other logic specific to native
-};
-
 export const BentoGrid = ({
   items,
   baseSize,
   onItemPress,
   selectedItems = [],
   selectionMode = false,
-  wishlistColor
+  wishlistColor,
 }: BentoGridProps) => {
-  
-  // Format price with currency symbol
+  const { gridPositions, containerWidth, containerHeight } = useBentoLayout(items, baseSize);
 
   const formatPrice = (price?: number) => {
     if (price === undefined || price === null) return '';
     return `$${price.toFixed(2)}`;
   };
-  // Get card background color based on wishlist color
 
-  const getCardColor = () => {
-    return wishlistColor ? wishlistColor : COLORS.cardDark;
-  };
-
-  // Internal function to get grid width for the BentoGrid container style
-  const getGridWidth = () => {
-    if (Platform.OS === 'web') {
-      return WEB_FRAME_WIDTH * 1.2;
-    }
-    return Dimensions.get('window').width * 3; // Consistent with exported version
-  };
-
-  // Get appropriate grid height based on platform
-  const getGridHeight = () => {
-    return calculateBentoGridHeight(); 
-  };
-
-  // Use the consistent calculation for the component's style
-  const bentoGridContainerHeight = calculateBentoGridHeight();
-
-  const getSizeMultiplier = (priority: number) => {
-    switch(priority) {
-      case 0: return Platform.OS === 'web' ? 0.75 : 0.66;
-      case 1: return Platform.OS === 'web' ? 0.85 : 0.68;
-      case 2: return Platform.OS === 'web' ? 0.95 : 0.70;
-      case 3: return Platform.OS === 'web' ? 1 : 0.72;
-      case 4: return Platform.OS === 'web' ? 1.1 : 0.74;
-      default: return 1;
-    }
-  };
-
-  // Font size based on priority
-  const getFontSize = (priority: number, isTitle = true) => {
-    const baseFontSize = isTitle ? 20 : 16;
-    return baseFontSize * getSizeMultiplier(priority);
-  };
-
-  // Calculate item size based on priority
-  const getItemSize = (priority: number) => {
-    return baseSize * getSizeMultiplier(priority);
-  };
-
-  // Position items in a bento grid layout
-  const positionItems = () => {
-    const gridWidth = getGridWidth(); // Internal width for layout
-    const gridHeight = getGridHeight(); // Internal height for layout
-    
-    // Sort items by priority (highest first)
-    const sortedItems = [...items].sort((a, b) => b.priority - a.priority);
-    
-    // Center point for the grid
-    const centerX = gridWidth / 2;
-    const centerY = gridHeight / 2.6; // Adjust this factor as needed for vertical centering of items
-    
-    // Common spacing between items
-    const gapSize = SPACING.md;
-    
-    // Create a grid with absolute positions
-    let positions: any[] = [];
-    let currentIndex = 0;
-    
-    // First item in center
-    if (currentIndex < sortedItems.length) {
-      const centerItemSize = getItemSize(sortedItems[currentIndex].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: centerItemSize,
-        height: centerItemSize,
-        top: centerY - centerItemSize / 2,
-        left: centerX - centerItemSize / 2,
-        isCenter: true // Flag for the center item
-      });
-    }
-    
-    // Left item
-    if (currentIndex < sortedItems.length) {
-      const itemSize = getItemSize(sortedItems[currentIndex].priority);
-      const centerItemSize = getItemSize(sortedItems[0].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: itemSize,
-        height: itemSize,
-        top: centerY - itemSize / 2, // Align vertically with center item
-        left: centerX - centerItemSize / 2 - gapSize - itemSize, // Position to the left
-      });
-    }
-    
-    // Right item
-    if (currentIndex < sortedItems.length) {
-      const itemSize = getItemSize(sortedItems[currentIndex].priority);
-      const centerItemSize = getItemSize(sortedItems[0].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: itemSize,
-        height: itemSize,
-        top: centerY - itemSize / 2, // Align vertically with center item
-        left: centerX + centerItemSize / 2 + gapSize, // Position to the right
-      });
-    }
-    
-    // Top item
-    if (currentIndex < sortedItems.length) {
-      const itemSize = getItemSize(sortedItems[currentIndex].priority);
-      const centerItemSize = getItemSize(sortedItems[0].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: itemSize,
-        height: itemSize,
-        top: centerY - centerItemSize / 2 - gapSize - itemSize, // Position above
-        left: centerX - itemSize / 2, // Centered horizontally
-      });
-    }
-    
-    // Bottom item
-    if (currentIndex < sortedItems.length) {
-      const itemSize = getItemSize(sortedItems[currentIndex].priority);
-      const centerItemSize = getItemSize(sortedItems[0].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: itemSize,
-        height: itemSize,
-        top: centerY + centerItemSize / 2 + gapSize, // Position below
-        left: centerX - itemSize / 2, // Centered horizontally
-      });
-    }
-    
-    // Bottom left item
-    if (currentIndex < sortedItems.length) {
-      const itemSize = getItemSize(sortedItems[currentIndex].priority);
-      const centerItemSize = getItemSize(sortedItems[0].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: itemSize,
-        height: itemSize,
-        top: centerY + centerItemSize / 2 + gapSize, // Position below
-        left: centerX - centerItemSize / 2 - gapSize - itemSize, // Position to the left
-      });
-    }
-    
-    // Bottom right item
-    if (currentIndex < sortedItems.length) {
-      const itemSize = getItemSize(sortedItems[currentIndex].priority);
-      const centerItemSize = getItemSize(sortedItems[0].priority);
-      positions.push({
-        item: sortedItems[currentIndex++],
-        width: itemSize,
-        height: itemSize,
-        top: centerY + centerItemSize / 2 + gapSize, // Position below
-        left: centerX + centerItemSize / 2 + gapSize, // Position to the right
-      });
-    }
-    
-    // Additional items in a grid below
-    const rowItemsCount = 3;
-    let rowStartTop = centerY + (sortedItems.length > 0 ? getItemSize(sortedItems[0].priority) / 2 : 0) + getItemSize(5) + (gapSize * 2);
-    
-    while (currentIndex < sortedItems.length) {
-      const itemsInThisRow = Math.min(rowItemsCount, sortedItems.length - currentIndex);
-      const rowItemSizes = [];
-      let totalRowWidth = 0;
-      
-      // Calculate sizes for this row
-      for (let i = 0; i < itemsInThisRow; i++) {
-        const itemSize = getItemSize(sortedItems[currentIndex + i].priority);
-        rowItemSizes.push(itemSize);
-        totalRowWidth += itemSize;
-      }
-      
-      totalRowWidth += (itemsInThisRow - 1) * gapSize; // Add gaps
-      
-      // Position items in this row
-      let currentLeft = centerX - totalRowWidth / 2;
-      for (let i = 0; i < itemsInThisRow; i++) {
-        const itemSize = rowItemSizes[i];
-        positions.push({
-          item: sortedItems[currentIndex++],
-          width: itemSize,
-          height: itemSize,
-          top: rowStartTop,
-          left: currentLeft,
-        });
-        currentLeft += itemSize + gapSize;
-      }
-      // Move to next row
-      rowStartTop += getItemSize(5) + gapSize;
-    }
-    return positions;
-  };
-
-  const gridPositions = positionItems();
-  const cardColor = getCardColor();
+  const cardColor = wishlistColor ? wishlistColor : COLORS.cardDark;
   const lighterCardColor = getLightColor(cardColor);
-  
+
   return (
-    <View 
+    <View
       style={[
         styles.bentoContainer,
-        { 
-          width: getGridWidth(), // Uses internal getGridWidth
-          height: bentoGridContainerHeight, // Uses the calculated height
-        }
+        {
+          width: containerWidth,
+          height: containerHeight,
+        },
       ]}
     >
-      {gridPositions.map((position) => {
-        const { item, width, height, top, left, isCenter } = position;
+      {gridPositions.map((pos) => {
+        const { item, width, height, top, left, isCenter, titleFontSize, priceFontSize } = pos;
         const isSelected = selectedItems.includes(item.id);
-        const hasImage = item.id && item.image;
-        
-        // Dynamic font sizes based on priority
-        const titleFontSize = getFontSize(item.priority, true);
-        const priceFontSize = getFontSize(item.priority, false);
-        
-        return (
-          <TouchableOpacity
-            key={item.id}
-            style={[
-              styles.itemCard,
-              {
-                width,
-                height,
-                top,
-                left,
-                zIndex: isCenter ? 2 : 1,
-                backgroundColor: cardColor, // Apply base card color here
-              },
-              isSelected && styles.selectedCard,
-            ]}
-            onPress={() => onItemPress?.(item)}
-          >
-            {selectionMode && (
-              <View style={styles.selectionIndicator}>
-                <Ionicons
-                  name={isSelected ? "checkmark-circle" : "ellipse-outline"}
-                  size={24}
-                  color={isSelected ? COLORS.primary : COLORS.text.secondary}
-                />
-              </View>
-            )}
 
-            {hasImage ? (
-              <View style={styles.itemWithImageContainer}>
-                <View style={[styles.imageWrapper, { backgroundColor: lighterCardColor }]}>
-                <Image
-                  source={{ uri: `${API_URL}wishlist/${item.id}/image` }} // Ensure item.id is valid for URL
-                  style={styles.itemImage}
-                />
-                </View>
-                <View style={[styles.itemInfo]}>
-                  <Text 
-                    style={[
-                      styles.itemName,
-                      { fontSize: titleFontSize }
-                    ]} 
-                    numberOfLines={1}
-                  >
-                    {item.name}
-                  </Text>
-                  {item.price !== undefined && (
-                    <Text 
-                      style={[
-                        styles.itemPrice,
-                        { fontSize: priceFontSize }
-                      ]}
-                    >
-                      {formatPrice(item.price)}
-                    </Text>
-                  )}
-                </View>
-              </View>
-            ) : (
-              <View style={[styles.textOnlyContainer]}>
-                <Text 
-                  style={[
-                    styles.textOnlyName,
-                    { fontSize: titleFontSize }
-                  ]} 
-                  numberOfLines={2}
-                >
-                  {item.name}
-                </Text>
-                {item.price !== undefined && (
-                  <Text 
-                    style={[
-                      styles.textOnlyPrice,
-                      { fontSize: priceFontSize }
-                    ]}
-                  >
-                    {formatPrice(item.price)}
-                  </Text>
-                )}
-              </View>
-            )}
-          </TouchableOpacity>
+        return (
+          <BentoGridItem
+            key={item.id}
+            item={item}
+            style={{ width, height, top, left, zIndex: isCenter ? 2 : 1, backgroundColor: cardColor }}
+            isSelected={isSelected}
+            selectionMode={selectionMode}
+            onItemPress={onItemPress}
+            lighterCardColor={lighterCardColor}
+            titleFontSize={titleFontSize}
+            priceFontSize={priceFontSize}
+            formatPrice={formatPrice}
+          />
         );
       })}
     </View>
   );
 };
 
-// Exported for WishlistContent to use for centering calculations
-export const getBentoGridWidth = () => {
-  if (Platform.OS === 'web') {
-    return WEB_FRAME_WIDTH * 1.2;
-  }
-  // Consistent with the internal getGridWidth for native platforms
-  return Dimensions.get('window').width * 3; 
-};
-
-// Exported for WishlistContent to use for centering calculations
-export const getBentoGridRenderedHeight = () => {
-  return calculateBentoGridHeight(); // Uses the single source of truth
-};
-
-export default BentoGrid;
-
 const styles = StyleSheet.create({
   bentoContainer: {
     position: 'relative',
-  },
-  itemCard: {
-    position: 'absolute',
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 4,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  itemWithImageContainer: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  imageWrapper: {
-    height: '70%', // Percentage of the card height
-    width: '100%',
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain', // Ensures image fits without cropping, might show background
-  },
-  itemInfo: {
-    flex: 1,
-    width: '100%',
-    padding: SPACING.sm,
-    justifyContent: 'center',
-    minHeight: 50,
-  },
-  itemName: {
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-  },
-  itemPrice: {
-    color: COLORS.text.secondary,
-    marginTop: 2,
-  },
-  textOnlyContainer: {
-    width: '100%',
-    height: '100%',
-    padding: SPACING.md,
-    justifyContent: 'center', // Center content vertically
-    alignItems: 'center', // Center content horizontally
-  },
-  textOnlyName: {
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-    textAlign: 'center',
-  },
-  textOnlyPrice: {
-    color: COLORS.text.secondary,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  selectedCard: {
-    borderWidth: 3, // Make selection more prominent
-    borderColor: COLORS.primary,
-  },
-  selectionIndicator: {
-    position: 'absolute',
-    top: SPACING.xs,
-    right: SPACING.xs,
-    zIndex: 10, // Ensure it's above other content
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
-    padding: 2,
+    // backgroundColor: 'rgba(0,255,0,0.1)', // For debugging layout bounds
   },
 });
+
+export { getBentoGridWidthExport as getBentoGridWidth, getBentoGridRenderedHeightExport as getBentoGridRenderedHeight };
+export default BentoGrid;

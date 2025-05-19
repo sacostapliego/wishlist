@@ -10,6 +10,7 @@ import Toast from 'react-native-toast-message';
 import { StatusBar } from 'expo-status-bar';
 import { useItemDetail } from '../../hooks/useItemDetail'; // Reusing the same hook
 import ItemDetailContent from '../../components/item/ItemDetailContent'; // Reusing the same component
+import Head from 'expo-router/head';
 
 //TODO:
 // 1. Remove scrolling form description
@@ -53,6 +54,9 @@ export default function SharedWishlistItemScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: COLORS.background }]}>
+                <Head>
+                    <meta name="theme-color" content={getLightColor(COLORS.background)} />
+                </Head>
                  <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
                 <LoadingState />
             </SafeAreaView>
@@ -62,6 +66,9 @@ export default function SharedWishlistItemScreen() {
     if (error || !item) {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
+                <Head>
+                    <meta name="theme-color" content={headerBackgroundColor} />
+                </Head>
                 <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={headerBackgroundColor} />
                 <View style={styles.centeredMessageContainer}>
                     <Text style={styles.errorText}>{error || "The requested item could not be found."}</Text>
@@ -72,6 +79,9 @@ export default function SharedWishlistItemScreen() {
 
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
+            <Head>
+                <meta name="theme-color" content={headerBackgroundColor} />
+            </Head>
             <StatusBar
                 style={statusBarTextColor}
                 backgroundColor={headerBackgroundColor}
@@ -89,7 +99,6 @@ export default function SharedWishlistItemScreen() {
                 onOpenUrl={handleOpenUrl}
                 onCopyUrl={handleCopyUrl}
             />
-            {/* No ItemActionsMenu for shared view */}
         </SafeAreaView>
     );
 }
