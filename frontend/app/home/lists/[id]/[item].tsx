@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, ActivityIndicator, SafeAreaView, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking, SafeAreaView, Alert, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../../../styles/theme'; // Adjust path as needed
-import { API_URL } from '../../../services/api'; // Adjust path as needed
-import { Header } from '../../../components/layout/Header'; // Adjust path as needed
+import { COLORS, SPACING } from '../../../styles/theme';
+import { API_URL } from '../../../services/api';
+import { Header } from '../../../components/layout/Header';
 import wishlistAPI from '@/app/services/wishlist';
-import { LoadingState } from '../../../components/common/LoadingState'; // Adjust path as needed
+import { LoadingState } from '../../../components/common/LoadingState';
 import getLightColor from '@/app/components/ui/LightColor';
 import * as Clipboard from 'expo-clipboard';
+import { ItemActionsMenu } from '@/app/components/item/ItemActionsMenu';
+import Toast from 'react-native-toast-message';
+import { useRefresh } from '@/app/context/RefreshContext';
 
-const screenHeight = Dimensions.get('window').height; // Get screen height
+
+const screenHeight = Dimensions.get('window').height;
 
 interface WishlistItemDetails {
     id: string;
@@ -21,21 +25,15 @@ interface WishlistItemDetails {
     image?: string;
 }
 
-interface WishlistDetails { // Added interface for wishlist details
-    id: string;
-    title: string;
-    color?: string;
-}
-
 export default function WishlistItemScreen() {
     const router = useRouter();
     const { id: wishlistId, item: itemId } = useLocalSearchParams<{ id: string, item: string }>();
     const [item, setItem] = useState<WishlistItemDetails | null>(null);
-    const [wishlistColor, setWishlistColor] = useState<string | undefined>(COLORS.background); // State for wishlist color
+    const [wishlistColor, setWishlistColor] = useState<string | undefined>(COLORS.background);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [menuVisible, setMenuVisible] = useState(false);
-
+    const { triggerRefresh, refreshTimestamp } = useRefresh(); 
 
     const handleCustomBack = () => {
         if (router.canGoBack()) {
@@ -61,28 +59,20 @@ export default function WishlistItemScreen() {
                 setIsLoading(false);
                 return;
             }
+            // console.log(`Fetching item details for ${itemId}, refresh: ${refreshTimestamp}`); // For debugging
             setIsLoading(true);
             try {
-                // Fetch item details
                 const fetchedItem = await wishlistAPI.getWisihlistItem(itemId as string);
                 if (fetchedItem) {
                     setItem(fetchedItem);
                 } else {
                     setError("Item not found.");
-                    // Still try to fetch wishlist details for color if item not found but wishlistId exists
                 }
 
-                // Fetch wishlist details for color
-                try {
-                    const fetchedWishlist = await wishlistAPI.getWishlist(wishlistId as string);
-                    if (fetchedWishlist && fetchedWishlist.color) {
-                        setWishlistColor(fetchedWishlist.color);
-                    }
-                } catch (wishlistError) {
-                    console.error("Failed to fetch wishlist details for color:", wishlistError);
-                    // Keep default background color if wishlist fetch fails
+                const fetchedWishlist = await wishlistAPI.getWishlist(wishlistId as string);
+                if (fetchedWishlist && fetchedWishlist.color) {
+                    setWishlistColor(fetchedWishlist.color);
                 }
-
             } catch (err) {
                 console.error("Failed to fetch item details:", err);
                 setError("Failed to load item details.");
@@ -92,13 +82,14 @@ export default function WishlistItemScreen() {
         };
 
         fetchData();
-    }, [itemId, wishlistId]);
+    }, [itemId, wishlistId, refreshTimestamp]);
 
     const handleOpenUrl = () => {
         if (item?.url) {
             Linking.openURL(item.url).catch(err => console.error("Couldn't load page", err));
         }
     };
+
 
     const dynamicPageStyle = {
         ...styles.container,
@@ -113,8 +104,21 @@ export default function WishlistItemScreen() {
         height: dynamicImageHeight,
     };
 
+    const handleItemDeleted = () => {
+        Toast.show({
+            type: 'success',
+            text1: 'Item Deleted',
+            text2: `${item?.name || 'The item'} has been deleted.`,
+        });
+        triggerRefresh();
+        if (wishlistId) {
+            router.replace(`/home/lists/${wishlistId}`);
+        } else {
+            router.replace('/home/lists');
+        }
+    };
 
-    // TODO: Check
+
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
@@ -147,44 +151,65 @@ export default function WishlistItemScreen() {
 
     const itemImageUri = item.image ? `${API_URL}wishlist/${item.id}/image` : null;
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
+    
+    const fixedUrlContainerHeight = (SPACING.sm * 2) + 24 + SPACING.md;
+    const scrollPaddingBottom = (styles.scrollContent.paddingBottom || 0) + fixedUrlContainerHeight;
+
 
     return (
-        <SafeAreaView style={styles.container}>
-            <Header title='' onBack={handleCustomBack} backgroundColor={headerBackgroundColor} onOptionsPress={() => setMenuVisible(true)}/>
-            <ScrollView  style={dynamicPageStyle} contentContainerStyle={styles.scrollContent}>
+        <SafeAreaView style={dynamicPageStyle}>
+            <Header 
+                title=''
+                onBack={handleCustomBack} 
+                backgroundColor={headerBackgroundColor} 
+                showOptions={true} 
+                onOptionsPress={() => setMenuVisible(true)}
+            />
+            <ScrollView  
+                style={dynamicPageStyle} 
+                contentContainerStyle={{ ...styles.scrollContent, paddingBottom: scrollPaddingBottom }}
+            >
                 {itemImageUri && (
                     <View style={imageContainerDynamicStyle}>
                         <Image source={{ uri: itemImageUri }} style={styles.image} resizeMode='contain'/>
                     </View>
                 )}
-
                 <View style={styles.detailsContainer}>
-
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    {error && <Text style={styles.errorTextSmall}>{error}</Text>}
-
-                    {item.price !== undefined && item.price !== null && (
-                        <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-                    )}
-
+                    <View style={styles.namePriceContainer}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        {item.price !== undefined && item.price !== null && (
+                            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+                        )}
+                    </View>
                     {item.description && (
                         <Text style={styles.description}>{item.description}</Text>
                     )}
-
-                    {item.url && (
-                         <View style={styles.urlDisplayContainer}>
-                            <TouchableOpacity onPress={handleOpenUrl} style={styles.urlLinkTouchable}>
-                                <Text style={styles.urlLinkText} numberOfLines={1} ellipsizeMode="middle">
-                                    {item.url}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleCopyUrl} style={styles.copyIconTouchable}>
-                                <Ionicons name="copy-outline" size={24} color={COLORS.text.primary} />
-                            </TouchableOpacity>
-                        </View>
-                    )}
                 </View>
             </ScrollView>
+
+            {item.url && (
+                <View style={styles.fixedUrlDisplayContainer}>
+                    <TouchableOpacity onPress={handleOpenUrl} style={styles.urlLinkTouchable}>
+                        <Text style={styles.urlLinkText} numberOfLines={1} ellipsizeMode="middle">
+                            {item.url}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleCopyUrl} style={styles.copyIconTouchable}>
+                        <Ionicons name="copy-outline" size={24} color={COLORS.text.primary} />
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {itemId && wishlistId && (
+                <ItemActionsMenu
+                    itemId={itemId}
+                    wishlistId={wishlistId}
+                    itemName={item.name}
+                    menuVisible={menuVisible}
+                    onMenuClose={() => setMenuVisible(false)}
+                    onItemDeleted={handleItemDeleted}
+                />
+            )}
         </SafeAreaView>
     );
 }
@@ -192,14 +217,12 @@ export default function WishlistItemScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     scrollContent: {
-        paddingBottom: SPACING.lg,
+        paddingBottom: SPACING.lg, // Base padding
     },
-    imageContainer: { // Added a container for the image/placeholder
+    imageContainer: {
         width: '100%',
-        height: 300,
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
@@ -209,48 +232,53 @@ const styles = StyleSheet.create({
         width: '100%', 
         height: '100%', 
     },
-    imagePlaceholder: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imagePlaceholderText: {
-        color: COLORS.inactive,
-        marginTop: SPACING.sm,
-    },
     detailsContainer: {
-        paddingHorizontal: SPACING.md, // Only horizontal padding, vertical spacing handled by elements
+        paddingHorizontal: SPACING.md,
+        marginTop: SPACING.lg, 
+    },
+    namePriceContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center', 
+        marginBottom: SPACING.md, 
     },
     itemName: {
-        fontSize: 28,
+        fontSize: 22,
         fontWeight: 'bold',
         color: COLORS.text.primary,
-        marginBottom: SPACING.sm,
-        textAlign: 'center',
-        margin: SPACING.lg,
-    },
-    description: {
-        fontSize: 16,
-        minHeight: 200,
-        color: COLORS.text.secondary,
-        marginBottom: SPACING.md,
-        lineHeight: 22,
+        flex: 1, 
+        marginRight: SPACING.sm, 
     },
     price: {
         fontSize: 22,
         fontWeight: '600',
         color: COLORS.text.primary,
-        marginBottom: SPACING.md,
+        textAlign: 'right',
     },
-    urlDisplayContainer: {
+    description: {
+        fontSize: 16,
+        color: COLORS.text.secondary,
+        marginBottom: SPACING.md, 
+        lineHeight: 22,
+        minHeight: 100,
+    },
+    fixedUrlDisplayContainer: {
+        position: 'absolute',
+        bottom: SPACING.md,
+        left: SPACING.md,
+        right: SPACING.md,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.background || COLORS.card, // Use a suitable background color
+        backgroundColor: COLORS.cardDark,
         borderRadius: 8,
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.sm,
-        marginBottom: SPACING.md,
         borderWidth: 1,
-        borderColor: COLORS.background || COLORS.inactive, // Use a suitable border color
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.00,
+        elevation: 5,
     },
     urlLinkTouchable: {
         flex: 1, 
@@ -259,7 +287,6 @@ const styles = StyleSheet.create({
     urlLinkText: {
         fontSize: 15,
         color: COLORS.text.primary, 
-        // textDecorationLine: 'underline', // Optional: if you want underline
     },
     copyIconTouchable: {
         padding: SPACING.xs, 
@@ -274,11 +301,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: COLORS.error,
         textAlign: 'center',
-    },
-    errorTextSmall: { // For less critical errors shown within content
-        fontSize: 14,
-        color: COLORS.error,
-        textAlign: 'center',
-        marginBottom: SPACING.sm,
     },
 });

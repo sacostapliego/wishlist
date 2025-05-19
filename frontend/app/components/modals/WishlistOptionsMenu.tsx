@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   deleteItem: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: COLORS.border,
     marginTop: SPACING.sm,
     paddingTop: SPACING.md,
   },

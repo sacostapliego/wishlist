@@ -13,6 +13,7 @@ export interface WishlistItemDetails {
     price?: number;
     url?: string;
     image?: string;
+    priority?: number;
 }
 
 export default function wishlists() {

@@ -26,6 +26,7 @@ export const COLORS = {
   inactive: '#64748b',
   error: '#ef4444',
   white: '#ffffff',
+  border: '#64748b',
 };
 
 export const AUTH_COLORS = {

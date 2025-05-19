@@ -126,6 +126,7 @@ export const wishlistAPI = {
         return []; 
       }
     },
+    
     getWisihlistItem: async (itemId: string) => {
       try {
         const response = await api.get(`/wishlist/${itemId}`);
