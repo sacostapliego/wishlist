@@ -3,17 +3,8 @@ import { wishlistAPI } from '../services/wishlist';
 import { WishlistApiResponse } from '../types/lists';
 import { userAPI, PublicUserDetailsResponse } from '../services/user';
 import { API_URL } from '../services/api'; // Import API_URL
+import { WishlistItem } from '../types/wishlist';
 
-// Local type for items if not using a global Item type
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-};
-
-// interface for owner's display information
 interface OwnerDisplayInfo {
   name?: string;
   username: string;

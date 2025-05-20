@@ -16,5 +16,50 @@ export interface WishlistItemDetails {
     priority?: number;
 }
 
+export type WishlistItem = {
+  id: string;
+  name: string;
+  image?: string;
+  price?: number;
+  priority: number;
+};
+
+export interface WishlistOptionsMenuProps {
+  visible: boolean;
+  onClose: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onSelectItems: () => void;
+  onShare: () => void;
+}
+
+export interface WishlistActionsProps {
+  wishlistId: string;
+  menuVisible: boolean;
+  onMenuClose: () => void;
+  onEnterSelectionMode: () => void;
+  refetchItems: () => void;
+}
+
+export interface WishlistContentProps {
+  items: WishlistItem[];
+  baseSize: number;
+  isSelectionMode: boolean;
+  selectedItems: string[];
+  onItemPress: (item: WishlistItem) => void;
+  onAddItem: () => void;
+  onCancelSelection: () => void;
+  wishlistColor?: string;
+}
+
+export interface WishlistListViewProps {
+  items: WishlistItem[];
+  onItemPress?: (item: WishlistItem) => void;
+  isSelectionMode: boolean;
+  selectedItems: string[];
+  wishlistColor?: string; 
+}
+
+
 export default function wishlists() {
 }

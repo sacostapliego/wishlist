@@ -2,13 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_WIDTH, COLORS, SPACING } from '../../styles/theme';
-
-interface ItemOptionsMenuProps {
-  visible: boolean;
-  onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}
+import { ItemOptionsMenuProps } from '@/app/types/items';
 
 export default function ItemOptionsMenu({
   visible,

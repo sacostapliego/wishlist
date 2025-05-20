@@ -4,12 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { CARD_WIDTH, COLORS, SPACING } from '../../styles/theme';
 import * as Clipboard from 'expo-clipboard';
-
-interface ShareLinkModalProps {
-  visible: boolean;
-  shareUrl: string | null;
-  onClose: () => void;
-}
+import { ShareLinkModalProps } from '@/app/types/objects';
 
 export default function ShareLinkModal({
     visible,

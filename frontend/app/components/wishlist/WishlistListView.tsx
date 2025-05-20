@@ -4,22 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
 import { getLightColor } from '../ui/LightColor';
+import { WishlistListViewProps } from '@/app/types/wishlist';
 
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-};
-
-interface WishlistListViewProps {
-  items: WishlistItem[];
-  onItemPress?: (item: WishlistItem) => void;
-  isSelectionMode: boolean;
-  selectedItems: string[];
-  wishlistColor?: string; 
-}
 
 const formatPrice = (price?: number) => {
   if (price === undefined || price === null) return '';

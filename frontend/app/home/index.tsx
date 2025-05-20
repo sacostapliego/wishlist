@@ -14,9 +14,8 @@ import { useRefresh } from '../context/RefreshContext';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { user } = useAuth();
-  const { refreshTimestamp } = useRefresh(); // Use refresh context instead of params
+  const { refreshTimestamp } = useRefresh();
   const [personalLists, setPersonalLists] = useState<WishlistData[]>([]);
   const [friendsLists, setFriendsLists] = useState<WishlistData[]>([]);
   const [isLoading, setIsLoading] = useState(false);

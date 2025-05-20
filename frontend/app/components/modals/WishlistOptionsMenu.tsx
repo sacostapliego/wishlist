@@ -2,15 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_WIDTH, COLORS, SPACING } from '../../styles/theme';
-
-interface WishlistOptionsMenuProps {
-  visible: boolean;
-  onClose: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
-  onSelectItems: () => void;
-  onShare: () => void;
-}
+import { WishlistOptionsMenuProps } from '@/app/types/wishlist';
 
 export default function WishlistOptionsMenu({ 
   visible, 

@@ -10,7 +10,6 @@ import { Header } from '@/app/components/layout/Header';
 import { LoadingState } from '@/app/components/common/LoadingState';
 import ItemForm, { ItemFormRef, ItemFormData } from '@/app/components/forms/ItemForm';
 import { API_URL } from '@/app/services/api';
-// Ensure WishlistItemDetails includes priority if it's part of your backend model
 import { WishlistItemDetails } from '@/app/types/wishlist'; 
 
 export default function EditItemScreen() {
@@ -182,7 +181,7 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     padding: SPACING.md,
-    paddingBottom: SPACING.xxl, // Ensure enough space for the submit button
+    paddingBottom: SPACING.xxl,
   },
   formLoadingOverlay: {
     position: 'absolute',

@@ -5,25 +5,7 @@ import { EmptyState } from '../layout/EmptyState';
 import { ItemGrid } from './ItemGrid'; 
 import { COLORS, SPACING } from '../../styles/theme';
 import BentoGrid, { getBentoGridWidth, getBentoGridRenderedHeight } from './BentoGrid';
-
-interface WishlistItem {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-}
-
-interface WishlistContentProps {
-  items: WishlistItem[];
-  baseSize: number;
-  isSelectionMode: boolean;
-  selectedItems: string[];
-  onItemPress: (item: WishlistItem) => void;
-  onAddItem: () => void;
-  onCancelSelection: () => void;
-  wishlistColor?: string;
-}
+import { WishlistContentProps } from '@/app/types/wishlist';
 
 export const WishlistContent = ({
   items,

@@ -15,7 +15,7 @@ export interface ItemFormData {
   currentImageUri?: string; 
   newImageUri?: string; 
   priority?: number;
-  wishlistId?: string; // Added for wishlist selection
+  wishlistId?: string; 
 }
 
 interface ItemFormProps {
@@ -23,12 +23,11 @@ interface ItemFormProps {
   onSubmit: (data: ItemFormData, imageFile?: File | { uri: string; name: string; type: string }) => void;
   isLoading?: boolean;
   submitLabel?: string;
-  // Props for wishlist selection (used in "add" mode)
   wishlists?: WishlistApiResponse[];
   selectedWishlistId?: string;
   onWishlistChange?: (wishlistId: string) => void;
   loadingWishlists?: boolean;
-  isEditMode?: boolean; // To conditionally show wishlist selector
+  isEditMode?: boolean;
   hideWishlistSelector?: boolean;
 }
 

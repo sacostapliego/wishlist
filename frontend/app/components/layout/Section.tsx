@@ -11,7 +11,6 @@ interface SectionProps {
   showTitle?: boolean;
 }
 
-
 export function Section({ 
   title, 
   children, 

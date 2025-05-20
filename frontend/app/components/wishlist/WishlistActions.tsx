@@ -8,14 +8,7 @@ import ConfirmDialog from '../modals/Confirm';
 import { useRouter } from 'expo-router';
 import { useRefresh } from '../../context/RefreshContext';
 import ShareLinkModal from '../modals/ShareLinkModal';
-
-interface WishlistActionsProps {
-  wishlistId: string;
-  menuVisible: boolean;
-  onMenuClose: () => void;
-  onEnterSelectionMode: () => void;
-  refetchItems: () => void;
-}
+import { WishlistActionsProps } from '@/app/types/wishlist';
 
 export const WishlistActions = ({
   wishlistId,

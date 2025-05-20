@@ -5,15 +5,9 @@ import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
 import getLightColor from '../ui/LightColor';
 import { WishlistItemDetails } from '../../types/wishlist';
+import { ItemDetailContentProps } from '@/app/types/items';
 
 const screenHeight = Dimensions.get('window').height;
-
-interface ItemDetailContentProps {
-    item: WishlistItemDetails;
-    wishlistColor?: string;
-    onOpenUrl: () => void;
-    onCopyUrl: () => void;
-}
 
 export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
     item,
@@ -100,7 +94,7 @@ const styles = StyleSheet.create({
     namePriceContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start', // Align items to the start for multi-line names
+        alignItems: 'flex-start',
         marginBottom: SPACING.md,
     },
     itemName: {

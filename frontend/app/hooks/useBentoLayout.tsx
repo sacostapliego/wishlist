@@ -1,16 +1,9 @@
 import { useMemo } from 'react';
 import { Dimensions, Platform } from 'react-native';
 import { SPACING } from '../styles/theme';
+import { WishlistItem } from '../types/wishlist';
 
 const WEB_FRAME_WIDTH = 900;
-
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-};
 
 export type BentoGridPosition = {
   item: WishlistItem;

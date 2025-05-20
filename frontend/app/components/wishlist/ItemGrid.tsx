@@ -3,24 +3,7 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
-
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-};
-
-type ItemGridProps = {
-  items: WishlistItem[];
-  baseSize: number;
-  onItemPress?: (item: WishlistItem) => void;
-  showPrice?: boolean;
-  selectedItems?: string[];
-  selectionMode?: boolean;
-  wishlistColor?: string;
-};
+import { ItemGridProps } from '@/app/types/items';
 
 export const ItemGrid = ({ 
   items, 

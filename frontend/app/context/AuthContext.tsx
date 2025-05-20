@@ -4,15 +4,8 @@ import api from '../services/api';
 import authAPI from '../services/auth';
 import wishlistAPI from '../services/wishlist';
 import userAPI from '../services/user';
+import { User } from '../types/user';
 
-// Define types for context value
-type User = {
-  id: string;
-  email: string;
-  username: string;
-  name?: string;
-  pfp?:string
-};
 
 type AuthContextType = {
   user: User | null;

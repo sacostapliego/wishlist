@@ -14,13 +14,13 @@ export default function AddModal({ visible, onClose }: AddModalProps) {
   if (!visible) return null;
 
   const handleCreateWishlist = () => {
-    onClose(); // Close the modal first
-    router.push('/home/create-wishlist'); // Navigate to the create wishlist page
+    onClose();
+    router.push('/home/create-wishlist');
   };
 
   const handleAddItem = () => {
-    onClose(); // Close the modal first
-    router.push('/home/add-item'); // Navigate to add item page
+    onClose();
+    router.push('/home/add-item');
   };
 
   return (

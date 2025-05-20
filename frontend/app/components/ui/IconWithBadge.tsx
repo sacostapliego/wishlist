@@ -2,18 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../styles/theme';
+import { IconWithBadgeProps } from '@/app/types/objects';
 
-interface IconWithBadgeProps {
-  name: keyof typeof Ionicons.glyphMap;
-  size?: number;
-  color?: string;
-  badgeCount?: number;
-  badgeColor?: string;
-}
-
-/**
- * Icon component with optional badge counter
- */
 export function IconWithBadge({
   name,
   size = 24,

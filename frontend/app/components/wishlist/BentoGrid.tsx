@@ -4,23 +4,8 @@ import { COLORS } from '../../styles/theme';
 import { getLightColor } from '../ui/LightColor';
 import { BentoGridItem } from './BentoGridItem';
 import { useBentoLayout, getBentoGridWidthExport, getBentoGridRenderedHeightExport } from '../../hooks/useBentoLayout'; // Adjust path
-
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-};
-
-type BentoGridProps = {
-  items: WishlistItem[];
-  baseSize: number;
-  onItemPress?: (item: WishlistItem) => void;
-  selectedItems?: string[];
-  selectionMode?: boolean;
-  wishlistColor?: string;
-};
+import { WishlistItem } from '@/app/types/wishlist';
+import { BentoGridProps } from '@/app/types/objects';
 
 export const BentoGrid = ({
   items,

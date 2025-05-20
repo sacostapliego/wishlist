@@ -3,14 +3,7 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme'; // Adjust path as needed
 import { API_URL } from '../../services/api'; // Adjust path as needed
-
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number; // Keep priority if needed for other styling, though size is from layout
-};
+import { WishlistItem } from '@/app/types/wishlist';
 
 interface BentoGridItemProps {
   item: WishlistItem;

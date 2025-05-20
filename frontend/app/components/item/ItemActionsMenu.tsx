@@ -7,15 +7,7 @@ import { COLORS } from '../../styles/theme';
 import ConfirmDialog from '../modals/Confirm';
 import ItemOptionsMenu from './ItemOptionsMenu';
 import { useRefresh } from '../../context/RefreshContext';
-
-interface ItemActionsMenuProps {
-  itemId: string;
-  wishlistId: string;
-  itemName: string; // For confirmation message
-  menuVisible: boolean;
-  onMenuClose: () => void;
-  onItemDeleted: () => void;
-}
+import { ItemActionsMenuProps } from '@/app/types/items';
 
 export const ItemActionsMenu = ({
   itemId,
@@ -96,6 +88,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999, // Ensure it's on top
+    zIndex: 999,
   },
 });
