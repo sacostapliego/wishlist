@@ -6,13 +6,22 @@ import uuid
 
 from models.wishlist import Wishlist
 from models.base import get_db
-from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse
+from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse, ScrapeRequest
 from middleware.auth import get_current_user
 from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
+from services.scraper import scrape_url
 
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
 router = APIRouter(prefix='/wishlist', tags=['wishlist'])
+
+''' Scrap item details from a URL '''
+@router.post('/scrape-url', tags=['scraper'])
+async def scrape_item_from_url(scrape_request: ScrapeRequest, current_user: dict = Depends(get_current_user)):
+    scraped_data = scrape_url(str(scrape_request.url))
+    if "error" in scraped_data:
+        raise HTTPException(status_code=400, detail=scraped_data["error"])
+    return scraped_data
 
 ''' Create a new item '''
 @router.post('/', response_model=WishListItemResponse)
@@ -64,7 +73,6 @@ async def create_wishlist_item(
         if 'image_url' in locals() and image_url:
             delete_file_from_s3(image_url)
         raise HTTPException(status_code=500, detail=f"Error creating item: {str(e)}")
-
 
 ''' Get all items '''
 @router.get('/', response_model=List[WishListItemResponse])
