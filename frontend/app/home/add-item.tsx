@@ -90,7 +90,18 @@ export default function AddItemScreen() {
       await wishlistAPI.createItem(itemDataPayload, imageFile as any);
       
       triggerRefresh();
-      itemFormRef.current?.resetForm();
+      setInitialItemFormValues({
+        name: '',
+        description: '',
+        price: '',
+        url: '',
+        priority: 0,
+        newImageUri: undefined,
+      });
+
+      if (itemFormRef.current) {
+        itemFormRef.current.resetForm();
+      }
       
       Toast.show({
         type: 'success',
