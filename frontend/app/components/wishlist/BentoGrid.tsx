@@ -3,19 +3,17 @@ import { View, StyleSheet } from 'react-native';
 import { COLORS } from '../../styles/theme';
 import { getLightColor } from '../ui/LightColor';
 import { BentoGridItem } from './BentoGridItem';
-import { useBentoLayout, getBentoGridWidthExport, getBentoGridRenderedHeightExport } from '../../hooks/useBentoLayout'; // Adjust path
-import { WishlistItem } from '@/app/types/wishlist';
+import { useBentoLayout } from '../../hooks/useBentoLayout';
 import { BentoGridProps } from '@/app/types/objects';
 
 export const BentoGrid = ({
   items,
-  baseSize,
   onItemPress,
   selectedItems = [],
   selectionMode = false,
   wishlistColor,
-}: BentoGridProps) => {
-  const { gridPositions, containerWidth, containerHeight } = useBentoLayout(items, baseSize);
+}: Omit<BentoGridProps, 'baseSize'>) => {
+  const { gridPositions, containerWidth, containerHeight } = useBentoLayout(items);
 
   const formatPrice = (price?: number) => {
     if (price === undefined || price === null) return '';
@@ -36,14 +34,14 @@ export const BentoGrid = ({
       ]}
     >
       {gridPositions.map((pos) => {
-        const { item, width, height, top, left, isCenter, titleFontSize, priceFontSize } = pos;
+        const { item, width, height, top, left, titleFontSize, priceFontSize } = pos;
         const isSelected = selectedItems.includes(item.id);
 
         return (
           <BentoGridItem
             key={item.id}
             item={item}
-            style={{ width, height, top, left, zIndex: isCenter ? 2 : 1, backgroundColor: cardColor }}
+            style={{ width, height, top, left, backgroundColor: cardColor }}
             isSelected={isSelected}
             selectionMode={selectionMode}
             onItemPress={onItemPress}
@@ -61,9 +59,7 @@ export const BentoGrid = ({
 const styles = StyleSheet.create({
   bentoContainer: {
     position: 'relative',
-    // backgroundColor: 'rgba(0,255,0,0.1)', // For debugging layout bounds
   },
 });
 
-export { getBentoGridWidthExport as getBentoGridWidth, getBentoGridRenderedHeightExport as getBentoGridRenderedHeight };
 export default BentoGrid;

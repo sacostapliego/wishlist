@@ -1,15 +1,16 @@
-import React, { useEffect, useRef } from 'react';
-import { ScrollView, StyleSheet, View, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withDecay, runOnJS } from 'react-native-reanimated';
 import { EmptyState } from '../layout/EmptyState';
-import { ItemGrid } from './ItemGrid'; 
+import BentoGrid from './BentoGrid';
 import { COLORS, SPACING } from '../../styles/theme';
-import BentoGrid, { getBentoGridWidth, getBentoGridRenderedHeight } from './BentoGrid';
 import { WishlistContentProps } from '@/app/types/wishlist';
+import { useBentoLayout } from '../../hooks/useBentoLayout';
 
 export const WishlistContent = ({
   items,
-  baseSize,
   isSelectionMode,
   selectedItems,
   onItemPress,
@@ -17,61 +18,57 @@ export const WishlistContent = ({
   onCancelSelection,
   wishlistColor,
 }: WishlistContentProps) => {
+  const { gridPositions, containerWidth, containerHeight } = useBentoLayout(items);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const verticalScrollViewRef = useRef<ScrollView>(null); // Ref for the inner vertical ScrollView
-  
-  // Effect to scroll to the middle when items are loaded
-  useEffect(() => {
-    if (items && items.length > 0 && scrollViewRef.current && verticalScrollViewRef.current) {
-      // Horizontal centering
-      const bentoContainerWidth = getBentoGridWidth(); // Actual width of the BentoGrid
-      const horizontalViewportWidth = Platform.OS === 'web' ? 
-        430 : // Assuming DeviceFrame width for web, or a fixed width for the viewport
-        Dimensions.get('window').width;
-      
-      const horizontalScrollToOffset = (bentoContainerWidth - horizontalViewportWidth) / 2;
-      
-      // Vertical centering
-      const bentoGridActualRenderedHeight = getBentoGridRenderedHeight() ;
-      const verticalScrollViewportHeight = getGridContentHeight(); 
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
 
-      let verticalScrollToOffset = (bentoGridActualRenderedHeight - verticalScrollViewportHeight) / 2;
-      verticalScrollToOffset = Math.max(0, verticalScrollToOffset);
+  const onPanGestureEvent = (event: any) => {
+    if (Platform.OS === 'web') return;
 
-      setTimeout(() => {
-        // Horizontal scroll
-        scrollViewRef.current?.scrollTo({ 
-          x: horizontalScrollToOffset > 0 ? horizontalScrollToOffset : 0, 
-          y: 0, 
-          animated: false 
-        });
+    const { translationX, translationY, state, velocityX, velocityY } = event.nativeEvent;
 
-        // Vertical scroll for the inner ScrollView
-        verticalScrollViewRef.current?.scrollTo({
-          x: 0,
-          y: verticalScrollToOffset,
-          animated: false
-        });
-      }, 150); // Increased timeout slightly to ensure layout is fully settled
-    } else if (items && items.length === 0 && scrollViewRef.current && verticalScrollViewRef.current) {
-      // If no items, scroll to top/left
-       setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
-        verticalScrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
-      }, 100);
+    if (state === State.BEGAN) {
+      startX.value = translateX.value;
+      startY.value = translateY.value;
     }
-  }, [items]);
-  
-  // This defines the height of the viewport for the vertical scroll
-  const getGridContentHeight = () => {
-    // This should be the height of the ScrollView that contains the BentoGrid vertically
-    if (Platform.OS === 'web') {
-        return Dimensions.get('window').height;
+
+    if (state === State.ACTIVE) {
+      translateX.value = startX.value + translationX;
+      translateY.value = startY.value + translationY;
     }
-    // For native, it might be a larger portion or a calculated value based on other elements
-    return Dimensions.get('window').height * 0.8;
+
+    if (state === State.END) {
+      // Calculate clamping boundaries
+      const clampX: [number, number] = [Math.min(0, screenWidth - containerWidth - SPACING.md * 2), 0];
+      const clampY: [number, number] = [Math.min(0, screenHeight - containerHeight - SPACING.md * 2), 0];
+
+      translateX.value = withDecay({ velocity: velocityX, clamp: clampX });
+      translateY.value = withDecay({ velocity: velocityY, clamp: clampY });
+    }
   };
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+      ],
+    };
+  });
+
+  const renderGrid = () => (
+    <BentoGrid
+      items={items}
+      onItemPress={onItemPress}
+      selectedItems={selectedItems}
+      selectionMode={isSelectionMode}
+      wishlistColor={wishlistColor}
+    />
+  );
 
   return (
     <View style={styles.container}>
@@ -82,68 +79,58 @@ export const WishlistContent = ({
           </TouchableOpacity>
         </View>
       )}
-      
+
       {!items || items.length === 0 ? (
-        <EmptyState 
-          message="No items in this wishlist yet" 
+        <EmptyState
+          message="No items in this wishlist yet"
           actionText="Add an item"
           onAction={onAddItem}
         />
-      ) : (
-        <ScrollView 
-          ref={scrollViewRef} // Ref for horizontal scroll
-          horizontal={true}
-          showsHorizontalScrollIndicator={true} // Keep true for web/debugging
-          nestedScrollEnabled={true}
-          contentContainerStyle={[styles.horizontalScrollContent, {
-              height: getGridContentHeight() 
-          }]}
-          style={styles.horizontalScrollView} // Added for potential outer styling
+      ) : Platform.OS === 'web' ? (
+        <ScrollView
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContentContainer}
         >
-          <ScrollView 
-            ref={verticalScrollViewRef}
-            nestedScrollEnabled={true} 
-            showsVerticalScrollIndicator={false} 
-            contentContainerStyle={styles.verticalScrollContent} 
-          >
-            <BentoGrid 
-              items={items} 
-              baseSize={baseSize} 
-              onItemPress={onItemPress}
-              selectedItems={selectedItems}
-              selectionMode={isSelectionMode}
-              wishlistColor={wishlistColor}
-            />
-          </ScrollView>
+          {renderGrid()}
         </ScrollView>
+      ) : (
+        <PanGestureHandler onGestureEvent={onPanGestureEvent} onHandlerStateChange={onPanGestureEvent}>
+          <Animated.View style={[styles.panContainer, animatedStyle]}>
+            {renderGrid()}
+          </Animated.View>
+        </PanGestureHandler>
       )}
     </View>
   );
 };
 
-export default WishlistContent;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden', // Important for pan gesture
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: SPACING.md, // Add padding if needed
-    paddingTop: SPACING.sm,      // Add padding if needed
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    zIndex: 10,
   },
   actionButton: {
     padding: SPACING.xs,
   },
-  horizontalScrollView: {
-    flex: 1, // Ensure it takes available space
+  scrollContentContainer: {
+    padding: SPACING.md,
+    alignItems: 'flex-start', // Align grid to the top
   },
-  horizontalScrollContent: {
-    paddingVertical: SPACING.xs, // Reduced padding if BentoGrid has its own
-    paddingHorizontal: SPACING.xs,
+  panContainer: {
+    // The pan container itself doesn't need explicit dimensions
+    // as the animated view will wrap the grid.
   },
-  verticalScrollContent: {
-    paddingBottom: SPACING.lg, // Ensure space at the bottom for scrolling
-  }
 });
+
+export default WishlistContent;

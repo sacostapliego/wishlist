@@ -16,7 +16,7 @@ def scrape_url(url: str):
         response = requests.get(url, headers=headers, timeout=15)
         
         # This will raise an HTTPError if the HTTP request returned an unsuccessful status code.
-        response.raise_for_status() 
+        response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
         

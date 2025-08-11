@@ -117,17 +117,23 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   itemImage: {
     width: '100%',
     height: '100%',
   },
   itemInfo: {
-    flex: 1,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     width: '100%',
     padding: SPACING.sm,
     justifyContent: 'center',
-    minHeight: 50, // Ensure some space for text
+    backgroundColor: 'rgba(0,0,0,0.4)', 
+    minHeight: 50,
   },
   itemName: {
     fontWeight: 'bold',
