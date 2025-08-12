@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Platform, useWindowDimensions } from 'react-native';
 import { WishlistItem } from '../types/wishlist';
 import { SPACING } from '../styles/theme';
+import { useImageDimensions } from './useImageDimensions';
 
 export type BentoGridPosition = {
   item: WishlistItem;
@@ -13,99 +14,76 @@ export type BentoGridPosition = {
   priceFontSize: number;
 };
 
-// Configuration
-const GAP_SIZE = SPACING.md;
-const BASE_ITEM_WIDTH = Platform.OS === 'web' ? 250 : 160;
-const BASE_ITEM_HEIGHT = 150;
+const GAP = SPACING.md;
+const INFO_BAR_HEIGHT = 56;
+const ITEM_SCALE = 0.7; // 30% smaller
 
-/**
- * A hook to calculate a packed layout for a bento grid.
- * This algorithm places items to minimize grid size.
- * @param items - The array of wishlist items.
- * @returns An object containing the calculated positions and the total container dimensions.
- */
 export const useBentoLayout = (items: WishlistItem[]) => {
   const { width: screenWidth } = useWindowDimensions();
+  const imageDims = useImageDimensions(items);
 
   const { gridPositions, containerWidth, containerHeight } = useMemo(() => {
     if (!items || items.length === 0) {
       return { gridPositions: [], containerWidth: 0, containerHeight: 0 };
     }
 
+    // Columns responsive by platform
+    const horizontalPadding = SPACING.md * 2;
+    const workWidth = Math.max(320, screenWidth - horizontalPadding);
+
+    const targetColWidth = Platform.OS === 'web' ? 280 : 170;
+    let cols = Math.max(2, Math.floor((workWidth + GAP) / (targetColWidth + GAP)));
+    if (Platform.OS === 'web') cols = Math.min(6, Math.max(3, cols));
+    else cols = Math.min(3, cols); // 2–3 columns on mobile
+
+    const baseColWidth = Math.floor((workWidth - GAP * (cols - 1)) / cols);
+    const colWidth = Math.max(100, Math.floor(baseColWidth * ITEM_SCALE)); // apply 30% shrink
+    const colHeights = new Array(cols).fill(0);
+
     const positions: BentoGridPosition[] = [];
-    const occupied = new Set<string>(); // "x,y" coordinates of occupied cells
 
-    let finalWidth = 0;
-    let finalHeight = 0;
-
-    const getDynamicSize = (priority: number) => {
-      const multiplier = 1 + (priority / 5) * 0.5;
+    const fontSizesFor = (priority: number) => {
+      const k = 1 + (priority / 5) * 0.25;
       return {
-        width: BASE_ITEM_WIDTH * (1 + (priority / 5) * 0.2),
-        height: BASE_ITEM_HEIGHT * multiplier,
+        titleFontSize: Math.max(12, 14 * k),
+        priceFontSize: Math.max(10, 12 * k),
       };
     };
 
-    const getFontSizes = (priority: number) => {
-      const sizeMultiplier = 1 + (priority / 5) * 0.3;
-      return {
-        titleFontSize: Math.max(12, 14 * sizeMultiplier),
-        priceFontSize: Math.max(10, 12 * sizeMultiplier),
-      };
-    };
+    for (const item of items) {
+      const dims = imageDims[item.id];
+      const aspect = dims?.aspect ?? 1; // h/w
+      const imageHeight = Math.round(colWidth * aspect);
+      const cardHeight = Math.max(120, imageHeight + INFO_BAR_HEIGHT);
 
-    items.forEach((item) => {
-      const { width, height } = getDynamicSize(item.priority);
-      const { titleFontSize, priceFontSize } = getFontSizes(item.priority);
+      const colIndex = colHeights.indexOf(Math.min(...colHeights));
+      const top = colHeights[colIndex];
+      const left = colIndex * (colWidth + GAP);
 
-      let bestPosition = { x: Infinity, y: Infinity, score: Infinity };
+      const { titleFontSize, priceFontSize } = fontSizesFor(item.priority);
 
-      // Search for the best position (top-most, then left-most)
-      for (let y = 0; y < finalHeight + BASE_ITEM_HEIGHT; y += GAP_SIZE) {
-        for (let x = 0; x < finalWidth + BASE_ITEM_WIDTH; x += GAP_SIZE) {
-          let canPlace = true;
-          // Check if the area is free
-          for (let i = x; i < x + width; i += GAP_SIZE) {
-            for (let j = y; j < y + height; j += GAP_SIZE) {
-              if (occupied.has(`${i},${j}`)) {
-                canPlace = false;
-                break;
-              }
-            }
-            if (!canPlace) break;
-          }
+      positions.push({
+        item,
+        width: colWidth,
+        height: cardHeight,
+        top,
+        left,
+        titleFontSize,
+        priceFontSize,
+      });
 
-          if (canPlace) {
-            const score = y + x; // Prioritize top-left placement
-            if (score < bestPosition.score) {
-              bestPosition = { x, y, score };
-            }
-          }
-        }
-      }
-      
-      const { x: left, y: top } = bestPosition;
+      colHeights[colIndex] += cardHeight + GAP;
+    }
 
-      // Mark the area as occupied
-      for (let i = left; i < left + width; i += GAP_SIZE) {
-        for (let j = top; j < top + height; j += GAP_SIZE) {
-          occupied.add(`${i},${j}`);
-        }
-      }
-
-      positions.push({ item, width, height, top, left, titleFontSize, priceFontSize });
-
-      // Update container dimensions
-      finalWidth = Math.max(finalWidth, left + width);
-      finalHeight = Math.max(finalHeight, top + height);
-    });
+    const totalWidth = cols * colWidth + GAP * (cols - 1);
+    const totalHeight = Math.max(...colHeights) - GAP; // remove last gap
 
     return {
       gridPositions: positions,
-      containerWidth: finalWidth,
-      containerHeight: finalHeight,
+      containerWidth: totalWidth,
+      containerHeight: totalHeight,
     };
-  }, [items, screenWidth]);
+  }, [items, imageDims, screenWidth]);
 
   return { gridPositions, containerWidth, containerHeight };
 };

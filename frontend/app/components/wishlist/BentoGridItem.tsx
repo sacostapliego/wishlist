@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../../styles/theme'; // Adjust path as needed
-import { API_URL } from '../../services/api'; // Adjust path as needed
+import { COLORS, SPACING } from '../../styles/theme';
+import { API_URL } from '../../services/api';
 import { WishlistItem } from '@/app/types/wishlist';
 
 interface BentoGridItemProps {
   item: WishlistItem;
-  style: { // Style props passed from the layout hook
+  style: {
     width: number;
     height: number;
     top: number;
@@ -35,23 +35,20 @@ export const BentoGridItem: React.FC<BentoGridItemProps> = ({
   priceFontSize,
   formatPrice,
 }) => {
-  const hasImage = item.id && item.image;
+  const hasImage = !!item?.id && !!item?.image;
 
   return (
     <TouchableOpacity
       key={item.id}
-      style={[
-        styles.itemCard,
-        style, // Apply dynamic layout styles
-        isSelected && styles.selectedCard,
-      ]}
+      style={[styles.itemCard, style, isSelected && styles.selectedCard]}
       onPress={() => onItemPress?.(item)}
+      activeOpacity={0.8}
     >
       {selectionMode && (
         <View style={styles.selectionIndicator}>
           <Ionicons
-            name={isSelected ? "checkmark-circle" : "ellipse-outline"}
-            size={24}
+            name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+            size={22}
             color={isSelected ? COLORS.primary : COLORS.text.secondary}
           />
         </View>
@@ -63,14 +60,11 @@ export const BentoGridItem: React.FC<BentoGridItemProps> = ({
             <Image
               source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
               style={styles.itemImage}
-              resizeMode="contain"
+              resizeMode="contain" // show the whole image
             />
           </View>
-          <View style={[styles.itemInfo]}>
-            <Text
-              style={[styles.itemName, { fontSize: titleFontSize }]}
-              numberOfLines={1}
-            >
+          <View style={[styles.itemInfo, { backgroundColor: style.backgroundColor }]}>
+            <Text style={[styles.itemName, { fontSize: titleFontSize }]} numberOfLines={1}>
               {item.name}
             </Text>
             {item.price !== undefined && (
@@ -81,15 +75,12 @@ export const BentoGridItem: React.FC<BentoGridItemProps> = ({
           </View>
         </View>
       ) : (
-        <View style={[styles.textOnlyContainer, { backgroundColor: style.backgroundColor /* Use card color */ }]}>
-          <Text
-            style={[styles.textOnlyName, { fontSize: titleFontSize }]}
-            numberOfLines={2}
-          >
+        <View style={[styles.textOnlyContainer, { backgroundColor: style.backgroundColor }]}>
+          <Text style={[styles.textOnlyName, { fontSize: titleFontSize }]} numberOfLines={2}>
             {item.name}
           </Text>
           {item.price !== undefined && (
-            <Text style={[styles.textOnlyPrice, { fontSize: priceFontSize }]}>
+            <Text style={[styles.textOnlyPrice, { fontSize: priceFontSize }]} numberOfLines={1}>
               {formatPrice(item.price)}
             </Text>
           )}
@@ -105,35 +96,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 4,
-    // boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', // For web
   },
   itemWithImageContainer: {
     flex: 1,
-    flexDirection: 'column',
   },
   imageWrapper: {
-    height: '70%',
+    flex: 1,               // image area uses remaining space
     width: '100%',
-    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
   },
   itemImage: {
     width: '100%',
     height: '100%',
   },
   itemInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     width: '100%',
-    padding: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    minHeight: 52,         // solid bar, no transparency
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)', 
-    minHeight: 50,
   },
   itemName: {
     fontWeight: 'bold',
