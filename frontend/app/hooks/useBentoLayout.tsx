@@ -16,7 +16,7 @@ export type BentoGridPosition = {
 
 const GAP = SPACING.md;
 const INFO_BAR_HEIGHT = 56;
-const ITEM_SCALE = 0.7; // 30% smaller
+const ITEM_SCALE_WEB = 0.6; // 30% smaller on web only
 
 export const useBentoLayout = (items: WishlistItem[]) => {
   const { width: screenWidth } = useWindowDimensions();
@@ -37,9 +37,12 @@ export const useBentoLayout = (items: WishlistItem[]) => {
     else cols = Math.min(3, cols); // 2–3 columns on mobile
 
     const baseColWidth = Math.floor((workWidth - GAP * (cols - 1)) / cols);
-    const colWidth = Math.max(100, Math.floor(baseColWidth * ITEM_SCALE)); // apply 30% shrink
-    const colHeights = new Array(cols).fill(0);
 
+    // Apply 30% shrink only on web
+    const scale = Platform.OS === 'web' ? ITEM_SCALE_WEB : 1;
+    const colWidth = Math.max(100, Math.floor(baseColWidth * scale));
+
+    const colHeights = new Array(cols).fill(0);
     const positions: BentoGridPosition[] = [];
 
     const fontSizesFor = (priority: number) => {
@@ -76,7 +79,7 @@ export const useBentoLayout = (items: WishlistItem[]) => {
     }
 
     const totalWidth = cols * colWidth + GAP * (cols - 1);
-    const totalHeight = Math.max(...colHeights) - GAP; // remove last gap
+    const totalHeight = Math.max(...colHeights) - GAP;
 
     return {
       gridPositions: positions,
