@@ -82,9 +82,9 @@ export default function WishlistItemScreen() {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
                 <Head>
-                    <meta name="theme-color" content={headerBackgroundColor} />
+                    <meta name="theme-color" content={COLORS.cardDark} />
                 </Head>
-                <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={headerBackgroundColor} />
+                <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={COLORS.cardDark} />
                 <View style={styles.centeredMessageContainer}>
                     <Text style={styles.errorText}>{error || "The requested item could not be found."}</Text>
                 </View>
@@ -95,17 +95,17 @@ export default function WishlistItemScreen() {
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
             <Head>
-                <meta name="theme-color" content={headerBackgroundColor} />
+                <meta name="theme-color" content={COLORS.cardDark} />
             </Head>
             <StatusBar
                 style={statusBarTextColor}
-                backgroundColor={headerBackgroundColor}
+                backgroundColor={COLORS.cardDark}
                 translucent={false}
             />
             <Header
                 title=""
                 onBack={handleCustomBack}
-                backgroundColor={headerBackgroundColor}
+                backgroundColor={COLORS.cardDark}
                 showOptions={true}
                 onOptionsPress={() => setMenuVisible(true)}
             />
