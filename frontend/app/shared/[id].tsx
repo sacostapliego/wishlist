@@ -55,11 +55,10 @@ export default function WishlistDetailScreen() {
 
       try {
         const friendsWishlists = await friendsAPI.getFriendsWishlists();
-        // Check if any wishlist belongs to this user
-        const isFriend = friendsWishlists.some(list => 
-          list.id === wishlist.id || // Same wishlist
-          friendsWishlists.some(fl => fl.owner_username === ownerDisplayInfo?.username)
-        );
+        // Consider owner_id (best), or fall back to username
+        const isFriend =
+          friendsWishlists.some(w => w.owner_id === wishlist.user_id) ||
+          friendsWishlists.some(w => w.owner_username === ownerDisplayInfo?.username);
         setIsAlreadyFriend(isFriend);
       } catch (error) {
         console.error('Failed to check friendship status:', error);

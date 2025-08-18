@@ -37,6 +37,7 @@ class FriendWishlistResponse(BaseModel):
     description: str = None
     color: str = None
     item_count: int = 0
+    owner_id: str
     owner_name: str
     owner_username: str
     image: str | None = None
@@ -197,7 +198,8 @@ def get_friends_wishlists(
     db: Session = Depends(get_db)
 ):
     """Get public wishlists from friends"""
-    user_id = current_user["user_id"]
+    # Normalize to UUID to compare correctly with DB UUIDs
+    user_id = uuid.UUID(str(current_user["user_id"]))
     
     # Get accepted friendships
     friendships = db.query(UserRelationship).filter(
@@ -208,12 +210,13 @@ def get_friends_wishlists(
         UserRelationship.status == RelationshipStatus.ACCEPTED
     ).all()
     
-    friend_ids = []
-    for friendship in friendships:
-        if friendship.user_id == user_id:
-            friend_ids.append(friendship.friend_id)
-        else:
-            friend_ids.append(friendship.user_id)
+    friend_ids: set[uuid.UUID] = set()
+    for fr in friendships:
+        # Always pick "the other" user
+        other_id = fr.friend_id if fr.user_id == user_id else fr.user_id
+        # Guard against self being added accidentally
+        if other_id != user_id:
+            friend_ids.add(other_id)
     
     if not friend_ids:
         return []
@@ -222,13 +225,12 @@ def get_friends_wishlists(
     wishlists = db.query(Wishlist, User).join(
         User, Wishlist.user_id == User.id
     ).filter(
-        Wishlist.user_id.in_(friend_ids),
+        Wishlist.user_id.in_(list(friend_ids)),
         Wishlist.is_public == True
     ).all()
     
     result = []
     for wishlist, user in wishlists:
-        # Count items in wishlist
         from models.item import WishListItem
         item_count = db.query(WishListItem).filter(
             WishListItem.wishlist_id == wishlist.id
@@ -240,6 +242,7 @@ def get_friends_wishlists(
             description=wishlist.description,
             color=wishlist.color,
             item_count=item_count,
+            owner_id=str(user.id),
             owner_name=user.name or user.username,
             owner_username=user.username,
             image=wishlist.image
@@ -253,7 +256,8 @@ def get_friends_list(
     db: Session = Depends(get_db)
 ):
     """Get accepted friends (both directions)"""
-    user_id = current_user["user_id"]
+    # Normalize to UUID
+    user_id = uuid.UUID(str(current_user["user_id"]))
 
     friendships = db.query(UserRelationship).filter(
         or_(
@@ -263,9 +267,11 @@ def get_friends_list(
         UserRelationship.status == RelationshipStatus.ACCEPTED
     ).all()
 
-    friend_ids = set()
+    friend_ids: set[uuid.UUID] = set()
     for fr in friendships:
-        friend_ids.add(fr.friend_id if fr.user_id == user_id else fr.user_id)
+        other_id = fr.friend_id if fr.user_id == user_id else fr.user_id
+        if other_id != user_id:
+            friend_ids.add(other_id)
 
     if not friend_ids:
         return []

@@ -6,6 +6,7 @@ export interface FriendWishlistResponse {
   description?: string;
   color?: string;
   item_count: number;
+  owner_id: string;
   owner_name: string;
   owner_username: string;
   image?: string;
