@@ -141,6 +141,16 @@ export default function WishlistDetailScreen() {
         profileImage={user?.id ? `${API_URL}users/${user.id}/profile-image` : undefined}
         onAddPress={handleAddItem}
         hasItems={items && items.length > 0}
+        onProfilePress={() =>
+          router.push({
+            pathname: '/home/profile',
+            params: {
+              userId: user?.id,
+              name: user?.name || undefined,
+              username: user?.username || undefined,
+            },
+          })
+        }
       />
 
       {!isSelectionMode && items && items.length > 0 && (

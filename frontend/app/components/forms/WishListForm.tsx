@@ -37,7 +37,7 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
   const [isPublic, setIsPublic] = useState(initialValues.isPublic || false);
   const [selectedColor, setSelectedColor] = useState(initialValues.color || '#ff7f50');
   const [privacy, setPrivacy] = useState('private');
-  const [selectedImage, setSelectedImage] = useState(initialValues.image || "gift-outline");
+  const [selectedImage, setSelectedImage] = useState(initialValues.image);
 
   const handleSubmit = async () => {
     // Basic validation
@@ -48,7 +48,7 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
       description: description.trim(),
       color: selectedColor,
       is_public: isPublic,
-      image: selectedImage,
+      image: selectedImage ?? "gift-outline"
     });
   };
 

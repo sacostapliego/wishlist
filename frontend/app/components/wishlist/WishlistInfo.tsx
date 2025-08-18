@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../../styles/theme';
+import { SPACING, COLORS } from '@/app/styles/theme';
 import { WishlistInfoProps } from '@/app/types/wishlist';
 
 export const WishlistInfo = ({ 
@@ -10,13 +10,25 @@ export const WishlistInfo = ({
   profileImage,
   onAddPress,
   hasItems = false,
+  onProfilePress,
+  showAddFriend = false,
+  onAddFriend,
 }: WishlistInfoProps) => {
   const hasDescription = description && description.trim().length > 0;
+  const hasActionButtons = (showAddFriend && onAddFriend) || (onAddPress && hasItems);
   
   return (
     <View style={styles.wishlistInfo}>
       <View style={styles.topRow}>
-        <View style={styles.userInfo}>
+        <TouchableOpacity
+          onPress={onProfilePress}
+          disabled={!onProfilePress}
+          style={[
+            styles.userInfo,
+            !hasActionButtons && !hasDescription && styles.userInfoNoMargin
+          ]}
+          activeOpacity={0.7}
+        >
           {profileImage ? (
             <Image source={{ uri: profileImage }} style={styles.profileImage} />
           ) : (
@@ -25,19 +37,31 @@ export const WishlistInfo = ({
             </View>
           )}
           <Text style={styles.username}>{username || 'User'}</Text>
-        </View>
-        
-        {/* Add button - only shown when there are items */}
-        {onAddPress && hasItems ? (
-          <TouchableOpacity onPress={onAddPress} style={styles.actionButton}>
-            <Ionicons name="add-circle-outline" size={28} color={'white'} />
-          </TouchableOpacity>
-        ) : null}
+        </TouchableOpacity>
+
+        {hasActionButtons && (
+          <View style={styles.actionButtons}>
+            {/* Add Friend button - shown when showAddFriend is true */}
+            {showAddFriend && onAddFriend && (
+              <TouchableOpacity onPress={onAddFriend} style={styles.addFriendButton}>
+                <Ionicons name="person-add-outline" size={20} color="#fff" />
+                <Text style={styles.addFriendText}>Add Friend</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Add item button - only shown when there are items and onAddPress exists */}
+            {onAddPress && hasItems && (
+              <TouchableOpacity onPress={onAddPress} style={styles.actionButton}>
+                <Ionicons name="add-circle-outline" size={28} color={'white'} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
       
-      {hasDescription ? (
+      {hasDescription && (
         <Text style={styles.description}>{description}</Text>
-      ) : null}
+      )}
     </View>
   );
 };
@@ -53,11 +77,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 48, // Ensure consistent height
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: SPACING.sm,
+    flex: 1,
+  },
+  userInfoNoMargin: {
+    marginBottom: 0,
   },
   profileImage: {
     width: 36,
@@ -84,7 +113,26 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     marginTop: SPACING.xs,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   actionButton: {
     padding: SPACING.xs,
-  }
+  },
+  addFriendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 8,
+    gap: SPACING.xs,
+  },
+  addFriendText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

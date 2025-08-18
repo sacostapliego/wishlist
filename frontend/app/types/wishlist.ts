@@ -4,6 +4,9 @@ export interface WishlistInfoProps {
   profileImage?: string;
   onAddPress?: () => void;
   hasItems?: boolean;
+  onProfilePress?: () => void;
+  showAddFriend?: boolean;
+  onAddFriend?: () => void;
 }
 
 export interface WishlistItemDetails {

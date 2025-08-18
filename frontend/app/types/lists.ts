@@ -3,7 +3,7 @@ export interface ListItem {
     title: string;
     itemCount: number;
     color?: string;
-    image?: string;
+    image?: string | null;
   }
   
 export interface ListDisplayProps {
@@ -37,7 +37,9 @@ export interface WishlistData {
   title: string;
   itemCount: number;
   color: string;
-  image: string;
+  image?: string | null;
+  ownerName?: string;
+  ownerUsername?: string;
 }
 
 export interface WishlistFormProps {

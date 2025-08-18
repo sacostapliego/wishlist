@@ -1,31 +1,26 @@
 import { useState, useEffect } from 'react';
 import { wishlistAPI } from '../services/wishlist';
-import { WishlistApiResponse } from '../types/lists';
-import { userAPI, PublicUserDetailsResponse } from '../services/user';
-import { API_URL } from '../services/api'; // Import API_URL
-import { WishlistItem } from '../types/wishlist';
+import { userAPI } from '../services/user';
+import { API_URL } from '../services/api';
 
 interface OwnerDisplayInfo {
   name?: string;
-  username: string;
+  username?: string;
   profileImageUrl?: string;
 }
 
 export const usePublicWishlistDetail = (wishlistId: string, refreshTimestamp?: number) => {
-  const [wishlist, setWishlist] = useState<WishlistApiResponse | null>(null);
-  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [wishlist, setWishlist] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
   const [ownerDisplayInfo, setOwnerDisplayInfo] = useState<OwnerDisplayInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchPublicWishlistDetails = async () => {
-    if (!wishlistId) {
-      setIsLoading(false);
-      setError("No Wishlist ID provided");
-      return;
-    }
+  const fetchWishlistDetails = async () => {
     setIsLoading(true);
+    setWishlist(null);
+    setItems([]);
     setOwnerDisplayInfo(null);
+    
     try {
       const wishlistData = await wishlistAPI.getPublicWishlist(wishlistId);
       setWishlist(wishlistData);
@@ -33,11 +28,10 @@ export const usePublicWishlistDetail = (wishlistId: string, refreshTimestamp?: n
       if (wishlistData && wishlistData.user_id) {
         try {
           const publicOwnerDetails = await userAPI.getPublicUserDetails(wishlistData.user_id);
-          // Construct the proxy URL if pfp (direct S3 link) exists
-          // The backend /users/{user_id}/profile-image endpoint will serve the image
-          // This also implies that if publicOwnerDetails.pfp is null, no image should be attempted.
+          
+          // Fix: Use the owner's ID, not the current user's ID for profile image
           const imageUrl = publicOwnerDetails.pfp 
-            ? `${API_URL}users/${publicOwnerDetails.id}/profile-image` 
+            ? `${API_URL}users/${wishlistData.user_id}/profile-image` // Use wishlistData.user_id instead
             : undefined;
 
           setOwnerDisplayInfo({
@@ -50,15 +44,21 @@ export const usePublicWishlistDetail = (wishlistId: string, refreshTimestamp?: n
           setOwnerDisplayInfo(null); 
         }
       } else {
-        setOwnerDisplayInfo(null); 
+        console.warn('No user_id found in wishlist data');
+        setOwnerDisplayInfo(null);
       }
 
-      const itemsData = await wishlistAPI.getPublicWishlistItems(wishlistId);
-      setItems(itemsData as WishlistItem[]);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch public wishlist details:', err);
-      setError('Failed to load wishlist. It may not be public or an error occurred.');
+      // Fetch items
+      try {
+        const itemsData = await wishlistAPI.getPublicWishlistItems(wishlistId);
+        setItems(itemsData || []);
+      } catch (itemsError) {
+        console.error('Failed to fetch wishlist items:', itemsError);
+        setItems([]);
+      }
+
+    } catch (error) {
+      console.error('Failed to fetch wishlist:', error);
       setWishlist(null);
       setItems([]);
       setOwnerDisplayInfo(null);
@@ -68,10 +68,20 @@ export const usePublicWishlistDetail = (wishlistId: string, refreshTimestamp?: n
   };
 
   useEffect(() => {
-    fetchPublicWishlistDetails();
+    if (wishlistId) {
+      fetchWishlistDetails();
+    }
   }, [wishlistId, refreshTimestamp]);
 
-  return { wishlist, items, ownerDisplayInfo, isLoading, error, refetch: fetchPublicWishlistDetails };
-};
+  const refetch = () => {
+    fetchWishlistDetails();
+  };
 
-export default usePublicWishlistDetail;
+  return {
+    wishlist,
+    items,
+    ownerDisplayInfo,
+    isLoading,
+    refetch
+  };
+};

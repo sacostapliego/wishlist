@@ -21,7 +21,7 @@ TODO
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import items, users, auth, wishlists
+from routes import items, users, auth, wishlists, relationships
 
 app = FastAPI(
     title='Wishlist API',
@@ -50,6 +50,7 @@ app.include_router(items.router)
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(wishlists.router)
+app.include_router(relationships.router)
 
 @app.get('/')
 def read_root():

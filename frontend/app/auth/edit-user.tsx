@@ -169,7 +169,7 @@ export default function EditProfileScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header 
               title={''} 
-              onBack={() => router.push('/home')} 
+              onBack={() => router.back()} 
               rightIcon="ellipsis-vertical"
             />
       

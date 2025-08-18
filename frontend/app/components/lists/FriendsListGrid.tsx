@@ -1,114 +1,95 @@
 import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Image} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Section } from '../layout/Section';
-import { Card } from '../ui/Card';
-import { COLORS, ITEM_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
-import { ListItem as ListItemType } from '../../types/lists';
-import { commonStyles } from '../../styles/common';
+import { COLORS, CARD_WIDTH, SPACING, TYPOGRAPHY } from '../../styles/theme';
+import { WishlistData } from '../../types/lists';
 import { useRouter } from 'expo-router';
+import { commonStyles } from '@/app/styles/common';
 
 interface ListItemProps {
   title: string;
   color?: string;
   onPress: () => void;
-  username?: string; // Added username prop
+  username?: string;
+  itemCount?: number;
+  image?: string | null;
 }
 
-export function ListItem({ title, onPress, username = "Friend" }: ListItemProps) {
+export function ListItem({ title, onPress, username = 'Friend', itemCount = 0, color, image }: ListItemProps) {
   return (
-    <TouchableOpacity 
-      activeOpacity={0.7} 
-      onPress={onPress}
-      style={styles.listItemWrapper}
-    >
-      <Card style={StyleSheet.flatten([styles.listItem, { backgroundColor: COLORS.cardDark }])}>
+    <TouchableOpacity onPress={onPress} style={[styles.listItemWrapper]}>
+      <View style={[styles.listItem, { backgroundColor: color || COLORS.cardDark }]}>
         <View style={styles.listItemContent}>
-          {/* Icon container with circular background */}
           <View style={styles.iconContainer}>
-            <Ionicons name="gift-outline" size={24} color="white" />
+            {renderImageOrIcon(image, 24)}
           </View>
-
-          {/* Text content container */}
           <View style={styles.textContainer}>
-            <Text style={styles.listTitle} numberOfLines={1}>{title}</Text>
-            <Text style={styles.username} numberOfLines={1}>{username}'s List</Text>
+            <Text numberOfLines={1} style={styles.listTitle}>{title}</Text>
+            <Text numberOfLines={1} style={styles.username}>{username}’s List</Text>
+            <Text style={styles.itemCount}>{itemCount} {itemCount === 1 ? 'item' : 'items'}</Text>
           </View>
         </View>
-      </Card>
+      </View>
     </TouchableOpacity>
   );
 }
 
+function renderImageOrIcon(source?: string | null, size = 20) {
+  if (!source) return <Ionicons name="gift-outline" size={size} color="#fff" />;
+  if (source.startsWith('http')) {
+    return <Image source={{ uri: source }} style={{ width: size, height: size, tintColor: '#fff' }} resizeMode="contain" />;
+  }
+  return <Ionicons name={source as any} size={size} color="#fff" />;
+}
+
 interface ListGridProps {
   title: string;
-  lists: ListItemType[];
+  lists: WishlistData[];
   maxItems?: number;
 }
 
-export default function FriendsListGrid({ title, lists, maxItems = 8 }: ListGridProps) {
+export default function FriendsListGrid({ title, lists, maxItems = 6 }: ListGridProps) {
   const router = useRouter();
-  
-  // Ensure lists is always an array
-  const safeListsArray = Array.isArray(lists) ? lists : [];
-  const displayedLists = safeListsArray.slice(0, maxItems);
-  
-  const handleSeeAllPress = () => {
-    router.push('/home/friends');
-  };
 
-  // Create rows with 2 items each
-  const createRows = () => {
-    const rows = [];
-    for (let i = 0; i < displayedLists.length; i += 2) {
-      rows.push(
-        <View key={`row-${i}`} style={styles.row}>
-          <View style={styles.column}>
-            <ListItem
-              title={displayedLists[i].title}
-              username={`User${displayedLists[i].id}`} // dummy username
-              onPress={() => {}}
-            />
-          </View>
-          
-          {i + 1 < displayedLists.length && (
-            <View style={styles.column}>
-              <ListItem
-                title={displayedLists[i + 1].title}
-                username={`User${displayedLists[i + 1].id}`} // dummy username
-                onPress={() => {}}
-              />
-            </View>
-          )}
-        </View>
-      );
-    }
-    return rows;
-  };
+  const safeListsArray = Array.isArray(lists) ? lists.slice(0, maxItems) : [];
 
-  // See All Link
-  const renderSectionHeader = () => (
-    <View style={styles.headerContainer}>
-      <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
-      {safeListsArray.length > 0 && (
+  const handleSeeAllPress = () => router.push('/home/friends');
+  const handleListPress = (wishlistId: string) => router.push(`/shared/${wishlistId}`);
+
+  // Split into rows of 2 (grid), keep gutters inside, but “bleed” the grid past the header padding
+  const rows: WishlistData[][] = [];
+  for (let i = 0; i < safeListsArray.length; i += 2) {
+    rows.push(safeListsArray.slice(i, i + 2));
+  }
+
+   return (
+    <Section title={title} showTitle={false}>
+      <View style={styles.headerContainer}>
+        <Text style={[commonStyles.sectionTitle, styles.mainTitle]}>{title}</Text>
         <TouchableOpacity onPress={handleSeeAllPress}>
           <Text style={styles.seeAllText}>Show all</Text>
         </TouchableOpacity>
-      )}
-    </View>
-  );
-  
-  return (
-    <Section title={title} titleStyle={styles.mainTitle} showTitle={false}>
-      {renderSectionHeader()}
+      </View>
+
       <View style={styles.gridContainer}>
-        {safeListsArray.length > 0 ? (
-          createRows()
-        ) : (
-          <View style={commonStyles.centeredContent}>
-            <Text style={commonStyles.emptyText}>No friends found</Text>
+        {rows.map((row, rowIndex) => (
+          <View key={`row-${rowIndex}`} style={styles.row}>
+            {row.map((wishlist, colIndex) => (
+              <View key={wishlist.id ?? `col-${colIndex}`} style={styles.column}>
+                <ListItem
+                  title={wishlist.title}
+                  username={wishlist.ownerName || wishlist.ownerUsername || 'Friend'}
+                  itemCount={wishlist.itemCount}
+                  color={wishlist.color}
+                  image={wishlist.image}
+                  onPress={() => handleListPress(wishlist.id)}
+                />
+              </View>
+            ))}
+            {row.length === 1 && <View style={styles.column} />}
           </View>
-        )}
+        ))}
       </View>
     </Section>
   );
@@ -119,12 +100,23 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sectionTitle.fontSize,
     marginBottom: 0,
   },
-  sectionContainer: {
-    marginBottom: 0,
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.sm, // same as PersonalListStack
+  },
+  seeAllText: {
+    color: COLORS.text.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   gridContainer: {
+    width: CARD_WIDTH + SPACING.sm, // full width of card + gutters
+    alignSelf: 'center',
     paddingVertical: SPACING.xs,
-    minHeight: 250,
+    minHeight: 200,
   },
   row: {
     flexDirection: 'row',
@@ -132,7 +124,7 @@ const styles = StyleSheet.create({
   },
   column: {
     flex: 1,
-    paddingHorizontal: SPACING.xs,
+    paddingHorizontal: SPACING.xs, // inner gutters
   },
   listItemWrapper: {
     flex: 1,
@@ -148,12 +140,11 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 24,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.xs,
-    marginLeft: -4,
+    marginRight: SPACING.sm,
   },
   textContainer: {
     flex: 1,
@@ -163,22 +154,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+    marginBottom: 2,
   },
   username: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginTop: 2,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 2,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-  },
-  seeAllText: {
-    color: COLORS.text.primary,
-    fontSize: 14,
-    fontWeight: '600',
+  itemCount: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 });

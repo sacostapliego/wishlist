@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../styles/theme';
-import { API_URL } from '../services/api'; // Keep for image URLs if items have them
 import { Header } from '../components/layout/Header';
 import { WishlistInfo } from '../components/wishlist/WishlistInfo';
 import { LoadingState } from '../components/common/LoadingState';
-import { usePublicWishlistDetail } from '../hooks/usePublicWishlistDetail'; // Adjust path if needed
-import { useRefresh } from '../context/RefreshContext'; // Keep if manual refresh is desired
+import { usePublicWishlistDetail } from '../hooks/usePublicWishlistDetail';
+import { useRefresh } from '../context/RefreshContext';
 import { WishlistContent } from '../components/wishlist/WishlistContent';
 import { WishlistListView } from '../components/wishlist/WishlistListView';
 import { EmptyState } from '../components/layout/EmptyState';
+import { friendsAPI } from '../services/friends';
+import { useAuth } from '../context/AuthContext';
 
 type WishlistItem = {
   id: string;
@@ -25,17 +26,69 @@ export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { refreshTimestamp } = useRefresh(); // For potential manual refresh
+  const { refreshTimestamp } = useRefresh();
+  const { user } = useAuth();
 
   const [viewMode, setViewMode] = useState<'bento' | 'list'>('bento');
+  const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
+  const [isCheckingFriendship, setIsCheckingFriendship] = useState(true);
 
-  // Use the new hook for public data
   const { wishlist, items, ownerDisplayInfo, isLoading, refetch } = usePublicWishlistDetail(id as string, refreshTimestamp);
 
   const baseSize = Platform.OS === 'web' ? (420 / 2) : (width - (SPACING.md * 3) / 2);
   const activeColor = wishlist?.color || COLORS.cardDark;
 
-  console.log('Wishlist:', ownerDisplayInfo?.profileImageUrl);
+  // Check if user is already friends with the wishlist owner
+  useEffect(() => {
+    const checkFriendshipStatus = async () => {
+      if (!wishlist?.user_id || !user?.id) {
+        setIsCheckingFriendship(false);
+        return;
+      }
+
+      // Don't show add friend for own wishlist
+      if (wishlist.user_id === user.id) {
+        setIsAlreadyFriend(true);
+        setIsCheckingFriendship(false);
+        return;
+      }
+
+      try {
+        const friendsWishlists = await friendsAPI.getFriendsWishlists();
+        // Check if any wishlist belongs to this user
+        const isFriend = friendsWishlists.some(list => 
+          list.id === wishlist.id || // Same wishlist
+          friendsWishlists.some(fl => fl.owner_username === ownerDisplayInfo?.username)
+        );
+        setIsAlreadyFriend(isFriend);
+      } catch (error) {
+        console.error('Failed to check friendship status:', error);
+        setIsAlreadyFriend(false);
+      } finally {
+        setIsCheckingFriendship(false);
+      }
+    };
+
+    if (wishlist && ownerDisplayInfo) {
+      checkFriendshipStatus();
+    }
+  }, [wishlist, ownerDisplayInfo, user]);
+
+  const handleAddFriend = async () => {
+    if (!wishlist?.user_id) {
+      Alert.alert('Error', 'Unable to add friend');
+      return;
+    }
+
+    try {
+      await friendsAPI.sendFriendRequest(wishlist.user_id);
+      Alert.alert('Success', 'Friend request sent!');
+      setIsAlreadyFriend(true); // Optimistically update UI
+    } catch (error) {
+      console.error('Friend request error:', error);
+      Alert.alert('Error', 'Failed to send friend request');
+    }
+  };
 
   const handleItemPress = (pressedItem: WishlistItem) => {
     if (id && pressedItem && pressedItem.id) {
@@ -58,15 +111,15 @@ export default function WishlistDetailScreen() {
 
   if (!wishlist && !isLoading) {
     return (
-        <SafeAreaView style={styles.container}>
-            <Header
-                title="Not Found"
-                onBack={() => router.canGoBack() ? router.back() : router.replace('/')}
-            />
-            <EmptyState
-                message="This wishlist could not be loaded. It might be private or no longer available."
-            />
-        </SafeAreaView>
+      <SafeAreaView style={styles.container}>
+        <Header
+          title="Not Found"
+          onBack={() => router.canGoBack() ? router.back() : router.replace('/')}
+        />
+        <EmptyState
+          message="This wishlist could not be loaded. It might be private or no longer available."
+        />
+      </SafeAreaView>
     );
   }
 
@@ -75,7 +128,6 @@ export default function WishlistDetailScreen() {
       return (
         <EmptyState
           message="This wishlist is empty."
-          // No actionText or onAction for public view
         />
       );
     }
@@ -89,38 +141,54 @@ export default function WishlistDetailScreen() {
           selectedItems={[]}    
           onItemPress={handleItemPress}
           wishlistColor={wishlist?.color}
-          onAddItem={() => {}} // Pass empty function instead of undefined
-          onCancelSelection={() => {}} // Pass empty function
+          onAddItem={() => {}}
+          onCancelSelection={() => {}}
         />
       );
     } else {
       return (
         <WishlistListView
           items={items}
-          onItemPress={handleItemPress} // Or undefined
-          isSelectionMode={false} // Not in selection mode
-          selectedItems={[]}    // No selected items
+          onItemPress={handleItemPress}
+          isSelectionMode={false}
+          selectedItems={[]}
           wishlistColor={wishlist?.color}
         />
       );
     }
   };
 
+  // Determine if we should show the Add Friend button
+  const shouldShowAddFriend = !isCheckingFriendship && 
+                              !isAlreadyFriend && 
+                              wishlist?.user_id !== user?.id;
+
   return (
     <SafeAreaView style={styles.container}>
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
-        onBack={() => router.canGoBack() ? router.back() : router.replace('/auth/login')} // Generic back or home
+        onBack={() => router.canGoBack() ? router.back() : router.replace('/auth/login')}
       />
 
       <WishlistInfo
-        username={ownerDisplayInfo?.name || wishlist?.title || "Someone's Wishlist"} // Fallback username
+        username={ownerDisplayInfo?.name || ownerDisplayInfo?.username || "Someone's Wishlist"}
         description={wishlist?.description}
-        profileImage={ownerDisplayInfo?.profileImageUrl} // WishlistInfo needs to handle undefined
-        
+        profileImage={ownerDisplayInfo?.profileImageUrl}
         hasItems={items && items.length > 0}
+        onProfilePress={() =>
+          router.push({
+            pathname: '/home/profile',
+            params: {
+              userId: wishlist?.user_id,
+              name: ownerDisplayInfo?.name,
+              username: ownerDisplayInfo?.username,
+            },
+          })
+        }
+        showAddFriend={shouldShowAddFriend}
+        onAddFriend={handleAddFriend}
       />
-      {/* View toggle can remain if items exist */}
+      
       {items && items.length > 0 && (
         <View style={styles.viewToggleContainer}>
           <TouchableOpacity
@@ -148,7 +216,6 @@ export default function WishlistDetailScreen() {
 
       {renderMainContent()}
     </SafeAreaView>
-    
   );
 }
 

@@ -1,9 +1,9 @@
 import { ScrollView, Text, StyleSheet, SafeAreaView, View, TouchableOpacity, Image} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { router, useLocalSearchParams, useRouter } from 'expo-router';
 import FriendsListGrid from '../components/lists/FriendsListGrid';
 import PersonalListStack from '../components/lists/PersonalListStack';
-import { COLORS, PROFILE_RIGHT_MARGIN } from '../styles/theme';
+import { COLORS, PROFILE_RIGHT_MARGIN, SPACING } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { wishlistAPI } from '../services/wishlist';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { API_URL } from '../services/api';
 import { WishlistApiResponse, WishlistData } from '../types/lists';
 import { useRefresh } from '../context/RefreshContext';
+import friendsAPI from '../services/friends';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -30,26 +31,23 @@ export default function HomeScreen() {
       if (!user) return;
       
       try {
-        // TODO: Replace this with actual API call to get friends' lists
-        // const friendsWishlists = await wishlistAPI.getFriendsWishlists();
+        const friendsWishlists = await friendsAPI.getFriendsWishlists();
         
-        // For now, using empty array until API is implemented
-        setFriendsLists([
-          
-        ]);
-        
-        // When API is ready:
-        /*
+        // Format the API response to match WishlistData interface
         const formattedLists: WishlistData[] = friendsWishlists.map((list) => ({
           id: list.id,
           title: list.title,
           itemCount: list.item_count || 0,
-          color: list.color || '#ff7f50'
+          color: list.color || '#ff7f50',
+          image: list.image, 
+          ownerName: list.owner_name,
+          ownerUsername: list.owner_username
         }));
+        
         setFriendsLists(formattedLists);
-        */
       } catch (error) {
         console.error('Failed to fetch friends wishlists:', error);
+        setFriendsLists([]);
       }
     }
     
@@ -71,7 +69,7 @@ export default function HomeScreen() {
           title: list.title,
           itemCount: list.item_count || 0,
           color: list.color || '#ff7f50', // Default color if none is specified
-          image: list.image || "gift-outline", // Default image if none is specified
+          image: list.image, // Default image if none is specified
         }));
         
         setPersonalLists(formattedLists);
@@ -97,23 +95,25 @@ export default function HomeScreen() {
       >
         <View style={styles.headerContainer}>
           <Text style={styles.userName}>Welcome, {displayName}!</Text>
-          <TouchableOpacity style={styles.profileButton}>
-          {user?.id && !imageLoadError ? (
-              <Image 
-                source={{ uri: `${API_URL}users/${user.id}/profile-image` }} 
-                style={styles.profileImage} 
-                onError={(e) => {
-                  setImageLoadError(true);
-                }}
-              />
-            ) : (
-              <Ionicons 
-                name="person-circle-outline" 
-                size={48} 
-                color={COLORS.text.primary} 
-              />
-            )}
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/home/profile')}>
+              {user?.id && !imageLoadError ? (
+                <Image 
+                  source={{ uri: `${API_URL}users/${user.id}/profile-image` }} 
+                  style={styles.profileImage} 
+                  onError={(e) => {
+                    setImageLoadError(true);
+                  }}
+                />
+              ) : (
+                <Ionicons 
+                  name="person-circle-outline" 
+                  size={48} 
+                  color={COLORS.text.primary} 
+                />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
         
         <FriendsListGrid 
@@ -165,5 +165,13 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 202,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  addFriendButton: {
+    padding: SPACING.xs,
   },
 });
