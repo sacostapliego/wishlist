@@ -33,13 +33,13 @@ export interface FriendInfo {
 }
 
 export const friendsAPI = {
-  async searchUser(username: string): Promise<UserSearchResponse> {
+  async searchUsers(query: string): Promise<UserSearchResponse[]> {
     try {
-      const response = await api.get(`/friends/search?username=${encodeURIComponent(username)}`);
+      const response = await api.get(`/friends/search-many?query=${encodeURIComponent(query)}`);
       return response.data;
     } catch (error) {
-      console.error('Search error:', error);
-      throw new Error('User not found');
+      console.error('Search-many error:', error);
+      return [];
     }
   },
 

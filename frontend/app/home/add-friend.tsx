@@ -20,8 +20,9 @@ export default function AddFriendScreen() {
     
     setIsSearching(true);
     try {
-      const result = await friendsAPI.searchUser(searchQuery.trim());
-      setSearchResult(result);
+      const result = await friendsAPI.searchUsers(searchQuery.trim());
+      // Support both single or array responses
+      setSearchResult(Array.isArray(result) ? result[0] : result);
     } catch (error) {
       Alert.alert('Error', 'User not found');
       setSearchResult(null);
@@ -31,13 +32,16 @@ export default function AddFriendScreen() {
   };
 
   const handleAddFriend = async () => {
-    if (!searchResult) return;
-    
+    if (!searchResult?.id) {
+      Alert.alert('Error', 'No user selected');
+      return;
+    }
+
     setIsAddingFriend(true);
     try {
       await friendsAPI.sendFriendRequest(searchResult.id);
       Alert.alert('Success', 'Friend request sent!');
-      router.back();
+      setSearchResult(null);
     } catch (error) {
       Alert.alert('Error', 'Failed to send friend request');
     } finally {

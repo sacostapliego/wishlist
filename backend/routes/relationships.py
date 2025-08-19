@@ -47,27 +47,55 @@ class FriendInfo(BaseModel):
     username: str
     name: str | None = None
 
-@router.get("/search")
-def search_users(
-    username: str = Query(..., min_length=2, description="Username to search for"),
+@router.get("/search-many", response_model=List[UserSearchResponse])
+def search_users_many(
+    query: str = Query(..., min_length=1, description="Query for username or name"),
+    limit: int = Query(20, ge=1, le=50),
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Search for users by username"""
-    # Search for users excluding current user
-    user = db.query(User).filter(
-        User.username.ilike(f"%{username}%"),
-        User.id != current_user["user_id"]
-    ).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return UserSearchResponse(
-        id=str(user.id),
-        username=user.username,
-        name=user.name
-    )
+    user_id = uuid.UUID(str(current_user["user_id"]))
+
+    # Exclude current user and anyone already in a relationship (any status)
+    relationships = db.query(UserRelationship).filter(
+        or_(
+            UserRelationship.user_id == user_id,
+            UserRelationship.friend_id == user_id,
+        )
+    ).all()
+
+    exclude_ids: set[uuid.UUID] = {user_id}
+    for relationship in relationships:
+        other_user_id = relationship.friend_id if relationship.user_id == user_id else relationship.user_id
+        exclude_ids.add(other_user_id)
+
+    candidates = db.query(User).filter(
+        or_(User.username.ilike(f"%{query}%"), User.name.ilike(f"%{query}%"))
+    ).filter(~User.id.in_(list(exclude_ids))).limit(200).all()
+
+    lower_query = query.lower()
+
+    def rank(user_record: User) -> int:
+        username_lower = (user_record.username or "").lower()
+        name_lower = (user_record.name or "").lower()
+        if username_lower == lower_query:
+            return 0
+        if username_lower.startswith(lower_query):
+            return 1
+        if name_lower.startswith(lower_query):
+            return 2
+        if lower_query in username_lower:
+            return 3
+        if lower_query in name_lower:
+            return 4
+        return 9
+
+    sorted_users = sorted(
+        candidates,
+        key=lambda user_record: (rank(user_record), (user_record.username or "").lower())
+    )[:limit]
+
+    return [UserSearchResponse(id=str(user.id), username=user.username, name=user.name) for user in sorted_users]
 
 @router.post("/request")
 def send_friend_request(

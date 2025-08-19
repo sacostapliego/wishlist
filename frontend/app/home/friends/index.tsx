@@ -10,6 +10,7 @@ import WishlistsTab from './tabs/WishlistsTab';
 import FriendsTab from './tabs/FriendsTab';
 import RequestsTab from './tabs/RequestsTab';
 
+import Header from '@/app/components/layout/Header';
 
 type TabKey = 'wishlists' | 'friends' | 'requests';
 
@@ -21,15 +22,13 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Friends & Family</Text>
-        <TouchableOpacity onPress={() => router.push('/home/add-friend')}>
-          <Ionicons name="person-add-outline" size={24} color={COLORS.text.primary} />
-        </TouchableOpacity>
-      </View>
+      <Header
+        title="Friends & Family"
+        onBack={() => router.back()}
+        showOptions
+        rightIcon="person-add-outline"
+        onOptionsPress={() => router.push('/home/add-friend')}
+      />
 
       <View style={styles.tabs}>
         <TabButton label="Wishlists" icon="gift-outline" active={activeTab === 'wishlists'} onPress={() => setActiveTab('wishlists')} />
@@ -51,13 +50,6 @@ export default function FriendsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  },
   title: { fontSize: 18, fontWeight: '700', color: COLORS.text.primary },
   tabs: {
     flexDirection: 'row',
