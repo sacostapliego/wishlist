@@ -19,9 +19,9 @@ interface ListItemProps {
 export function ListItem({ title, onPress, username = 'Friend', itemCount = 0, color, image }: ListItemProps) {
   return (
     <TouchableOpacity onPress={onPress} style={[styles.listItemWrapper]}>
-      <View style={[styles.listItem, { backgroundColor: color || COLORS.cardDark }]}>
+      <View style={styles.listItem}>
         <View style={styles.listItemContent}>
-          <View style={styles.iconContainer}>
+          <View style={[styles.colorStrip, { backgroundColor: color || COLORS.cardDark }]}>
             {renderImageOrIcon(image, 24)}
           </View>
           <View style={styles.textContainer}>
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.sm, // same as PersonalListStack
+    paddingHorizontal: SPACING.sm,
   },
   seeAllText: {
     color: COLORS.text.primary,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   gridContainer: {
-    width: CARD_WIDTH + SPACING.sm, // full width of card + gutters
+    width: CARD_WIDTH + SPACING.sm,
     alignSelf: 'center',
     paddingVertical: SPACING.xs,
     minHeight: 200,
@@ -129,26 +129,27 @@ const styles = StyleSheet.create({
   listItemWrapper: {
     flex: 1,
   },
-  listItem: {
-    borderRadius: 8,
-    padding: 14,
-  },
   listItemContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    minHeight: 72,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  listItem: {
+    borderRadius: 8,
+    backgroundColor: COLORS.cardGray,
+    overflow: 'hidden',
+  },
+  colorStrip: {
+    width: 64,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.sm,
+    alignSelf: 'stretch',
   },
   textContainer: {
     flex: 1,
     justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 10, 
   },
   listTitle: {
     fontSize: 16,

@@ -166,7 +166,7 @@ export default function WishlistDetailScreen() {
     <SafeAreaView style={styles.container}>
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
-        onBack={() => router.canGoBack() ? router.back() : router.replace('/auth/login')}
+        onBack={() => router.canGoBack() ? router.back() : router.replace('/')}
       />
 
       <WishlistInfo

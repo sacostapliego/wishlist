@@ -27,6 +27,7 @@ export const COLORS = {
   error: '#ef4444',
   white: '#ffffff',
   border: '#64748b',
+  cardGray: '#212121',
 };
 
 export const AUTH_COLORS = {
