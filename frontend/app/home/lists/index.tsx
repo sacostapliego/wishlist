@@ -48,31 +48,33 @@ export default function ListsScreen() {
   };
 
   const renderWishlists = () => {
-    return wishlists.map((item) => {
-      const itemColor = item.color || '#ff7f50';
-      return (
-        <TouchableOpacity 
-          key={item.id}
-          style={[styles.listItem, { borderColor: itemColor, borderWidth: 5, borderRadius: 16 }]}
-          onPress={() => {
+  return wishlists.map((item) => {
+    const itemColor = item.color || '#ff7f50';
+    return (
+      <TouchableOpacity 
+        key={item.id}
+        style={styles.listItem}
+        onPress={() => {
           router.push(`/home/lists/${item.id}`);
-          }}
-
-        >
-          <View style={styles.listContent}>
-            <View style={styles.listTextContainer}>
-              <Text style={styles.listName}>{item.title}</Text>
-              <Text style={styles.listDetails}>
-                {item.description ? `${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}` : ''}
-              </Text>
-              <Text style={styles.itemCount}>{item.item_count || 0} items</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={COLORS.text.secondary} />
+        }}
+      >
+        <View style={[styles.colorStrip, { backgroundColor: itemColor }]}>
+          <Ionicons name="gift-outline" size={28} color="#fff" />
+        </View>
+        <View style={styles.listContent}>
+          <View style={styles.listTextContainer}>
+            <Text style={styles.listName}>{item.title}</Text>
+            <Text style={styles.listDetails}>
+              {item.description ? `${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}` : ''}
+            </Text>
+            <Text style={styles.itemCount}>{item.item_count || 0} items</Text>
           </View>
-        </TouchableOpacity>
-      );
-    });
-  };
+          <Ionicons name="chevron-forward" size={24} color={COLORS.text.secondary} />
+        </View>
+      </TouchableOpacity>
+    );
+  });
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -154,11 +156,22 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   listItem: {
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderRadius: 4,
     marginBottom: SPACING.md,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  colorStrip: {
+    width: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
   },
   listContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -166,7 +179,6 @@ const styles = StyleSheet.create({
   },
   listTextContainer: {
     flex: 1,
-    marginRight: SPACING.sm,
   },
   listName: {
     fontSize: 18,

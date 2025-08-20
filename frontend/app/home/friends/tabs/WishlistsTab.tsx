@@ -30,17 +30,21 @@ export default function WishlistsTab({ wishlists }: { wishlists: WishlistData[] 
       {wishlists.map(wishlist => (
         <TouchableOpacity
           key={wishlist.id}
-          style={[styles.card, { borderColor: wishlist.color || COLORS.cardDark }]}
+          style={styles.card}
           onPress={() => router.push(`/shared/${wishlist.id}`)}
         >
-          <View style={styles.cardIcon}>{renderImageOrIcon(wishlist.image, 22)}</View>
-          <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>{wishlist.title}</Text>
-            <Text style={styles.cardSub}>
-              {wishlist.ownerName || wishlist.ownerUsername} • {wishlist.itemCount} item{wishlist.itemCount === 1 ? '' : 's'}
-            </Text>
+          <View style={[styles.cardIconStrip, { backgroundColor: wishlist.color || 'rgba(255,255,255,0.15)' }]}>
+            {renderImageOrIcon(wishlist.image, 28)}
           </View>
-          <Ionicons name="chevron-forward" size={20} color={COLORS.text.secondary} />
+          <View style={styles.cardContent}>
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>{wishlist.title}</Text>
+              <Text style={styles.cardSub}>
+                {wishlist.ownerName || wishlist.ownerUsername} • {wishlist.itemCount} item{wishlist.itemCount === 1 ? '' : 's'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.text.secondary} />
+          </View>
         </TouchableOpacity>
       ))}
     </View>
@@ -51,20 +55,26 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
   card: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.md,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: SPACING.sm,
-  },
-  cardIcon: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'stretch',
+    borderRadius: 4,
+    marginBottom: SPACING.md,
     overflow: 'hidden',
+    minHeight: 64,
+    backgroundColor: 'transparent',
+  },
+  cardContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    
+  },
+  cardIconStrip: {
+    width: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
   },
   cardText: { flex: 1 },
   cardTitle: { color: COLORS.text.primary, fontWeight: '700', marginBottom: 2 },
