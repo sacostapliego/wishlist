@@ -54,3 +54,5 @@ export function useFriendsData() {
 
   return { wishlists, friends, requests, refreshing, reload: loadData, accept, decline };
 }
+
+export default useFriendsData;

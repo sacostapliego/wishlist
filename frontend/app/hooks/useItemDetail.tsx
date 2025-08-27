@@ -88,3 +88,5 @@ export const useItemDetail = (
 
   return { item, wishlistColor, isLoading, error, refetchItemData: fetchData };
 };
+
+export default useItemDetail;

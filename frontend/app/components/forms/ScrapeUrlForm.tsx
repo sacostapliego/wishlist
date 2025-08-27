@@ -74,6 +74,8 @@ export const ScrapeUrlForm = ({ onScrapeSuccess }: ScrapeUrlFormProps) => {
   );
 };
 
+export default ScrapeUrlForm;
+
 const styles = StyleSheet.create({
   label: {
     fontSize: 16,

@@ -85,3 +85,5 @@ export const usePublicWishlistDetail = (wishlistId: string, refreshTimestamp?: n
     refetch
   };
 };
+
+export default usePublicWishlistDetail;

@@ -38,3 +38,5 @@ export function useImageDimensions(items: WishlistItem[]) {
 
   return dims;
 }
+
+export default useImageDimensions;

@@ -82,6 +82,8 @@ export const ItemActionsMenu = ({
   );
 };
 
+export default ItemActionsMenu;
+
 const styles = StyleSheet.create({
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

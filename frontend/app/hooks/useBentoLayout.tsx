@@ -90,3 +90,5 @@ export const useBentoLayout = (items: WishlistItem[]) => {
 
   return { gridPositions, containerWidth, containerHeight };
 };
+
+export default useBentoLayout;
