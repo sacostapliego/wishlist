@@ -54,7 +54,7 @@ export default function ProfileScreen() {
             <View style={styles.headerActions}>
               <TouchableOpacity onPress={() => router.push('/auth/edit-user')} style={styles.actionButton}>
                 <Ionicons name="create-outline" size={18} color="#fff" />
-                <Text style={styles.actionText}>Edit Profile</Text>
+                <Text style={styles.actionText}>Edit Preferences</Text>
               </TouchableOpacity>
             </View>
           )}

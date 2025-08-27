@@ -18,7 +18,7 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
     const itemImageUri = item.image ? `${API_URL}wishlist/${item.id}/image` : null;
     
     const dynamicImageHeight = screenHeight * 0.40;
-    const imageContainerBackgroundColor = getLightColor(COLORS.cardDark || COLORS.cardDark);
+    const imageContainerBackgroundColor = getLightColor(wishlistColor || COLORS.cardDark);
 
     const imageContainerDynamicStyle = {
         ...styles.imageContainer,
