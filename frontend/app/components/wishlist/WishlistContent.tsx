@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withDecay } from 'react-native-reanimated';
 import { EmptyState } from '../layout/EmptyState';
 import BentoGrid from './BentoGrid';
@@ -156,11 +156,13 @@ export const WishlistContent = ({
           />
         </View>
       ) : (
-        <PanGestureHandler onGestureEvent={onPanGestureEvent} onHandlerStateChange={onPanGestureEvent}>
-          <Animated.View style={[styles.panContainer, animatedStyle]}>
-            {renderGrid()}
-          </Animated.View>
-        </PanGestureHandler>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <PanGestureHandler onGestureEvent={onPanGestureEvent} onHandlerStateChange={onPanGestureEvent}>
+            <Animated.View style={[styles.panContainer, animatedStyle]}>
+              {renderGrid()}
+            </Animated.View>
+          </PanGestureHandler>
+        </GestureHandlerRootView>
       )}
     </View>
   );
