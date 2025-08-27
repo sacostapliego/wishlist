@@ -99,13 +99,13 @@ export default function WishlistItemScreen() {
             </Head>
             <StatusBar
                 style={statusBarTextColor}
-                backgroundColor={COLORS.cardDark}
+                backgroundColor={headerBackgroundColor}
                 translucent={false}
             />
             <Header
                 title=""
                 onBack={handleCustomBack}
-                backgroundColor={COLORS.cardDark}
+                backgroundColor={headerBackgroundColor}
                 showOptions={true}
                 onOptionsPress={() => setMenuVisible(true)}
             />
