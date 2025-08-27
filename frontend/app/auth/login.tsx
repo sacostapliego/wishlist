@@ -74,7 +74,7 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          colors={[AUTH_COLORS.primary, AUTH_COLORS.secondary]}
+          colors={[AUTH_COLORS.secondary, AUTH_COLORS.primary]}
           placeholderTextColor={AUTH_COLORS.inactive}
         />
 

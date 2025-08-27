@@ -2,14 +2,7 @@ import { useState, useEffect } from 'react';
 import { wishlistAPI } from '../services/wishlist';
 import Toast from 'react-native-toast-message';
 import { WishlistApiResponse } from '../types/lists';
-
-type WishlistItem = {
-  id: string;
-  name: string;
-  image?: string;
-  price?: number;
-  priority: number;
-};
+import { WishlistItem } from '../types/wishlist';
 
 export const useWishlistDetail = (wishlistId: string, shouldRefresh?: number) => {
   const [wishlist, setWishlist] = useState<WishlistApiResponse | null>(null);

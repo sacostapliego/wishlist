@@ -1,17 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { CARD_WIDTH, COLORS, SPACING } from '../../styles/theme';
-
-interface ConfirmDialogProps {
-  visible: boolean;
-  title: string;
-  message: string;
-  confirmText: string;
-  cancelText: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  isDestructive?: boolean;
-}
+import { ConfirmDialogProps } from '@/app/types/objects';
 
 export default function ConfirmDialog({
   visible,

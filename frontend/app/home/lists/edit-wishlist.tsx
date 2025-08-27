@@ -55,7 +55,7 @@ export default function EditWishlistScreen() {
       });
       
       triggerRefresh();
-      router.replace({
+      router.push({
         pathname: `/home/lists/[id]`,
         params: { id }
       });
@@ -76,7 +76,7 @@ export default function EditWishlistScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.push('/')}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>

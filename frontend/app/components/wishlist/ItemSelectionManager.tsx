@@ -5,14 +5,7 @@ import { COLORS } from '../../styles/theme';
 import Toast from 'react-native-toast-message';
 import ConfirmDialog from '../modals/Confirm';
 import { useRefresh } from '../../context/RefreshContext';
-
-interface ItemSelectionManagerProps {
-  selectedItems: string[];
-  onItemsDeleted: () => void;
-  refetchItems: () => void;
-  confirmDeleteVisible: boolean;
-  setConfirmDeleteVisible: (visible: boolean) => void;
-}
+import { ItemSelectionManagerProps } from '@/app/types/items';
 
 export const ItemSelectionManager = ({
   selectedItems,

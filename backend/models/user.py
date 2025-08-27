@@ -13,45 +13,50 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     name = Column(String, nullable=True)
     pfp = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # relationship
-    wishlist_items = relationship("WishListItem", back_populates="user", cascade="all, delete-orphan")
-    
+    # Relationships
+    wishlists = relationship('Wishlist', back_populates='user', cascade='all, delete-orphan')
+    wishlist_items = relationship('WishListItem', back_populates='user', cascade='all, delete-orphan')
+
+# Pydantic models
 class UserBase(BaseModel):
-    email:EmailStr
-    username: str
-    name: Optional[str] = None
-    pfp: Optional[HttpUrl] = None
-
-class UserCreate(UserBase):
-    password: str
-    
-class UserUpdate(UserBase):
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
-    name: Optional[str] = None
-    pfp: Optional[HttpUrl] = None
-    password: Optional[str] = None
-
-class UserResponse(UserBase):
-    id: uuid.UUID  # Change from int to uuid.UUID
     email: EmailStr
     username: str
     name: Optional[str] = None
-    pfp: Optional[HttpUrl] = None
+
+class UserCreate(UserBase):
+    password: str
+
+class UserUpdate(UserBase):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    name: Optional[str] = None
+
+class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: uuid.UUID
     is_active: bool
     created_at: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
+    pfp: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class PublicUserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: uuid.UUID
+    username: str
+    name: Optional[str] = None
+    pfp: Optional[str] = None

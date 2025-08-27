@@ -1,143 +1,308 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from models.base import get_db
+from models.user_relationship import UserRelationship, RelationshipStatus
+from models.user import User
+from models.wishlist import Wishlist
+from middleware.auth import get_current_user
+
+from pydantic import BaseModel
 from typing import List
 import uuid
 
-from models.base import get_db
-from models.user_relationship import UserRelationship, RelationshipCreate, RelationshipUpdate, RelationshipResponse
-from models.user import User
-from middleware.auth import get_current_user
+router = APIRouter(prefix="/friends", tags=["friends"])
 
-router = APIRouter(prefix='/relationships', tags=['relationships'])
+class FriendRequestCreate(BaseModel):
+    friendId: str
 
-@router.post('/', response_model=RelationshipResponse)
-def create_relationship(
-    relationship: RelationshipCreate,
+class FriendRequestResponse(BaseModel):
+    status: str
+
+class UserSearchResponse(BaseModel):
+    id: str
+    username: str
+    name: str = None
+
+class FriendRequestInfo(BaseModel):
+    id: str
+    user_id: str
+    username: str
+    name: str = None
+    created_at: str
+
+class FriendWishlistResponse(BaseModel):
+    id: str
+    title: str
+    description: str = None
+    color: str = None
+    item_count: int = 0
+    owner_id: str
+    owner_name: str
+    owner_username: str
+    image: str | None = None
+    
+class FriendInfo(BaseModel):
+    id: str
+    username: str
+    name: str | None = None
+
+@router.get("/search-many", response_model=List[UserSearchResponse])
+def search_users_many(
+    query: str = Query(..., min_length=1, description="Query for username or name"),
+    limit: int = Query(20, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user_id = uuid.UUID(str(current_user["user_id"]))
+
+    # Exclude current user and anyone already in a relationship (any status)
+    relationships = db.query(UserRelationship).filter(
+        or_(
+            UserRelationship.user_id == user_id,
+            UserRelationship.friend_id == user_id,
+        )
+    ).all()
+
+    exclude_ids: set[uuid.UUID] = {user_id}
+    for relationship in relationships:
+        other_user_id = relationship.friend_id if relationship.user_id == user_id else relationship.user_id
+        exclude_ids.add(other_user_id)
+
+    candidates = db.query(User).filter(
+        or_(User.username.ilike(f"%{query}%"), User.name.ilike(f"%{query}%"))
+    ).filter(~User.id.in_(list(exclude_ids))).limit(200).all()
+
+    lower_query = query.lower()
+
+    def rank(user_record: User) -> int:
+        username_lower = (user_record.username or "").lower()
+        name_lower = (user_record.name or "").lower()
+        if username_lower == lower_query:
+            return 0
+        if username_lower.startswith(lower_query):
+            return 1
+        if name_lower.startswith(lower_query):
+            return 2
+        if lower_query in username_lower:
+            return 3
+        if lower_query in name_lower:
+            return 4
+        return 9
+
+    sorted_users = sorted(
+        candidates,
+        key=lambda user_record: (rank(user_record), (user_record.username or "").lower())
+    )[:limit]
+
+    return [UserSearchResponse(id=str(user.id), username=user.username, name=user.name) for user in sorted_users]
+
+@router.post("/request")
+def send_friend_request(
+    request: FriendRequestCreate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Send a friend request to another user"""
-    # Check if the friend user exists
-    friend_user = db.query(User).filter(User.id == relationship.friend_id).first()
-    if not friend_user:
+    """Send a friend request"""
+    friend_id = uuid.UUID(request.friendId)
+    user_id = current_user["user_id"]
+    
+    # Check if user exists
+    friend = db.query(User).filter(User.id == friend_id).first()
+    if not friend:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Check if a relationship already exists
-    existing_relationship = db.query(UserRelationship).filter(
-        ((UserRelationship.user_id == current_user["user_id"]) & 
-         (UserRelationship.friend_id == relationship.friend_id)) |
-        ((UserRelationship.user_id == relationship.friend_id) & 
-         (UserRelationship.friend_id == current_user["user_id"]))
+    # Check if they're trying to add themselves
+    if friend_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself as friend")
+    
+    # Check if relationship already exists
+    existing = db.query(UserRelationship).filter(
+        or_(
+            (UserRelationship.user_id == user_id) & (UserRelationship.friend_id == friend_id),
+            (UserRelationship.user_id == friend_id) & (UserRelationship.friend_id == user_id)
+        )
     ).first()
     
-    if existing_relationship:
-        raise HTTPException(status_code=400, detail="Relationship already exists")
+    if existing:
+        if existing.status == RelationshipStatus.ACCEPTED:
+            raise HTTPException(status_code=400, detail="Already friends")
+        elif existing.status == RelationshipStatus.PENDING:
+            raise HTTPException(status_code=400, detail="Friend request already sent")
     
-    # Create the relationship
-    db_relationship = UserRelationship(
-        user_id=current_user["user_id"],
-        friend_id=relationship.friend_id,
-        status="pending"
+    # Create friend request
+    relationship = UserRelationship(
+        user_id=user_id,
+        friend_id=friend_id,
+        status=RelationshipStatus.PENDING
     )
     
-    db.add(db_relationship)
+    db.add(relationship)
     db.commit()
-    db.refresh(db_relationship)
     
-    # Add user details to response
-    response_data = db_relationship.__dict__.copy()
-    response_data['friend_username'] = friend_user.username
-    response_data['friend_name'] = friend_user.name
-    
-    return response_data
+    return {"message": "Friend request sent successfully"}
 
-@router.get('/', response_model=List[RelationshipResponse])
-def get_relationships(
-    status: str = None,
+@router.get("/requests")
+def get_friend_requests(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all relationships for the current user"""
-    query = db.query(UserRelationship).filter(
-        (UserRelationship.user_id == current_user["user_id"]) | 
-        (UserRelationship.friend_id == current_user["user_id"])
-    )
+    """Get pending friend requests for current user"""
+    user_id = current_user["user_id"]
     
-    if status:
-        query = query.filter(UserRelationship.status == status)
+    # Get pending requests where current user is the friend (receiver)
+    requests = db.query(UserRelationship, User).join(
+        User, UserRelationship.user_id == User.id
+    ).filter(
+        UserRelationship.friend_id == user_id,
+        UserRelationship.status == RelationshipStatus.PENDING
+    ).all()
     
-    relationships = query.all()
-    
-    # Add user details to each relationship
     result = []
-    for rel in relationships:
-        # Figure out which user is the friend from current user's perspective
-        friend_id = rel.friend_id if rel.user_id == current_user["user_id"] else rel.user_id
-        friend_user = db.query(User).filter(User.id == friend_id).first()
-        
-        rel_dict = rel.__dict__.copy()
-        rel_dict['friend_username'] = friend_user.username
-        rel_dict['friend_name'] = friend_user.name
-        
-        result.append(rel_dict)
+    for relationship, user in requests:
+        result.append(FriendRequestInfo(
+            id=str(relationship.id),
+            user_id=str(user.id),
+            username=user.username,
+            name=user.name,
+            created_at=relationship.created_at.isoformat()
+        ))
     
     return result
 
-@router.put('/{relationship_id}', response_model=RelationshipResponse)
-def update_relationship(
-    relationship_id: uuid.UUID,
-    relationship_update: RelationshipUpdate,
+@router.post("/requests/{request_id}/accept")
+def accept_friend_request(
+    request_id: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update a relationship (accept/reject friend request)"""
-    db_relationship = db.query(UserRelationship).filter(
-        UserRelationship.id == relationship_id,
-        (UserRelationship.user_id == current_user["user_id"]) | 
-        (UserRelationship.friend_id == current_user["user_id"])
+    """Accept a friend request"""
+    user_id = current_user["user_id"]
+    
+    # Find the request
+    relationship = db.query(UserRelationship).filter(
+        UserRelationship.id == uuid.UUID(request_id),
+        UserRelationship.friend_id == user_id,
+        UserRelationship.status == RelationshipStatus.PENDING
     ).first()
     
-    if not db_relationship:
-        raise HTTPException(status_code=404, detail="Relationship not found")
+    if not relationship:
+        raise HTTPException(status_code=404, detail="Friend request not found")
     
-    # Only allow the recipient of the request to update status
-    if db_relationship.friend_id == current_user["user_id"] or relationship_update.status is None:
-        # Update status if provided
-        if relationship_update.status is not None:
-            db_relationship.status = relationship_update.status
-        
-        db.commit()
-        db.refresh(db_relationship)
-        
-        # Get friend user details for response
-        friend_id = db_relationship.friend_id if db_relationship.user_id == current_user["user_id"] else db_relationship.user_id
-        friend_user = db.query(User).filter(User.id == friend_id).first()
-        
-        response_data = db_relationship.__dict__.copy()
-        response_data['friend_username'] = friend_user.username
-        response_data['friend_name'] = friend_user.name
-        
-        return response_data
-    else:
-        raise HTTPException(status_code=403, detail="Only the request recipient can update status")
-
-@router.delete('/{relationship_id}', response_model=dict)
-def delete_relationship(
-    relationship_id: uuid.UUID,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Delete a relationship"""
-    db_relationship = db.query(UserRelationship).filter(
-        UserRelationship.id == relationship_id,
-        (UserRelationship.user_id == current_user["user_id"]) | 
-        (UserRelationship.friend_id == current_user["user_id"])
-    ).first()
-    
-    if not db_relationship:
-        raise HTTPException(status_code=404, detail="Relationship not found")
-    
-    db.delete(db_relationship)
+    # Update status to accepted
+    relationship.status = RelationshipStatus.ACCEPTED
     db.commit()
     
-    return {"message": "Relationship deleted successfully"}
+    return {"message": "Friend request accepted"}
+
+@router.post("/requests/{request_id}/decline")
+def decline_friend_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Decline a friend request"""
+    user_id = current_user["user_id"]
+    
+    # Find the request
+    relationship = db.query(UserRelationship).filter(
+        UserRelationship.id == uuid.UUID(request_id),
+        UserRelationship.friend_id == user_id,
+        UserRelationship.status == RelationshipStatus.PENDING
+    ).first()
+    
+    if not relationship:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    # Delete the relationship
+    db.delete(relationship)
+    db.commit()
+    
+    return {"message": "Friend request declined"}
+
+@router.get("/wishlists")
+def get_friends_wishlists(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get public wishlists from friends"""
+    # Normalize to UUID to compare correctly with DB UUIDs
+    user_id = uuid.UUID(str(current_user["user_id"]))
+    
+    # Get accepted friendships
+    friendships = db.query(UserRelationship).filter(
+        or_(
+            (UserRelationship.user_id == user_id),
+            (UserRelationship.friend_id == user_id)
+        ),
+        UserRelationship.status == RelationshipStatus.ACCEPTED
+    ).all()
+    
+    friend_ids: set[uuid.UUID] = set()
+    for fr in friendships:
+        # Always pick "the other" user
+        other_id = fr.friend_id if fr.user_id == user_id else fr.user_id
+        # Guard against self being added accidentally
+        if other_id != user_id:
+            friend_ids.add(other_id)
+    
+    if not friend_ids:
+        return []
+    
+    # Get public wishlists from friends
+    wishlists = db.query(Wishlist, User).join(
+        User, Wishlist.user_id == User.id
+    ).filter(
+        Wishlist.user_id.in_(list(friend_ids)),
+        Wishlist.is_public == True
+    ).all()
+    
+    result = []
+    for wishlist, user in wishlists:
+        from models.item import WishListItem
+        item_count = db.query(WishListItem).filter(
+            WishListItem.wishlist_id == wishlist.id
+        ).count()
+        
+        result.append(FriendWishlistResponse(
+            id=str(wishlist.id),
+            title=wishlist.title,
+            description=wishlist.description,
+            color=wishlist.color,
+            item_count=item_count,
+            owner_id=str(user.id),
+            owner_name=user.name or user.username,
+            owner_username=user.username,
+            image=wishlist.image
+        ))
+    
+    return result
+
+@router.get("/list")
+def get_friends_list(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get accepted friends (both directions)"""
+    # Normalize to UUID
+    user_id = uuid.UUID(str(current_user["user_id"]))
+
+    friendships = db.query(UserRelationship).filter(
+        or_(
+            (UserRelationship.user_id == user_id),
+            (UserRelationship.friend_id == user_id)
+        ),
+        UserRelationship.status == RelationshipStatus.ACCEPTED
+    ).all()
+
+    friend_ids: set[uuid.UUID] = set()
+    for fr in friendships:
+        other_id = fr.friend_id if fr.user_id == user_id else fr.user_id
+        if other_id != user_id:
+            friend_ids.add(other_id)
+
+    if not friend_ids:
+        return []
+
+    friends = db.query(User).filter(User.id.in_(list(friend_ids))).all()
+    return [FriendInfo(id=str(u.id), username=u.username, name=u.name) for u in friends]

@@ -126,8 +126,27 @@ export const wishlistAPI = {
         return []; 
       }
     },
+    
+    getWisihlistItem: async (itemId: string) => {
+      try {
+        const response = await api.get(`/wishlist/${itemId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching item ${itemId}:`, error);
+        throw error;
+      }
+    },
+
+    scrapeUrl: async (url: string) => {
+      try {
+        const response = await api.post('/wishlist/scrape-url', { url });
+        return response.data;
+      } catch (error) {
+        console.error('Error scraping URL:', error);
+        throw error; // Propagate the error for handling in the component
+      }
+    }
   };
 
-  
 
 export default wishlistAPI;

@@ -19,5 +19,10 @@ pydantic
 pydantic[email]
 python-dotenv
 requests
+boto3
+
+# web scraping
+beautifulsoup4
+requests
 
 sqlalchemy-utils

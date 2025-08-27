@@ -10,6 +10,7 @@ type HeaderProps = {
   showOptions?: boolean;
   onOptionsPress?: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
+  backgroundColor?: string;
 };
 
 export const Header = ({
@@ -18,10 +19,11 @@ export const Header = ({
   showBackButton = true,
   showOptions = false,
   onOptionsPress,
-  rightIcon = 'ellipsis-vertical'
+  rightIcon = 'ellipsis-vertical',
+  backgroundColor = COLORS.background,
 }: HeaderProps) => {
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor }]}>
       {showBackButton ? (
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
@@ -54,6 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.background,
   },
   backButton: {
     padding: SPACING.xs,

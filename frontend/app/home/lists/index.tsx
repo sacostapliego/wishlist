@@ -10,22 +10,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { COLORS, SPACING } from '../styles/theme';
-import { wishlistAPI } from '../services/wishlist';
-import { WishlistApiResponse } from '../types/lists';
+import { SPACING, COLORS } from '@/app/styles/theme';
+import { wishlistAPI } from '@/app/services/wishlist';
+import { WishlistApiResponse } from '@/app/types/lists';
 import Toast from 'react-native-toast-message';
-import { useRefresh } from '../context/RefreshContext';
+import { useRefresh } from '@/app/context/RefreshContext';
 
 export default function ListsScreen() {
   const router = useRouter();
   const [wishlists, setWishlists] = useState<WishlistApiResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedWishlist, setSelectedWishlist] = useState<WishlistApiResponse | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const { refreshTimestamp, triggerRefresh } = useRefresh(); // Use refresh context
+  const { refreshTimestamp, triggerRefresh } = useRefresh();
 
-  // Fetch wishlists on component mount
   useEffect(() => {
     fetchWishlists();
   }, [refreshTimestamp]);
@@ -51,41 +47,34 @@ export default function ListsScreen() {
     router.push('/home/create-wishlist');
   };
 
-   const handleOpenMenu = (wishlist: WishlistApiResponse) => {
-    setSelectedWishlist(wishlist);
-    setShowMenu(true);
-  };
-
-
   const renderWishlists = () => {
-    return wishlists.map((item) => {
-      const itemColor = item.color || '#ff7f50'; // Default color if none specified
-      return (
-        <TouchableOpacity 
-          key={item.id}
-          style={[styles.listItem, { borderColor: itemColor, borderWidth: 5, borderRadius: 16 }]}
-          onPress={() => {
-          router.push({
-            pathname: "/home/lists/[id]",
-            params: { id: item.id }
-          });
-          }}
-
-        >
-          <View style={styles.listContent}>
-            <View style={styles.listTextContainer}>
-              <Text style={styles.listName}>{item.title}</Text>
-              <Text style={styles.listDetails}>
-                {item.description ? `${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}` : ''}
-              </Text>
-              <Text style={styles.itemCount}>{item.item_count || 0} items</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={COLORS.text.secondary} />
+  return wishlists.map((item) => {
+    const itemColor = item.color || '#ff7f50';
+    return (
+      <TouchableOpacity 
+        key={item.id}
+        style={styles.listItem}
+        onPress={() => {
+          router.push(`/home/lists/${item.id}`);
+        }}
+      >
+        <View style={[styles.colorStrip, { backgroundColor: itemColor }]}>
+          <Ionicons name="gift-outline" size={28} color="#fff" />
+        </View>
+        <View style={styles.listContent}>
+          <View style={styles.listTextContainer}>
+            <Text style={styles.listName}>{item.title}</Text>
+            <Text style={styles.listDetails}>
+              {item.description ? `${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}` : ''}
+            </Text>
+            <Text style={styles.itemCount}>{item.item_count || 0} items</Text>
           </View>
-        </TouchableOpacity>
-      );
-    });
-  };
+          <Ionicons name="chevron-forward" size={24} color={COLORS.text.secondary} />
+        </View>
+      </TouchableOpacity>
+    );
+  });
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -167,11 +156,22 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   listItem: {
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderRadius: 4,
     marginBottom: SPACING.md,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  colorStrip: {
+    width: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
   },
   listContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -179,7 +179,6 @@ const styles = StyleSheet.create({
   },
   listTextContainer: {
     flex: 1,
-    marginRight: SPACING.sm,
   },
   listName: {
     fontSize: 18,

@@ -7,9 +7,10 @@ interface DeviceFrameProps {
 }
 
 export default function DeviceFrame({ children }: DeviceFrameProps) {
-  if (Platform.OS !== 'web') {
-    return <>{children}</>;
-  }
+  if (Platform.OS !== 'web' || 
+    (typeof window !== 'undefined' && window.innerWidth < 768)) {
+  return <>{children}</>;
+}
 
   return (
     <View style={styles.container}>

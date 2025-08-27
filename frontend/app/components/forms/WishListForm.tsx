@@ -9,7 +9,8 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, SPACING, WISHLIST_COLORS } from '../../styles/theme';
+import { COLORS, SPACING } from '../../styles/theme';
+import { WISHLIST_COLORS } from '@/app/styles/colors';
 import { Button } from '../ui/Button';
 import { WishlistFormProps } from '@/app/types/lists';
 import { ICONS } from '@/app/styles/icons';
@@ -36,7 +37,7 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
   const [isPublic, setIsPublic] = useState(initialValues.isPublic || false);
   const [selectedColor, setSelectedColor] = useState(initialValues.color || '#ff7f50');
   const [privacy, setPrivacy] = useState('private');
-  const [selectedImage, setSelectedImage] = useState(initialValues.image || "gift-outline");
+  const [selectedImage, setSelectedImage] = useState(initialValues.image);
 
   const handleSubmit = async () => {
     // Basic validation
@@ -47,7 +48,7 @@ const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
       description: description.trim(),
       color: selectedColor,
       is_public: isPublic,
-      image: selectedImage,
+      image: selectedImage ?? "gift-outline"
     });
   };
 

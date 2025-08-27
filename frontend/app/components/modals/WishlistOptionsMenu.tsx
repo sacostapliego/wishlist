@@ -2,21 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_WIDTH, COLORS, SPACING } from '../../styles/theme';
-
-interface WishlistOptionsMenuProps {
-  visible: boolean;
-  onClose: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
-  onSelectItems: () => void;
-}
+import { WishlistOptionsMenuProps } from '@/app/types/wishlist';
 
 export default function WishlistOptionsMenu({ 
   visible, 
   onClose,
   onDelete,
   onEdit,
-  onSelectItems
+  onSelectItems,
+  onShare,
 }: WishlistOptionsMenuProps) {
   
   return (
@@ -28,6 +22,7 @@ export default function WishlistOptionsMenu({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <View style={styles.menuContainer}>
+          {/* Edit button */}
           <TouchableOpacity 
             style={styles.menuItem} 
             onPress={onEdit}
@@ -36,12 +31,22 @@ export default function WishlistOptionsMenu({
             <Text style={styles.menuText}>Edit Wishlist</Text>
           </TouchableOpacity>
           
+          {/* Select button | for deleting items */}
           <TouchableOpacity 
             style={styles.menuItem} 
             onPress={onSelectItems}
           >
             <Ionicons name="checkbox-outline" size={24} color={COLORS.text.primary} />
             <Text style={styles.menuText}>Select Items</Text>
+          </TouchableOpacity>
+
+          {/* Share button */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={onShare}
+          >
+            <Ionicons name="share-social-outline" size={24} color={COLORS.text.primary} />
+            <Text style={styles.menuText}>Share Wishlist</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
   },
   deleteItem: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: COLORS.border,
     marginTop: SPACING.sm,
     paddingTop: SPACING.md,
   },

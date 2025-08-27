@@ -35,7 +35,7 @@ export default function SettingsScreen() {
             onPress={navigateToEditProfile}
           >
             <Ionicons name="person" size={24} color={COLORS.text.primary} />
-            <Text style={styles.settingText}>Edit Profile</Text>
+            <Text style={styles.settingText}>Account Management</Text>
           </TouchableOpacity>
         </View>
         
