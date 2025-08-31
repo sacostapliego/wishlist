@@ -281,18 +281,18 @@ export const WishlistContent = ({
             {renderGrid()}
           </ScrollView>
 
-            <ScrollView
-              ref={bottomRef}
-              horizontal
-              showsHorizontalScrollIndicator
-              style={styles.bottomScrollbar}
-              contentContainerStyle={{
-                width: containerWidth + TOTAL_PAD * 2 + horizontalCenterPad * 2,
-                height: 1,
-              }}
-              onScroll={onBottomScroll}
-              scrollEventThrottle={16}
-            />
+          <ScrollView
+            ref={bottomRef}
+            horizontal
+            showsHorizontalScrollIndicator
+            style={styles.bottomScrollbar}
+            contentContainerStyle={{
+              width: containerWidth + TOTAL_PAD * 2 + horizontalCenterPad * 2,
+              height: 1,
+            }}
+            onScroll={onBottomScroll}
+            scrollEventThrottle={16}
+          />
         </View>
       ) : (
         <GestureHandlerRootView style={{ flex: 1 }}>
