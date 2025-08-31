@@ -28,7 +28,7 @@ export default function WishlistDetailScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'bento' | 'list'>('bento'); // State for view mode
+  const [viewMode, setViewMode] = useState<'list' | 'bento'>('list'); // State for view mode
 
   const baseSize = Platform.OS === 'web' ? (420 / 2) : (width - (SPACING.md * 3) / 2);
   const { wishlist, items, isLoading, refetch } = useWishlistDetail(id as string, refreshTimestamp);
@@ -91,26 +91,26 @@ export default function WishlistDetailScreen() {
       );
     }
 
-    if (viewMode === 'bento') {
-      return (
-        <WishlistContent
-          items={items}
-          baseSize={baseSize}
-          isSelectionMode={isSelectionMode}
-          selectedItems={selectedItems}
-          onItemPress={handleItemPress}
-          onAddItem={handleAddItem}
-          onCancelSelection={cancelSelection}
-          wishlistColor={wishlist?.color}
-        />
-      );
-    } else {
+    if (viewMode === 'list') {
       return (
         <WishlistListView
           items={items}
           onItemPress={handleItemPress}
           isSelectionMode={isSelectionMode}
           selectedItems={selectedItems}
+          wishlistColor={wishlist?.color}
+        />
+      );
+    } else {
+      return (
+        <WishlistContent
+          items={items}
+          baseSize={baseSize}
+          isSelectionMode={isSelectionMode}
+            selectedItems={selectedItems}
+          onItemPress={handleItemPress}
+          onAddItem={handleAddItem}
+          onCancelSelection={cancelSelection}
           wishlistColor={wishlist?.color}
         />
       );
@@ -158,22 +158,22 @@ export default function WishlistDetailScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'bento' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },
-            ]}
-            onPress={() => setViewMode('bento')}
-          >
-            <Ionicons name="grid-outline" size={20} color={viewMode === 'bento' ? COLORS.white : COLORS.text.secondary} />
-            <Text style={[styles.toggleButtonText, viewMode === 'bento' && styles.activeToggleButtonText]}>Grid</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
               viewMode === 'list' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },,
             ]}
             onPress={() => setViewMode('list')}
           >
             <Ionicons name="list-outline" size={20} color={viewMode === 'list' ? COLORS.white : COLORS.text.secondary} />
             <Text style={[styles.toggleButtonText, viewMode === 'list' && styles.activeToggleButtonText]}>List</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === 'bento' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },
+            ]}
+            onPress={() => setViewMode('bento')}
+          >
+            <Ionicons name="grid-outline" size={20} color={viewMode === 'bento' ? COLORS.white : COLORS.text.secondary} />
+            <Text style={[styles.toggleButtonText, viewMode === 'bento' && styles.activeToggleButtonText]}>Grid</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -15,16 +15,17 @@ export type BentoGridPosition = {
 };
 
 const GAP = SPACING.md;
-const INFO_BAR_HEIGHT = 56;
+const INFO_BAR_HEIGHT = 0;
 const ITEM_SCALE_WEB = 0.6; // 30% smaller on web only
+const CANVAS_PADDING = 300;
 
 export const useBentoLayout = (items: WishlistItem[]) => {
   const { width: screenWidth } = useWindowDimensions();
   const imageDims = useImageDimensions(items);
 
-  const { gridPositions, containerWidth, containerHeight } = useMemo(() => {
+  const { gridPositions, containerWidth, containerHeight, innerWidth, innerHeight } = useMemo(() => {
     if (!items || items.length === 0) {
-      return { gridPositions: [], containerWidth: 0, containerHeight: 0 };
+      return { gridPositions: [], containerWidth: 0, containerHeight: 0, innerWidth: 0, innerHeight: 0 };
     }
 
     // Columns responsive by platform
@@ -56,12 +57,16 @@ export const useBentoLayout = (items: WishlistItem[]) => {
     for (const item of items) {
       const dims = imageDims[item.id];
       const aspect = dims?.aspect ?? 1; // h/w
+      const hasImage = !!item.image;
+
       const imageHeight = Math.round(colWidth * aspect);
-      const cardHeight = Math.max(120, imageHeight + INFO_BAR_HEIGHT);
+      const cardHeight = hasImage
+        ? Math.max(140, imageHeight + INFO_BAR_HEIGHT)
+        : Math.max(140, imageHeight); // text-only card just uses min height
 
       const colIndex = colHeights.indexOf(Math.min(...colHeights));
-      const top = colHeights[colIndex];
-      const left = colIndex * (colWidth + GAP);
+      const top = colHeights[colIndex] + CANVAS_PADDING;
+      const left = colIndex * (colWidth + GAP) + CANVAS_PADDING;
 
       const { titleFontSize, priceFontSize } = fontSizesFor(item.priority);
 
@@ -78,17 +83,22 @@ export const useBentoLayout = (items: WishlistItem[]) => {
       colHeights[colIndex] += cardHeight + GAP;
     }
 
-    const totalWidth = cols * colWidth + GAP * (cols - 1);
-    const totalHeight = Math.max(...colHeights) - GAP;
+    const innerWidth = cols * colWidth + GAP * (cols - 1);
+    const innerHeight = Math.max(...colHeights) - GAP + INFO_BAR_HEIGHT;
+
+    const totalWidth = innerWidth + CANVAS_PADDING * 2;
+    const totalHeight = innerHeight + CANVAS_PADDING * 2;
 
     return {
       gridPositions: positions,
       containerWidth: totalWidth,
       containerHeight: totalHeight,
+      innerWidth,
+      innerHeight,
     };
   }, [items, imageDims, screenWidth]);
 
-  return { gridPositions, containerWidth, containerHeight };
+  return { gridPositions, containerWidth, containerHeight, innerWidth, innerHeight };
 };
 
 export default useBentoLayout;

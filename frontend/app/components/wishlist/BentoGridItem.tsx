@@ -56,19 +56,17 @@ export const BentoGridItem: React.FC<BentoGridItemProps> = ({
 
       {hasImage ? (
         <View style={styles.itemWithImageContainer}>
-          <View style={[styles.imageWrapper, { backgroundColor: lighterCardColor }]}>
-            <Image
-              source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
-              style={styles.itemImage}
-              resizeMode="contain" // show the whole image
-            />
-          </View>
-          <View style={[styles.itemInfo, { backgroundColor: style.backgroundColor }]}>
-            <Text style={[styles.itemName, { fontSize: titleFontSize }]} numberOfLines={1}>
+          <Image
+            source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
+            style={styles.itemImage}
+            resizeMode="cover"
+          />
+          <View style={styles.overlay}>
+            <Text style={[styles.overlayName, { fontSize: titleFontSize }]} numberOfLines={2}>
               {item.name}
             </Text>
             {item.price !== undefined && (
-              <Text style={[styles.itemPrice, { fontSize: priceFontSize }]}>
+              <Text style={[styles.overlayPrice, { fontSize: priceFontSize }]}>
                 {formatPrice(item.price)}
               </Text>
             )}
@@ -99,12 +97,8 @@ const styles = StyleSheet.create({
   },
   itemWithImageContainer: {
     flex: 1,
-  },
-  imageWrapper: {
-    flex: 1,               // image area uses remaining space
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: '100%',
   },
   itemImage: {
     width: '100%',
@@ -114,7 +108,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.sm,
-    minHeight: 52,         // solid bar, no transparency
+    minHeight: 32,         // solid bar, no transparency
     justifyContent: 'center',
   },
   itemName: {
@@ -131,6 +125,23 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  overlayName: {
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  overlayPrice: {
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
   },
   textOnlyName: {
     fontWeight: 'bold',

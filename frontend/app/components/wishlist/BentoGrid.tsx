@@ -36,16 +36,16 @@ export const BentoGrid = ({
       {gridPositions.map((pos) => {
         const { item, width, height, top, left, titleFontSize, priceFontSize } = pos;
         const isSelected = selectedItems.includes(item.id);
-
+        //TODO: Implement the user options for the wishlist boolean, if the user clicks on it it usees the wishlist theme if not it uses COLORS.cardGray
         return (
           <BentoGridItem
             key={item.id}
             item={item}
-            style={{ width, height, top, left, backgroundColor: cardColor }}
+            style={{ width, height, top, left, backgroundColor: COLORS.cardGray }}
             isSelected={isSelected}
             selectionMode={selectionMode}
             onItemPress={onItemPress}
-            lighterCardColor={lighterCardColor}
+            lighterCardColor={COLORS.cardGray}
             titleFontSize={titleFontSize}
             priceFontSize={priceFontSize}
             formatPrice={formatPrice}
