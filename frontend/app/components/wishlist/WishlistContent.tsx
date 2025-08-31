@@ -127,6 +127,7 @@ export const WishlistContent = ({
                 paddingBottom: 18,
               },
             ]}
+            style={{ touchAction: "pan-x pan-y" }}
           >
             {renderGrid()}
           </ScrollView>
@@ -135,7 +136,7 @@ export const WishlistContent = ({
             ref={bottomRef}
             horizontal
             showsHorizontalScrollIndicator={true}
-            style={styles.bottomScrollbar}
+            style={[styles.bottomScrollbar, { touchAction: "pan-x pan-y" }]}
             contentContainerStyle={{ width: containerWidth + EXTRA_SCROLL, height: 1 }}
             onScroll={onBottomScroll}
             scrollEventThrottle={16}
