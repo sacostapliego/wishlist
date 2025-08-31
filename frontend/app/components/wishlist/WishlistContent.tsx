@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withDecay } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withDecay, useAnimatedScrollHandler } from 'react-native-reanimated';
 
 import { EmptyState } from '../layout/EmptyState';
 import BentoGrid from './BentoGrid';
@@ -260,7 +260,7 @@ export const WishlistContent = ({
           onAction={onAddItem}
         />
       ) : Platform.OS === 'web' ? (
-        <View style={styles.webWrapper} onTouchStart={onAnyTouch}>
+        <View style={styles.webWrapper} onPointerDown={onAnyTouch}>
           <ScrollView
             ref={mainRef}
             showsVerticalScrollIndicator={false}
@@ -323,7 +323,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   actionButton: { padding: SPACING.xs },
-  webWrapper: { flex: 1, position: 'relative' },
+  webWrapper: { 
+    flex: 1, 
+    position: 'relative',
+    touchAction: 'manipulation',
+  },
   bottomScrollbar: {
     position: 'absolute',
     left: 0,
