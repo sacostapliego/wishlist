@@ -29,7 +29,7 @@ export default function WishlistDetailScreen() {
   const { refreshTimestamp } = useRefresh();
   const { user } = useAuth();
 
-  const [viewMode, setViewMode] = useState<'bento' | 'list'>('bento');
+  const [viewMode, setViewMode] = useState<'bento' | 'list'>('list');
   const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
   const [isCheckingFriendship, setIsCheckingFriendship] = useState(true);
 
@@ -193,22 +193,22 @@ export default function WishlistDetailScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'bento' && {backgroundColor: activeColor, borderColor: activeColor },
-            ]}
-            onPress={() => setViewMode('bento')}
-          >
-            <Ionicons name="grid-outline" size={20} color={viewMode === 'bento' ? COLORS.white : COLORS.text.secondary} />
-            <Text style={[styles.toggleButtonText, viewMode === 'bento' && styles.activeToggleButtonText]}>Grid</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
               viewMode === 'list' && {backgroundColor: activeColor, borderColor: activeColor },
             ]}
             onPress={() => setViewMode('list')}
           >
             <Ionicons name="list-outline" size={20} color={viewMode === 'list' ? COLORS.white : COLORS.text.secondary} />
             <Text style={[styles.toggleButtonText, viewMode === 'list' && styles.activeToggleButtonText]}>List</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === 'bento' && {backgroundColor: activeColor, borderColor: activeColor },
+            ]}
+            onPress={() => setViewMode('bento')}
+          >
+            <Ionicons name="grid-outline" size={20} color={viewMode === 'bento' ? COLORS.white : COLORS.text.secondary} />
+            <Text style={[styles.toggleButtonText, viewMode === 'bento' && styles.activeToggleButtonText]}>Grid</Text>
           </TouchableOpacity>
         </View>
       )}
