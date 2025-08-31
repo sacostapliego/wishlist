@@ -42,7 +42,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userData = await AsyncStorage.getItem(USER_STORAGE_KEY);
         
         if (!token) {
-          console.log('No token found, user is logged out');
           setUser(null);
           setLoading(false);
           return;

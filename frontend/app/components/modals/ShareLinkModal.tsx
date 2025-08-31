@@ -14,7 +14,6 @@ export default function ShareLinkModal({
     const handleCopyLink = async () => {
       if (shareUrl) {
         await Clipboard.setStringAsync(shareUrl);
-        console.log("Link copy functionality to be implemented.");
       }
     };
 

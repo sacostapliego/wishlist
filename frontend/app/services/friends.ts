@@ -97,7 +97,6 @@ export const friendsAPI = {
     try {
       const response = await api.get('/friends/list');
       const wl: FriendWishlistResponse[] = await friendsAPI.getFriendsWishlists();
-      console.log('Friends wishlists:', wl.map(x => ({ id: x.id, image: x.image })));
       return response.data;
     } catch (error) {
       console.error('Friends list error:', error);

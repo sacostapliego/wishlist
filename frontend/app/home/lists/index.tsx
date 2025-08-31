@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.md,
+    backgroundColor: COLORS.cardDarkLight,
   },
   listTextContainer: {
     flex: 1,

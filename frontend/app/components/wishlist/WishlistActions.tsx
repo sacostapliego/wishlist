@@ -50,7 +50,6 @@ export const WishlistActions = ({
   };
 
   const handleShareWishlist = async () => {
-    console.log('[handleShareWishlist] Called');
     onMenuClose();
     setIsSharing(true);
     setGeneratedShareUrl(null);
