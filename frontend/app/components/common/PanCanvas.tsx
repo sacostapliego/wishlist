@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Platform, View, ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -12,17 +12,17 @@ type PanCanvasProps = {
   width: number;
   height: number;
   overscroll?: number;
-  disableChildPressOnDrag?: boolean;
+  dragSuppressThreshold?: number; // px before we treat pointer as drag
   children: (ctx: { dragging: boolean }) => React.ReactNode;
   style?: ViewStyle;
-  webUseNativeScroll?: boolean; // set true to just use normal browser scroll on web
+  webUseNativeScroll?: boolean;
 };
 
 export const PanCanvas = ({
   width,
   height,
   overscroll = 48,
-  disableChildPressOnDrag = true,
+  dragSuppressThreshold = 6,
   children,
   style,
   webUseNativeScroll = false,
@@ -31,12 +31,19 @@ export const PanCanvas = ({
   const ty = useSharedValue(0);
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
-  const draggingRef = useRef(false);
+
+  // dragging == user moved beyond threshold (only then disable clicks)
+  const [dragging, setDragging] = useState(false);
   const surfaceRef = useRef<View | null>(null);
 
-  const webExtras = Platform.OS === 'web'
-  ? ({ cursor: 'grab', touchAction: 'none', WebkitUserSelect: 'none' } as any)
-  : null;
+  const webExtras =
+    Platform.OS === 'web'
+      ? ({
+          cursor: dragging ? 'grabbing' : 'grab',
+          touchAction: 'none',
+          WebkitUserSelect: 'none',
+        } as any)
+      : null;
 
   const getClamp = useCallback(() => {
     const sw = typeof window !== 'undefined' ? window.innerWidth : 0;
@@ -48,6 +55,7 @@ export const PanCanvas = ({
     return { x: [minX, maxX] as [number, number], y: [minY, maxY] as [number, number] };
   }, [width, height, overscroll]);
 
+  // Native (apps) pan
   const pan = Gesture.Pan()
     .minDistance(1)
     .onBegin(() => {
@@ -55,25 +63,27 @@ export const PanCanvas = ({
       cancelAnimation(ty);
       startX.value = tx.value;
       startY.value = ty.value;
-      draggingRef.current = true;
+      setDragging(false);
     })
     .onUpdate(e => {
       tx.value = startX.value + e.translationX;
       ty.value = startY.value + e.translationY;
+      if (!dragging && (Math.abs(e.translationX) > dragSuppressThreshold || Math.abs(e.translationY) > dragSuppressThreshold)) {
+        setDragging(true);
+      }
     })
     .onEnd(e => {
       const { x, y } = getClamp();
       tx.value = withDecay({ velocity: e.velocityX, clamp: x });
       ty.value = withDecay({ velocity: e.velocityY, clamp: y });
+      // keep dragging true through inertia
     })
     .onFinalize(() => {
-      // allow presses again next frame
-      requestAnimationFrame(() => {
-        draggingRef.current = false;
-      });
+      // allow next tap after frame
+      requestAnimationFrame(() => setDragging(false));
     });
 
-  // Raw pointer fallback for web when not using native scroll
+  // Web pointer fallback (desktop & mobile web) when not using native scroll
   useEffect(() => {
     if (Platform.OS !== 'web' || webUseNativeScroll) return;
     // @ts-ignore
@@ -81,8 +91,12 @@ export const PanCanvas = ({
     if (!node) return;
 
     let pid: number | null = null;
-    let lx = 0;
-    let ly = 0;
+    let originX = 0;
+    let originY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let moved = false;
+    let draggingActive = false;
 
     const down = (e: PointerEvent) => {
       if (pid !== null) return;
@@ -91,34 +105,59 @@ export const PanCanvas = ({
       cancelAnimation(ty);
       startX.value = tx.value;
       startY.value = ty.value;
-      lx = e.clientX;
-      ly = e.clientY;
-      draggingRef.current = true;
-      node.setPointerCapture(pid);
+      originX = lastX = e.clientX;
+      originY = lastY = e.clientY;
+      moved = false;
+      draggingActive = false;
+      setDragging(false);
+      // Do NOT capture yet; only after threshold
     };
+
     const move = (e: PointerEvent) => {
       if (pid === null || e.pointerId !== pid) return;
-      tx.value += e.clientX - lx;
-      ty.value += e.clientY - ly;
-      lx = e.clientX;
-      ly = e.clientY;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      if (dx !== 0 || dy !== 0) moved = true;
+      tx.value += dx;
+      ty.value += dy;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      if (!draggingActive) {
+        const totalDx = e.clientX - originX;
+        const totalDy = e.clientY - originY;
+        if (Math.abs(totalDx) > dragSuppressThreshold || Math.abs(totalDy) > dragSuppressThreshold) {
+          draggingActive = true;
+          setDragging(true);
+          node.setPointerCapture(pid);
+        }
+      }
     };
-    const up = (e: PointerEvent) => {
-      if (e.pointerId !== pid) return;
+
+    const end = (e: PointerEvent) => {
+      if (pid === null || e.pointerId !== pid) return;
       pid = null;
-      draggingRef.current = false;
+      if (draggingActive) {
+        // inertia not implemented in pure pointer fallback (optional)
+        // allow click again
+        requestAnimationFrame(() => setDragging(false));
+      } else {
+        setDragging(false);
+      }
     };
+
     node.addEventListener('pointerdown', down, { passive: true });
     node.addEventListener('pointermove', move, { passive: true });
-    node.addEventListener('pointerup', up, { passive: true });
-    node.addEventListener('pointercancel', up, { passive: true });
+    node.addEventListener('pointerup', end, { passive: true });
+    node.addEventListener('pointercancel', end, { passive: true });
+
     return () => {
       node.removeEventListener('pointerdown', down);
       node.removeEventListener('pointermove', move);
-      node.removeEventListener('pointerup', up);
-      node.removeEventListener('pointercancel', up);
+      node.removeEventListener('pointerup', end);
+      node.removeEventListener('pointercancel', end);
     };
-  }, [webUseNativeScroll, tx, ty, startX, startY]);
+  }, [webUseNativeScroll, dragSuppressThreshold, tx, ty, startX, startY]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }, { translateY: ty.value }],
@@ -136,20 +175,16 @@ export const PanCanvas = ({
   }
 
   const surface = (
-    <Animated.View
+     <Animated.View
       ref={surfaceRef}
-      // @ts-ignore
       style={[
         { width, height },
         webExtras,
         style,
         animStyle,
-    ]}
-    pointerEvents={
-        disableChildPressOnDrag && draggingRef.current ? 'none' : 'auto'
-    }
+      ]}
     >
-      {children({ dragging: draggingRef.current })}
+      {children({ dragging })}
     </Animated.View>
   );
 

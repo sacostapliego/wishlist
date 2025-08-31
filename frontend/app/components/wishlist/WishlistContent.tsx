@@ -54,15 +54,19 @@ export const WishlistContent = ({
         width={containerWidth}
         height={containerHeight}
         overscroll={48}
-        webUseNativeScroll={false} // flip to true if you prefer standard scroll on web
+        dragSuppressThreshold={6}
+        webUseNativeScroll={false}
       >
-        {() => (
+        {({ dragging }) => (
           <BentoGrid
             gridPositions={gridPositions}
             width={containerWidth}
             height={containerHeight}
             items={items}
-            onItemPress={onItemPress}
+            onItemPress={item => {
+              if (dragging) return;
+              onItemPress(item);
+            }}
             selectedItems={selectedItems}
             selectionMode={isSelectionMode}
             wishlistColor={wishlistColor}
