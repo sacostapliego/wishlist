@@ -5,7 +5,7 @@ import Toast from 'react-native-toast-message';
 import { RefreshProvider } from './context/RefreshContext';
 import { useEffect } from 'react';
 import DeviceFrame from './context/FrameContext';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'; // ADD
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   useEffect(() => {
