@@ -19,8 +19,8 @@ import { COLORS, SPACING } from '../../styles/theme';
 import { WishlistContentProps } from '@/app/types/wishlist';
 import { useBentoLayout } from '../../hooks/useBentoLayout';
 
-const EXTRA_SCROLL = 160;              // extra roaming space
-const EDGE_PADDING = SPACING.md;       // base padding
+const EXTRA_SCROLL = 160;
+const EDGE_PADDING = SPACING.md;
 const TOTAL_PAD = EDGE_PADDING + EXTRA_SCROLL;
 
 export const WishlistContent = ({
@@ -50,21 +50,19 @@ export const WishlistContent = ({
   const itemSignature = items.map(i => i.id).join('|');
   const lastSignature = useRef(itemSignature);
 
-  // Auto-centering gating
-  const shouldAutoCenter = useRef(true); // reset on data change or dimension change
-  const pendingCenterPasses = useRef<number[]>([]); // timeout IDs
+  const shouldAutoCenter = useRef(true);
+  const pendingCenterPasses = useRef<number[]>([]);
 
-  // Clear any scheduled passes
   const clearCenterPasses = () => {
     pendingCenterPasses.current.forEach(id => clearTimeout(id));
     pendingCenterPasses.current = [];
   };
 
+  // Extra passes (added 400ms)
   const scheduleCenterPasses = useCallback(() => {
     if (Platform.OS !== 'web') return;
     clearCenterPasses();
-    // immediate + delayed passes (for images / fonts)
-    [0, 40, 160].forEach(delay => {
+    [0, 40, 160, 400].forEach(delay => {
       const id = setTimeout(() => centerToContent(), delay) as unknown as number;
       pendingCenterPasses.current.push(id);
     });
@@ -88,7 +86,7 @@ export const WishlistContent = ({
     });
   }, [containerWidth, containerHeight, screenWidth, screenHeight]);
 
-  // React to item changes
+  // Item changes
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (itemSignature !== lastSignature.current) {
@@ -98,7 +96,7 @@ export const WishlistContent = ({
     }
   }, [itemSignature, scheduleCenterPasses]);
 
-  // React to layout dimension changes of grid footprint
+  // Footprint changes
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (containerWidth && containerHeight) {
@@ -107,7 +105,7 @@ export const WishlistContent = ({
     }
   }, [containerWidth, containerHeight, scheduleCenterPasses]);
 
-  // React to viewport resize
+  // Viewport resize
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     if (!userInteracted.current) {
@@ -116,7 +114,6 @@ export const WishlistContent = ({
     }
   }, [screenWidth, screenHeight, scheduleCenterPasses]);
 
-  // Content size change (fires after images load)
   const onWebContentSizeChange = () => {
     if (Platform.OS !== 'web') return;
     if (!userInteracted.current) {
@@ -135,7 +132,6 @@ export const WishlistContent = ({
       return;
     }
     if (programmaticScroll.current) {
-      // Programmatic center or sync scroll; ignore as user intent
       programmaticScroll.current = false;
     } else {
       userInteracted.current = true;
@@ -158,7 +154,16 @@ export const WishlistContent = ({
     mainRef.current?.scrollTo({ x, y: lastY.current, animated: false });
   };
 
-  useEffect(() => () => clearCenterPasses(), []); // cleanup
+  useEffect(() => () => clearCenterPasses(), []);
+
+  // Mark user interaction immediately on touch (prevents later recenter)
+  const onAnyTouch = () => {
+    if (Platform.OS === 'web') {
+      userInteracted.current = true;
+      shouldAutoCenter.current = false;
+      clearCenterPasses();
+    }
+  };
 
   // ---------- MOBILE FREE-PAN ----------
   const translateX = useSharedValue(0);
@@ -194,12 +199,22 @@ export const WishlistContent = ({
       translateX.value = startX.value + translationX;
       translateY.value = startY.value + translationY;
     } else if (state === State.END) {
+      // Skip inertial if essentially a tap (prevents jump on iOS)
+      if (
+        Math.abs(translationX) < 3 &&
+        Math.abs(translationY) < 3 &&
+        Math.abs(velocityX) < 15 &&
+        Math.abs(velocityY) < 15
+      ) {
+        return;
+      }
       const totalW = containerWidth + TOTAL_PAD * 2;
       const totalH = containerHeight + TOTAL_PAD * 2;
       const minX = Math.min(0, screenWidth - totalW);
       const minY = Math.min(0, screenHeight - totalH);
-      translateX.value = withDecay({ velocity: velocityX, clamp: [minX, TOTAL_PAD] });
-      translateY.value = withDecay({ velocity: velocityY, clamp: [minY, TOTAL_PAD] });
+      // Limit roaming to 0 on right/bottom (removes jump-left artifacts)
+      translateX.value = withDecay({ velocity: velocityX, clamp: [minX, 0] });
+      translateY.value = withDecay({ velocity: velocityY, clamp: [minY, 0] });
     }
   };
 
@@ -218,6 +233,16 @@ export const WishlistContent = ({
     />
   );
 
+  // Offsets to center if content smaller than viewport (avoid left bias)
+  const horizontalCenterPad =
+    Platform.OS === 'web' && containerWidth
+      ? Math.max(0, (screenWidth - (containerWidth + TOTAL_PAD * 2)) / 2)
+      : 0;
+  const verticalCenterPad =
+    Platform.OS === 'web' && containerHeight
+      ? Math.max(0, (screenHeight - (containerHeight + TOTAL_PAD * 2)) / 2)
+      : 0;
+
   return (
     <View style={styles.container}>
       {isSelectionMode && (
@@ -231,13 +256,12 @@ export const WishlistContent = ({
       {!items || items.length === 0 ? (
         <EmptyState
           message="No items in this wishlist yet"
-            actionText="Add an item"
+          actionText="Add an item"
           onAction={onAddItem}
         />
       ) : Platform.OS === 'web' ? (
-        <View style={styles.webWrapper}>
+        <View style={styles.webWrapper} onTouchStart={onAnyTouch}>
           <ScrollView
-            key={itemSignature} // remount triggers fresh passes
             ref={mainRef}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
@@ -245,7 +269,10 @@ export const WishlistContent = ({
             scrollEventThrottle={16}
             onContentSizeChange={onWebContentSizeChange}
             contentContainerStyle={{
-              padding: TOTAL_PAD,
+              paddingTop: TOTAL_PAD + verticalCenterPad,
+              paddingBottom: TOTAL_PAD + verticalCenterPad,
+              paddingLeft: TOTAL_PAD + horizontalCenterPad,
+              paddingRight: TOTAL_PAD + horizontalCenterPad,
               minWidth: containerWidth + TOTAL_PAD * 2,
               minHeight: containerHeight + TOTAL_PAD * 2,
               alignItems: 'flex-start',
@@ -254,18 +281,18 @@ export const WishlistContent = ({
             {renderGrid()}
           </ScrollView>
 
-          <ScrollView
-            ref={bottomRef}
-            horizontal
-            showsHorizontalScrollIndicator
-            style={styles.bottomScrollbar}
-            contentContainerStyle={{
-              width: containerWidth + TOTAL_PAD * 2,
-              height: 1,
-            }}
-            onScroll={onBottomScroll}
-            scrollEventThrottle={16}
-          />
+            <ScrollView
+              ref={bottomRef}
+              horizontal
+              showsHorizontalScrollIndicator
+              style={styles.bottomScrollbar}
+              contentContainerStyle={{
+                width: containerWidth + TOTAL_PAD * 2 + horizontalCenterPad * 2,
+                height: 1,
+              }}
+              onScroll={onBottomScroll}
+              scrollEventThrottle={16}
+            />
         </View>
       ) : (
         <GestureHandlerRootView style={{ flex: 1 }}>
@@ -284,10 +311,7 @@ export const WishlistContent = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: 'hidden',
-  },
+  container: { flex: 1, overflow: 'hidden' },
   selectionHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -298,13 +322,8 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
   },
-  actionButton: {
-    padding: SPACING.xs,
-  },
-  webWrapper: {
-    flex: 1,
-    position: 'relative',
-  },
+  actionButton: { padding: SPACING.xs },
+  webWrapper: { flex: 1, position: 'relative' },
   bottomScrollbar: {
     position: 'absolute',
     left: 0,
@@ -313,9 +332,7 @@ const styles = StyleSheet.create({
     height: 14,
     zIndex: 5,
   },
-  panContainer: {
-    // padding via animatedStyle
-  },
+  panContainer: {},
 });
 
 export default WishlistContent;
