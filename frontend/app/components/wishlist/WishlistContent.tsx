@@ -263,6 +263,7 @@ export const WishlistContent = ({
         <View style={styles.webWrapper} onPointerDown={onAnyTouch}>
           <ScrollView
             ref={mainRef}
+            style={styles.scrollViewWebFix}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             onScroll={onMainScroll}
@@ -273,8 +274,9 @@ export const WishlistContent = ({
               paddingBottom: TOTAL_PAD + verticalCenterPad,
               paddingLeft: TOTAL_PAD + horizontalCenterPad,
               paddingRight: TOTAL_PAD + horizontalCenterPad,
-              minWidth: containerWidth + TOTAL_PAD * 2,
-              minHeight: containerHeight + TOTAL_PAD * 2,
+              // SAFETY: avoid NaN if width/height are not ready yet
+              minWidth: (containerWidth ?? 0) + TOTAL_PAD * 2,
+              minHeight: (containerHeight ?? 0) + TOTAL_PAD * 2,
               alignItems: 'flex-start',
             }}
           >
@@ -284,10 +286,10 @@ export const WishlistContent = ({
           <ScrollView
             ref={bottomRef}
             horizontal
+            style={[styles.bottomScrollbar, styles.scrollViewWebFix]}
             showsHorizontalScrollIndicator
-            style={styles.bottomScrollbar}
             contentContainerStyle={{
-              width: containerWidth + TOTAL_PAD * 2 + horizontalCenterPad * 2,
+              width: (containerWidth ?? 0) + TOTAL_PAD * 2 + (horizontalCenterPad ?? 0) * 2,
               height: 1,
             }}
             onScroll={onBottomScroll}
@@ -328,6 +330,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     touchAction: 'manipulation',
   },
+  scrollViewWebFix: {
+    touchAction: 'pan-x pan-y',
+    overscrollBehavior: 'contain',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   bottomScrollbar: {
     position: 'absolute',
     left: 0,
@@ -335,7 +342,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: 14,
     zIndex: 5,
-  },
+    touchAction: 'pan-x pan-y',
+    overscrollBehavior: 'contain',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   panContainer: {},
 });
 
