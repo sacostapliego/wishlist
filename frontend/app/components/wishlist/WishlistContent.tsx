@@ -10,10 +10,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import {
   GestureHandlerRootView,
-  PanGestureHandler,
-  State,
-  PanGestureHandlerGestureEvent,
-  PanGestureHandlerStateChangeEvent,
+  Gesture,
+  GestureDetector,
 } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -29,6 +27,7 @@ import { WishlistContentProps } from '@/app/types/wishlist';
 import { useBentoLayout } from '../../hooks/useBentoLayout';
 
 const EXTRA_SCROLL = 48;
+const SMALL_CONTENT_SLACK = 60; // extra drag room when content is smaller than viewport
 
 export const WishlistContent = ({
   items,
@@ -42,6 +41,11 @@ export const WishlistContent = ({
   const { containerWidth, containerHeight } = useBentoLayout(items);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
+  const isTouchWeb =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   // Shared translation
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -50,34 +54,37 @@ export const WishlistContent = ({
 
   // Compute clamps
   const getClamp = useCallback(() => {
+    const contentW = containerWidth + SPACING.md * 2;
+    const contentH = containerHeight + SPACING.md * 2;
+
+    // If content smaller than viewport give slack to allow some motion
+    const horizontalSlack =
+      contentW < screenWidth ? SMALL_CONTENT_SLACK : EXTRA_SCROLL;
+    const verticalSlack =
+      contentH < screenHeight ? SMALL_CONTENT_SLACK : EXTRA_SCROLL;
+
     const minX = Math.min(
       0,
-      screenWidth - containerWidth - SPACING.md * 2 - EXTRA_SCROLL
+      screenWidth - contentW - horizontalSlack
     );
     const minY = Math.min(
       0,
-      screenHeight - containerHeight - SPACING.md * 2 - EXTRA_SCROLL
+      screenHeight - contentH - verticalSlack
     );
     return {
-      x: [minX, 0] as [number, number],
-      y: [minY, 0] as [number, number],
+      x: [minX, horizontalSlack > 0 && contentW < screenWidth ? horizontalSlack : 0] as [number, number],
+      y: [minY, verticalSlack > 0 && contentH < screenHeight ? verticalSlack : 0] as [number, number],
     };
   }, [screenWidth, screenHeight, containerWidth, containerHeight]);
 
   // Center initially
   useEffect(() => {
-    const minX = Math.min(
-      0,
-      screenWidth - containerWidth - SPACING.md * 2
-    );
-    const minY = Math.min(
-      0,
-      screenHeight - containerHeight - SPACING.md * 2
-    );
-    const centerX = (screenWidth - containerWidth) / 2;
-    const centerY = (screenHeight - containerHeight) / 2;
-    translateX.value = Math.min(0, Math.max(minX, centerX));
-    translateY.value = Math.min(0, Math.max(minY, centerY));
+    const contentW = containerWidth;
+    const contentH = containerHeight;
+    const centerX = (screenWidth - contentW) / 2;
+    const centerY = (screenHeight - contentH) / 2;
+    translateX.value = centerX > 0 ? 0 : Math.min(0, centerX);
+    translateY.value = centerY > 0 ? 0 : Math.min(0, centerY);
   }, [screenWidth, screenHeight, containerWidth, containerHeight, translateX, translateY]);
 
   const clampInside = useCallback(() => {
@@ -86,32 +93,31 @@ export const WishlistContent = ({
     translateY.value = Math.min(y[1], Math.max(y[0], translateY.value));
   }, [getClamp, translateX, translateY]);
 
-  // Gesture event (continuous movement)
-  const onPanGestureEvent = (event: PanGestureHandlerGestureEvent) => {
-    const { translationX, translationY } = event.nativeEvent;
-    translateX.value = startX.value + translationX;
-    translateY.value = startY.value + translationY;
-  };
-
-  // State changes (start / end)
-  const onPanStateChange = (event: PanGestureHandlerStateChangeEvent) => {
-    const { state, velocityX, velocityY } = event.nativeEvent;
-
-    if (state === State.BEGAN) {
+  // Gesture (Gesture API)
+  const pan = Gesture.Pan()
+    .onBegin(() => {
       cancelAnimation(translateX);
       cancelAnimation(translateY);
       startX.value = translateX.value;
       startY.value = translateY.value;
-    } else if (state === State.END || state === State.CANCELLED) {
+    })
+    .onUpdate(e => {
+      translateX.value = startX.value + e.translationX;
+      translateY.value = startY.value + e.translationY;
+    })
+    .onEnd(e => {
       const { x, y } = getClamp();
-      translateX.value = withDecay({ velocity: velocityX, clamp: x });
-      translateY.value = withDecay({ velocity: velocityY, clamp: y });
-    }
-  };
+      translateX.value = withDecay({ velocity: e.velocityX, clamp: x });
+      translateY.value = withDecay({ velocity: e.velocityY, clamp: y });
+    })
+    .onFinalize(() => {
+      // Safety clamp if decay ended early
+      runOnJS(clampInside)();
+    });
 
-  // Wheel support (web only)
+  // Wheel (desktop / non-touch web only)
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
+    if (Platform.OS !== 'web' || isTouchWeb) return;
     const el = document.getElementById('wishlist-pan-surface');
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
@@ -125,11 +131,11 @@ export const WishlistContent = ({
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [clampInside, translateX, translateY]);
+  }, [isTouchWeb, clampInside, translateX, translateY]);
 
-  // Arrow keys (web)
+  // Arrow keys (desktop web only)
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
+    if (Platform.OS !== 'web' || isTouchWeb) return;
     const onKey = (e: KeyboardEvent) => {
       const step = 60;
       let used = true;
@@ -156,7 +162,7 @@ export const WishlistContent = ({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [clampInside, translateX, translateY]);
+  }, [isTouchWeb, clampInside, translateX, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -187,10 +193,13 @@ export const WishlistContent = ({
     );
   }
 
-  // Web-only cursor + touchAction (kept out of StyleSheet to avoid type widening)
+  // Web touchAction + cursor applied inline so StyleSheet stays strongly typed
   const panSurfaceWebStyle =
     Platform.OS === 'web'
-      ? ({ cursor: 'grab', touchAction: 'none' } as any)
+      ? ({
+          cursor: 'grab',
+          touchAction: 'none',
+        } as any)
       : null;
 
   return (
@@ -201,20 +210,12 @@ export const WishlistContent = ({
             onPress={onCancelSelection}
             style={styles.actionButton}
           >
-            <Ionicons
-              name="close-circle"
-              size={28}
-              color={COLORS.primary}
-            />
+            <Ionicons name="close-circle" size={28} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
       )}
-
       <GestureHandlerRootView style={styles.gestureRoot}>
-        <PanGestureHandler
-          onGestureEvent={onPanGestureEvent}
-          onHandlerStateChange={onPanStateChange}
-        >
+        <GestureDetector gesture={pan}>
           <Animated.View
             id="wishlist-pan-surface"
             style={[styles.panSurface, panSurfaceWebStyle, animatedStyle]}
@@ -229,7 +230,7 @@ export const WishlistContent = ({
               {renderGrid()}
             </View>
           </Animated.View>
-        </PanGestureHandler>
+        </GestureDetector>
       </GestureHandlerRootView>
     </View>
   );
