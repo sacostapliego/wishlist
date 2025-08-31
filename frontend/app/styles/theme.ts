@@ -28,6 +28,7 @@ export const COLORS = {
   white: '#ffffff',
   border: '#64748b',
   cardGray: '#212121',
+  cardDarkLight: '#1e1e1e'
 };
 
 export const AUTH_COLORS = {

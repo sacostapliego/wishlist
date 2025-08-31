@@ -52,7 +52,7 @@ export default function WishlistsTab({ wishlists }: { wishlists: WishlistData[] 
 }
 
 const styles = StyleSheet.create({
-  section: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
+  section: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },
   card: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -66,9 +66,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 15,
     paddingHorizontal: 16,
-    
+    backgroundColor: COLORS.cardDarkLight,
   },
   cardIconStrip: {
     width: 64,
