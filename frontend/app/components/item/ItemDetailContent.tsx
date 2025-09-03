@@ -92,6 +92,8 @@ const styles = StyleSheet.create({
         marginTop: SPACING.sm,
         paddingTop: SPACING.md,
         backgroundColor: COLORS.background,
+        justifyContent: 'flex-start',
+        minHeight: '100%',
     },
     namePriceContainer: {
         flexDirection: 'row',
