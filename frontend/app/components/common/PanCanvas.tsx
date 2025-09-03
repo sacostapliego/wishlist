@@ -194,3 +194,5 @@ export const PanCanvas = ({
     <GestureDetector gesture={pan}>{surface}</GestureDetector>
   );
 };
+
+export default PanCanvas;

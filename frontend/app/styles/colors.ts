@@ -8,3 +8,6 @@ export const WISHLIST_COLORS = {
     pink: 'rgb(232, 158, 184)',           // pink
     black: 'rgb(0, 0, 0)',                 // black
 };
+
+export default function ColorStyles() {
+}
