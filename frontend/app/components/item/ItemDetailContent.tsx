@@ -32,7 +32,7 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
     return (
         <>
             <ScrollView
-                style={styles.scrollView}
+                style={{...styles.scrollView, backgroundColor: imageContainerBackgroundColor}}
                 contentContainerStyle={{ ...styles.scrollContent, paddingBottom: scrollPaddingBottom }}
             >
                 {itemImageUri && (
@@ -72,7 +72,6 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
 const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     scrollContent: {
         paddingBottom: SPACING.lg,
@@ -90,7 +89,9 @@ const styles = StyleSheet.create({
     },
     detailsContainer: {
         paddingHorizontal: SPACING.md,
-        marginTop: SPACING.lg,
+        marginTop: SPACING.sm,
+        paddingTop: SPACING.md,
+        backgroundColor: COLORS.background,
     },
     namePriceContainer: {
         flexDirection: 'row',
