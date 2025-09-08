@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text, Alert } from 'react-native';
+import { SafeAreaView, useWindowDimensions, StyleSheet, Platform, View, TouchableOpacity, Text, Alert, Modal, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../styles/theme';
@@ -32,6 +32,7 @@ export default function WishlistDetailScreen() {
   const [viewMode, setViewMode] = useState<'bento' | 'list'>('list');
   const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
   const [isCheckingFriendship, setIsCheckingFriendship] = useState(true);
+  const [optionsVisible, setOptionsVisible] = useState(false);
 
   const { wishlist, items, ownerDisplayInfo, isLoading, refetch } = usePublicWishlistDetail(id as string, refreshTimestamp);
 
@@ -167,6 +168,9 @@ export default function WishlistDetailScreen() {
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
         onBack={() => router.canGoBack() ? router.back() : router.replace('/')}
+        showOptions={shouldShowAddFriend}
+        onOptionsPress={() => setOptionsVisible(true)}
+        rightIcon='ellipsis-vertical'
       />
 
       <WishlistInfo
@@ -184,8 +188,6 @@ export default function WishlistDetailScreen() {
             },
           })
         }
-        showAddFriend={shouldShowAddFriend}
-        onAddFriend={handleAddFriend}
       />
       
       {items && items.length > 0 && (
@@ -214,6 +216,30 @@ export default function WishlistDetailScreen() {
       )}
 
       {renderMainContent()}
+
+      {shouldShowAddFriend && (
+        <Modal
+          transparent
+          visible={optionsVisible}
+          animationType="fade"
+          onRequestClose={() => setOptionsVisible(false)}
+        >
+          <Pressable style={styles.optionsOverlay} onPress={() => setOptionsVisible(false)}>
+            <View style={styles.optionsMenuContainer}>
+              <TouchableOpacity
+                style={styles.optionsMenuItem}
+                onPress={() => {
+                  setOptionsVisible(false);
+                  handleAddFriend();
+                }}
+              >
+                <Ionicons name="person-add-outline" size={22} color={COLORS.text.primary} />
+                <Text style={styles.optionsMenuText}>Add Friend</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -253,5 +279,30 @@ const styles = StyleSheet.create({
   activeToggleButtonText: {
     color: COLORS.white,
     fontWeight: '600',
+  },
+  optionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  optionsMenuContainer: {
+    width: 260,
+    borderRadius: 12,
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: SPACING.sm,
+  },
+  optionsMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  },
+  optionsMenuText: {
+    marginLeft: SPACING.md,
+    fontSize: 16,
+    color: COLORS.text.primary,
   },
 });

@@ -72,6 +72,7 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
 const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
+        minHeight: '100%',
     },
     scrollContent: {
         paddingBottom: SPACING.lg,

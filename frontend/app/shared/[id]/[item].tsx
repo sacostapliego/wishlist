@@ -12,8 +12,6 @@ import { useItemDetail } from '../../hooks/useItemDetail'; // Reusing the same h
 import ItemDetailContent from '../../components/item/ItemDetailContent'; // Reusing the same component
 import Head from 'expo-router/head';
 
-//TODO:
-// 1. Remove scrolling form description
 
 export default function SharedWishlistItemScreen() {
     const router = useRouter();
