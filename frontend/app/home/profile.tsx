@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,29 +7,53 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../services/api';
 import { Header } from '../components/layout/Header';
 import { useLocalSearchParams } from 'expo-router';
+import { PublicUserDetailsResponse } from '../services/user';
+import userAPI from '../services/user';
 
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { userId, name: paramName, username: paramUsername } = useLocalSearchParams<{ userId?: string; name?: string; username?: string }>();
+  const { userId, name: paramName, username: paramUsername } =
+    useLocalSearchParams<{ userId?: string; name?: string; username?: string }>();
 
-  const viewedUserId = userId || user?.id || null;
   const isSelf = !userId || userId === user?.id;
+  const [publicUser, setPublicUser] = useState<PublicUserDetailsResponse | null>(null);
 
-  // Keep sizes/preferences as dummy data for now
-  const sizes = { shoe: '10 US', shirt: 'L', pants: '32x32', hat: 'M' };
-  const preferences = {
-    favoriteStores: ['Nike', 'Uniqlo', 'Target'],
-    interests: ['RPG games', 'Coffee', 'Hiking'],
-    favoriteColors: ['Navy', 'Forest Green', '#FF7F50'],
-    platforms: ['PlayStation', 'PC'],
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (isSelf || !userId) {
+        setPublicUser(null);
+        return;
+      }
+      try {
+        const data = await userAPI.getPublicUserDetails(userId);
+        if (active) setPublicUser(data);
+      } catch {
+        if (active) setPublicUser(null);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, [userId, isSelf]);
+
+  const target = isSelf ? user : publicUser;
+
+  const sizes = {
+    shoe: target?.shoe_size || '—',
+    shirt: target?.shirt_size || '—',
+    pants: target?.pants_size || '—',
+    hat: target?.hat_size || '—',
+    ring: target?.ring_size || '—',
+    dress: target?.dress_size || '—',
+    jacket: target?.jacket_size || '—',
   };
 
-  const profileImage = viewedUserId ? `${API_URL}users/${viewedUserId}/profile-image` : null;
+  const profileImage = target?.id ? `${API_URL}users/${target.id}/profile-image` : null;
   const displayName = isSelf
     ? (user?.name || user?.username || 'Guest')
-    : (paramName || paramUsername || 'User');
+    : (paramName || target?.name || paramUsername || target?.username || 'User');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,16 +91,9 @@ export default function ProfileScreen() {
             <InfoRow label="Shirt" value={sizes.shirt} />
             <InfoRow label="Pants" value={sizes.pants} />
             <InfoRow label="Hat" value={sizes.hat} />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.card}>
-            <InfoRow label="Favorite Stores" value={preferences.favoriteStores.join(', ')} />
-            <InfoRow label="Interests" value={preferences.interests.join(', ')} />
-            <InfoRow label="Favorite Colors" value={preferences.favoriteColors.join(', ')} />
-            <InfoRow label="Platforms" value={preferences.platforms.join(', ')} />
+            <InfoRow label="Ring" value={sizes.ring} />
+            <InfoRow label="Dress" value={sizes.dress} />
+            <InfoRow label="Jacket" value={sizes.jacket} />
           </View>
         </View>
       </ScrollView>

@@ -50,6 +50,13 @@ async def create_user(
     username: str = Form(...),
     password: str = Form(...),
     name: Optional[str] = Form(None),
+    hat_size: Optional[str] = Form(None),
+    shirt_size: Optional[str] = Form(None),
+    pants_size: Optional[str] = Form(None),
+    shoe_size: Optional[str] = Form(None),
+    ring_size: Optional[str] = Form(None),
+    dress_size: Optional[str] = Form(None),
+    jacket_size: Optional[str] = Form(None),
     profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -81,6 +88,13 @@ async def create_user(
             password=hashed_password,
             name=name,
             pfp=pfp_url,
+            hat_size=hat_size,
+            shirt_size=shirt_size,
+            pants_size=pants_size,
+            shoe_size=shoe_size,
+            ring_size=ring_size,
+            dress_size=dress_size,
+            jacket_size=jacket_size
         )
         
         db.add(db_user)
@@ -93,7 +107,6 @@ async def create_user(
             delete_file_from_s3(pfp_url)  # Clean up if user creation fails
         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
-
 @router.put('/{user_id}', response_model=UserResponse)
 async def update_user(
     user_id: uuid.UUID,
@@ -101,6 +114,13 @@ async def update_user(
     username: Optional[str] = Form(None),
     password: Optional[str] = Form(None),
     name: Optional[str] = Form(None),
+    hat_size: Optional[str] = Form(None),
+    shirt_size: Optional[str] = Form(None),
+    pants_size: Optional[str] = Form(None),
+    shoe_size: Optional[str] = Form(None),
+    ring_size: Optional[str] = Form(None),
+    dress_size: Optional[str] = Form(None),
+    jacket_size: Optional[str] = Form(None),
     profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
@@ -154,7 +174,28 @@ async def update_user(
         
     if password is not None:
         db_user.password = get_password_hash(password)
-    
+        
+    if hat_size is not None:
+        db_user.hat_size = hat_size
+        
+    if shirt_size is not None:
+        db_user.shirt_size = shirt_size
+        
+    if pants_size is not None:
+        db_user.pants_size = pants_size
+        
+    if shoe_size is not None:
+        db_user.shoe_size = shoe_size
+        
+    if ring_size is not None:
+        db_user.ring_size = ring_size
+        
+    if dress_size is not None:
+        db_user.dress_size = dress_size
+        
+    if jacket_size is not None:
+        db_user.jacket_size = jacket_size
+
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -223,5 +264,13 @@ def get_public_user_details(user_id: uuid.UUID, db: Session = Depends(get_db)):
         id=user.id,
         name=user.name,
         username=user.username,
-        pfp=user.pfp 
+        pfp=user.pfp,
+        
+        hat_size=user.hat_size,
+        shirt_size=user.shirt_size,
+        pants_size=user.pants_size,
+        shoe_size=user.shoe_size,
+        ring_size=user.ring_size,
+        dress_size=user.dress_size,
+        jacket_size=user.jacket_size
     )

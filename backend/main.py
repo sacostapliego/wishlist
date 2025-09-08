@@ -1,14 +1,5 @@
 """
 THINGS NEEDED FROM INDEX
-User name
-User pfp
-User wishlist name
-User wishlist items
-
-Other users name
-Other users pfp
-Other users wishlist name
-
 """
 
 """ 

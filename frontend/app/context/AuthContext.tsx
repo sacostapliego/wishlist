@@ -6,7 +6,6 @@ import wishlistAPI from '../services/wishlist';
 import userAPI from '../services/user';
 import { User } from '../types/user';
 
-
 type AuthContextType = {
   user: User | null;
   loading: boolean;

@@ -6,6 +6,13 @@ export interface PublicUserDetailsResponse {
   name?: string;
   username: string; // Matches backend Pydantic model
   pfp?: string; // This will be the direct S3 URL
+  hat_size?: string | null;
+  shirt_size?: string | null;
+  pants_size?: string | null;
+  shoe_size?: string | null;
+  ring_size?: string | null;
+  dress_size?: string | null;
+  jacket_size?: string | null;
 }
 
 export const userAPI = {
@@ -19,17 +26,15 @@ export const userAPI = {
     return response.data;
   },
 
-  updateUserProfile: async (userData: any) => {
+  updateUserProfile: async (userId: string, userData: Record<string, any>) => {
     const formData = new FormData();
-    Object.keys(userData).forEach(key => {
-      if (userData[key] !== null && userData[key] !== undefined) {
-        formData.append(key, userData[key]);
+    Object.entries(userData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        formData.append(key, value as any);
       }
     });
-    const response = await api.put(`/users/${userData.id || ''}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
+    const response = await api.put(`/users/${userId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
   },
