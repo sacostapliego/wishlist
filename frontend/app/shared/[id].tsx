@@ -34,6 +34,9 @@ export default function WishlistDetailScreen() {
   const [isCheckingFriendship, setIsCheckingFriendship] = useState(true);
   const [optionsVisible, setOptionsVisible] = useState(false);
 
+  const isAuthenticated = !!user;
+  const isGuest = !isAuthenticated;
+
   const { wishlist, items, ownerDisplayInfo, isLoading, refetch } = usePublicWishlistDetail(id as string, refreshTimestamp);
 
   const baseSize = Platform.OS === 'web' ? (420 / 2) : (width - (SPACING.md * 3) / 2);
@@ -159,18 +162,26 @@ export default function WishlistDetailScreen() {
   };
 
   // Determine if we should show the Add Friend button
-  const shouldShowAddFriend = !isCheckingFriendship && 
-                              !isAlreadyFriend && 
-                              wishlist?.user_id !== user?.id;
+  const shouldShowAddFriend = !isGuest &&
+    !isCheckingFriendship &&
+    !isAlreadyFriend &&
+    wishlist?.user_id !== user?.id;
+
+  // For guests, we can show a disabled Add button or no button at all
+  const showOptionsIcon = isGuest || shouldShowAddFriend;
+
+  const handleCreateAccount = () => router.push('/auth/register');
 
   return (
     <SafeAreaView style={styles.container}>
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
-        onBack={() => router.canGoBack() ? router.back() : router.replace('/')}
-        showOptions={shouldShowAddFriend}
+        {...(isAuthenticated
+          ? { onBack: () => (router.canGoBack() ? router.back() : router.replace('/')) }
+          : {})}
+        showOptions={showOptionsIcon}
         onOptionsPress={() => setOptionsVisible(true)}
-        rightIcon='ellipsis-vertical'
+        rightIcon="ellipsis-vertical"
       />
 
       <WishlistInfo
@@ -217,7 +228,7 @@ export default function WishlistDetailScreen() {
 
       {renderMainContent()}
 
-      {shouldShowAddFriend && (
+      {showOptionsIcon && (
         <Modal
           transparent
           visible={optionsVisible}
@@ -226,16 +237,29 @@ export default function WishlistDetailScreen() {
         >
           <Pressable style={styles.optionsOverlay} onPress={() => setOptionsVisible(false)}>
             <View style={styles.optionsMenuContainer}>
-              <TouchableOpacity
-                style={styles.optionsMenuItem}
-                onPress={() => {
-                  setOptionsVisible(false);
-                  handleAddFriend();
-                }}
-              >
-                <Ionicons name="person-add-outline" size={22} color={COLORS.text.primary} />
-                <Text style={styles.optionsMenuText}>Add Friend</Text>
-              </TouchableOpacity>
+              {isGuest ? (
+                <TouchableOpacity
+                  style={styles.optionsMenuItem}
+                  onPress={() => {
+                    setOptionsVisible(false);
+                    handleCreateAccount();
+                  }}
+                >
+                  <Ionicons name="log-in-outline" size={22} color={COLORS.text.primary} />
+                  <Text style={styles.optionsMenuText}>Create an account</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.optionsMenuItem}
+                  onPress={() => {
+                    setOptionsVisible(false);
+                    handleAddFriend();
+                  }}
+                >
+                  <Ionicons name="person-add-outline" size={22} color={COLORS.text.primary} />
+                  <Text style={styles.optionsMenuText}>Add Friend</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Pressable>
         </Modal>

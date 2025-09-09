@@ -13,6 +13,7 @@ export const WishlistInfo = ({
   onProfilePress,
   showAddFriend = false,
   onAddFriend,
+  isGuest = false
 }: WishlistInfoProps) => {
   const hasDescription = description && description.trim().length > 0;
   const hasActionButtons = (showAddFriend && onAddFriend) || (onAddPress && hasItems);

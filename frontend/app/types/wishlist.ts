@@ -7,6 +7,7 @@ export interface WishlistInfoProps {
   onProfilePress?: () => void;
   showAddFriend?: boolean;
   onAddFriend?: () => void;
+  isGuest?: boolean;
 }
 
 export interface WishlistItemDetails {

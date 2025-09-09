@@ -22,20 +22,23 @@ export const Header = ({
   rightIcon = 'ellipsis-vertical',
   backgroundColor = COLORS.background,
 }: HeaderProps) => {
+
+  const shouldShowBack = !!onBack && showBackButton;
+
   return (
     <View style={[styles.header, { backgroundColor }]}>
-      {showBackButton ? (
+      {shouldShowBack ? (
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />
       )}
-      
+
       <View style={styles.headerTextContainer}>
         <Text style={styles.title}>{title}</Text>
       </View>
-      
+
       {showOptions ? (
         <TouchableOpacity style={styles.optionsButton} onPress={onOptionsPress}>
           <Ionicons name={rightIcon as keyof typeof Ionicons.glyphMap} size={24} color={COLORS.text.primary} />
