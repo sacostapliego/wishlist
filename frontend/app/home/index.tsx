@@ -12,6 +12,8 @@ import { API_URL } from '../services/api';
 import { WishlistApiResponse, WishlistData } from '../types/lists';
 import { useRefresh } from '../context/RefreshContext';
 import friendsAPI from '../services/friends';
+import { StatusBar } from 'expo-status-bar';
+import Head from 'expo-router/head';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -86,6 +88,10 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Head>
+        <meta name="theme-color" content={COLORS.background} />
+      </Head>
+      <StatusBar style="light" backgroundColor={COLORS.background} />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={[
