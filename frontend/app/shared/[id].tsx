@@ -180,7 +180,7 @@ export default function WishlistDetailScreen() {
         hasItems={items && items.length > 0}
         onProfilePress={() =>
           router.push({
-            pathname: '/home/profile',
+            pathname: '/shared/profile/[userId]',
             params: {
               userId: wishlist?.user_id,
               name: ownerDisplayInfo?.name,

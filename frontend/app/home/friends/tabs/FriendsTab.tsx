@@ -31,7 +31,7 @@ export default function FriendsTab({ friends }: { friends: FriendInfo[] }) {
           style={styles.card}
           onPress={() =>
             router.push({
-              pathname: '/home/profile',
+              pathname: '/home/friends/[userId]',
               params: { userId: friend.id, name: friend.name, username: friend.username },
             })
           }
