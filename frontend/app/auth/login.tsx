@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Alert,
-  ActivityIndicator,
-  SafeAreaView
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
-import { AUTH_COLORS, COLORS, SPACING } from '../styles/theme';
+import { AUTH_COLORS, SPACING } from '../styles/theme';
 import GradientBorderInput from '../components/forms/GradientBorderInput';
+import ErrorBanner from '../components/common/ErrorBanner';
+import { SubmitButton } from '../components/forms/SubmitButton';
+import { useRegisterAnimations } from '../hooks/useRegisterAnimations';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -21,33 +21,35 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const router = useRouter();
 
+  const {
+    errorMessage,
+    didSucceed,
+    showError,
+    triggerSuccess,
+    errorBannerStyle,
+    buttonScaleStyle,
+    successScale,
+  } = useRegisterAnimations(() => router.replace('/home'), 500);
+
   const handleLogin = async () => {
+    if (isLoading || didSucceed) return;
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      showError('Enter email and password.');
       return;
     }
-
     try {
       setIsLoading(true);
       const response = await login(email, password);
       if (response && response.user) {
-        router.replace('/home');
+        triggerSuccess();
+      } else {
+        showError('Invalid credentials.');
       }
-    } catch (error: any) {
-      let errorMessage = 'Unable to login. Please check your credentials.';
-      
-      if (error?.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (typeof error?.message === 'string') {
-        errorMessage = error.message;
-      }
-      
-      console.error('Login error:', errorMessage);
-      
-      Alert.alert(
-        'Login Failed',
-        errorMessage
-      );
+    } catch (e: any) {
+      let msg = 'Login failed.';
+      if (e?.response?.data?.detail) msg = e.response.data.detail;
+      else if (typeof e?.message === 'string') msg = e.message;
+      showError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +57,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <ErrorBanner message={errorMessage} animatedStyle={errorBannerStyle} />
       <View style={styles.formContainer}>
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
@@ -67,8 +70,8 @@ export default function LoginScreen() {
           keyboardType="email-address"
           colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
           placeholderTextColor={AUTH_COLORS.inactive}
+          editable={!didSucceed && !isLoading}
         />
-
         <GradientBorderInput
           placeholder="Password"
           value={password}
@@ -76,43 +79,39 @@ export default function LoginScreen() {
           secureTextEntry
           colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
           placeholderTextColor={AUTH_COLORS.inactive}
+          editable={!didSucceed && !isLoading}
         />
 
-        <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="white" size="small" />
-          ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
-          )}
-        </TouchableOpacity>
+        {!didSucceed && (
+          <TouchableOpacity
+            style={styles.registerLink}
+            onPress={() => router.push('/auth/register')}
+            disabled={isLoading}
+          >
+            <Text style={styles.registerText}>
+              Don't have an account? <Text style={styles.registerTextBold}>Register</Text>
+            </Text>
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity
-          style={styles.registerLink}
-          onPress={() => router.push('/auth/register')}
-        >
-          <Text style={styles.registerText}>
-            Don't have an account? <Text style={styles.registerTextBold}>Register</Text>
-          </Text>
-        </TouchableOpacity>
+        <SubmitButton
+          isLoading={isLoading}
+          didSucceed={didSucceed}
+          onPress={handleLogin}
+          disabled={didSucceed}
+          buttonScaleStyle={buttonScaleStyle}
+          successScale={successScale}
+          idleLabel="Sign In"
+          successLabel="Success"
+        />
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AUTH_COLORS.background,
-  },
-  formContainer: {
-    flex: 1,
-    padding: SPACING.lg,
-    justifyContent: 'center',
-  },
+  container: { flex: 1, backgroundColor: AUTH_COLORS.background },
+  formContainer: { flex: 1, padding: SPACING.lg, justifyContent: 'center' },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -124,41 +123,7 @@ const styles = StyleSheet.create({
     color: AUTH_COLORS.text.secondary,
     marginBottom: SPACING.xl,
   },
-  input: {
-    height: 56,
-    backgroundColor: AUTH_COLORS.cardDark,
-    borderRadius: 8,
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    fontSize: 16,
-    color: AUTH_COLORS.text.primary,
-  },
-  button: {
-    backgroundColor: AUTH_COLORS.primary,
-    height: 56,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: SPACING.md,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  registerLink: {
-    marginTop: SPACING.xl,
-    alignItems: 'center',
-  },
-  registerText: {
-    color: AUTH_COLORS.text.secondary,
-    fontSize: 14,
-  },
-  registerTextBold: {
-    color: AUTH_COLORS.primary,
-    fontWeight: '600',
-  },
+  registerLink: { marginTop: SPACING.xl, alignItems: 'center' },
+  registerText: { color: AUTH_COLORS.text.secondary, fontSize: 14 },
+  registerTextBold: { color: AUTH_COLORS.primary, fontWeight: '600' },
 });

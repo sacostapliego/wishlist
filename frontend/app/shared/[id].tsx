@@ -56,7 +56,7 @@ export default function WishlistDetailScreen() {
 
       try {
         const friendsWishlists = await friendsAPI.getFriendsWishlists();
-        // Consider owner_id (best), or fall back to username
+        // Consider owner_id, or fall back to username
         const isFriend =
           friendsWishlists.some(w => w.owner_id === wishlist.user_id) ||
           friendsWishlists.some(w => w.owner_username === ownerDisplayInfo?.username);

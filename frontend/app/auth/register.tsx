@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
   Alert,
-  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   Image,
-  Platform
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
-import { AUTH_COLORS, SPACING } from '../styles/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+
+import { useAuth } from '../context/AuthContext';
+import { AUTH_COLORS, SPACING } from '../styles/theme';
 import GradientBorderInput from '../components/forms/GradientBorderInput';
+import ErrorBanner from '../components/common/ErrorBanner';
+import { SubmitButton } from '../components/forms/SubmitButton';
+import { useRegisterAnimations } from '../hooks/useRegisterAnimations';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -26,19 +29,27 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const { register } = useAuth();
   const router = useRouter();
 
+  const {
+    errorMessage,
+    didSucceed,
+    showError,
+    triggerSuccess,
+    errorBannerStyle,
+    buttonScaleStyle,
+    successScale,
+  } = useRegisterAnimations(() => router.replace('/home'));
+
   const pickImage = async () => {
-    // Request permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
     if (status !== 'granted') {
       Alert.alert('Permission Needed', 'We need access to your photos to set a profile picture.');
       return;
     }
 
-    // Launch image picker
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -46,89 +57,67 @@ export default function RegisterScreen() {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets && result.assets[0].uri) {
+    if (!result.canceled && result.assets?.[0]?.uri) {
       setProfilePicture(result.assets[0].uri);
     }
   };
 
   const handleRegister = async () => {
-    // Form validation
+    if (isLoading || didSucceed) return;
+
     if (!email || !username || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      showError('Please fill in all required fields.');
       return;
     }
-
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showError('Passwords do not match.');
       return;
     }
-
-    // Simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      showError('Enter a valid email address.');
       return;
     }
 
     try {
       setIsLoading(true);
-      
-      // Create form data to handle file upload
       const formData = new FormData();
       formData.append('email', email);
       formData.append('username', username);
       formData.append('name', name || username);
       formData.append('password', password);
-      
-      // Add profile picture if selected
+
       if (profilePicture) {
         try {
-          // Get the file extension
           const uriParts = profilePicture.split('.');
           const fileType = uriParts[uriParts.length - 1];
-          
-          // For web:
           if (Platform.OS === 'web') {
-            try {
-              const response = await fetch(profilePicture);
-              const blob = await response.blob();
-              formData.append('profile_picture', blob, `profile-${username}.${fileType}`);
-            } catch (fetchError) {
-              console.error("Error creating blob:", fetchError);
-            }
+            const response = await fetch(profilePicture);
+            const blob = await response.blob();
+            formData.append('profile_picture', blob as any, `profile-${username}.${fileType}`);
           } else {
-            // For native (add explicit typing):
             formData.append('profile_picture', {
               uri: profilePicture,
               name: `profile-${username}.${fileType}`,
-              type: `image/${fileType.toLowerCase()}`
+              type: `image/${fileType.toLowerCase()}`,
             } as any);
           }
-        } catch (imageError) {
-          console.error("Error processing profile image:", imageError);
-          // Continue without image if there's an error
+        } catch {
+          // ignore image errors
         }
       }
-      
+
       const response = await register(formData);
       if (response && response.user) {
-        router.replace('/home');
+        triggerSuccess();
+      } else {
+        showError('Registration failed. Try again.');
       }
-    } catch (error: any) {
-      let errorMessage = 'Registration failed. Please try again.';
-      
-      if (error?.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (typeof error?.message === 'string') {
-        errorMessage = error.message;
-      }
-      
-      console.error('Registration error:', errorMessage);
-      
-      Alert.alert(
-        'Registration Failed',
-        errorMessage
-      );
+    } catch (e: any) {
+      let msg = 'Registration failed.';
+      if (e?.response?.data?.detail) msg = e.response.data.detail;
+      else if (typeof e?.message === 'string') msg = e.message;
+      showError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -136,28 +125,31 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ErrorBanner message={errorMessage} animatedStyle={errorBannerStyle} />
+
         <View style={styles.formContainer}>
-          <View style= {styles.titleContainer}>
+          <View style={styles.titleContainer}>
             <Text style={styles.title}>Create your account!</Text>
           </View>
           <Text style={styles.subtitle}>Sign up to get started</Text>
 
-          <View style={styles.profileImageContainer}>
-            <TouchableOpacity onPress={pickImage} style={styles.profileImageButton}>
-              {profilePicture ? (
-                <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-              ) : (
-                <View style={styles.profileImagePlaceholder}>
-                  <Ionicons name="person" size={40} color={AUTH_COLORS.inactive} />
-                </View>
-              )}
-            </TouchableOpacity>
-            <Text style={styles.profileImageText}>Add profile picture</Text>
-          </View>
+            <View style={styles.profileImageContainer}>
+              <TouchableOpacity
+                onPress={pickImage}
+                style={styles.profileImageButton}
+                disabled={didSucceed}
+              >
+                {profilePicture ? (
+                  <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+                ) : (
+                  <View style={styles.profileImagePlaceholder}>
+                    <Ionicons name="person" size={40} color={AUTH_COLORS.inactive} />
+                  </View>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.profileImageText}>Add profile picture</Text>
+            </View>
 
           <GradientBorderInput
             placeholder="Email"
@@ -168,6 +160,7 @@ export default function RegisterScreen() {
             textContentType="emailAddress"
             colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
+            editable={!didSucceed && !isLoading}
           />
           <GradientBorderInput
             placeholder="Username"
@@ -177,6 +170,7 @@ export default function RegisterScreen() {
             textContentType="username"
             colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
+            editable={!didSucceed && !isLoading}
           />
           <GradientBorderInput
             placeholder="Full Name (Optional)"
@@ -185,8 +179,8 @@ export default function RegisterScreen() {
             textContentType="name"
             colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
+            editable={!didSucceed && !isLoading}
           />
-
           <GradientBorderInput
             placeholder="Password"
             value={password}
@@ -195,8 +189,8 @@ export default function RegisterScreen() {
             textContentType="newPassword"
             colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
+            editable={!didSucceed && !isLoading}
           />
-
           <GradientBorderInput
             placeholder="Confirm Password"
             value={confirmPassword}
@@ -205,28 +199,31 @@ export default function RegisterScreen() {
             textContentType="newPassword"
             colors={[AUTH_COLORS.primary, AUTH_COLORS.primary]}
             placeholderTextColor={AUTH_COLORS.inactive}
+            editable={!didSucceed && !isLoading}
           />
 
-          <TouchableOpacity
-            style={styles.loginLink}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.loginText}>
-              Already have an account? <Text style={styles.loginTextBold}>Sign In</Text>
-            </Text>
-          </TouchableOpacity>
+          {!didSucceed && (
+            <TouchableOpacity
+              style={styles.loginLink}
+              onPress={() => router.push('/auth/login')}
+              disabled={isLoading}
+            >
+              <Text style={styles.loginText}>
+                Already have an account? <Text style={styles.loginTextBold}>Sign In</Text>
+              </Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+          <SubmitButton
+            isLoading={isLoading}
+            didSucceed={didSucceed}
             onPress={handleRegister}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text style={styles.buttonText}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
+            disabled={didSucceed}
+            buttonScaleStyle={buttonScaleStyle}
+            successScale={successScale}
+            idleLabel="Sign Up"
+            successLabel="Success"
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -234,18 +231,9 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AUTH_COLORS.background,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  formContainer: {
-    flex: 1,
-    padding: SPACING.lg,
-    justifyContent: 'center',
-  },
+  container: { flex: 1, backgroundColor: AUTH_COLORS.background },
+  scrollContainer: { flexGrow: 1 },
+  formContainer: { flex: 1, padding: SPACING.lg, justifyContent: 'center' },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -257,10 +245,7 @@ const styles = StyleSheet.create({
     color: AUTH_COLORS.text.secondary,
     marginBottom: SPACING.xl,
   },
-  profileImageContainer: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
+  profileImageContainer: { alignItems: 'center', marginBottom: SPACING.xl },
   profileImageButton: {
     position: 'relative',
     width: 100,
@@ -269,10 +254,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: SPACING.md,
   },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
+  profileImage: { width: '100%', height: '100%' },
   profileImagePlaceholder: {
     width: '100%',
     height: '100%',
@@ -280,30 +262,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  editIconContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: AUTH_COLORS.primary,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileImageText: {
-    color: AUTH_COLORS.text.secondary,
-    fontSize: 14,
-  },
-  input: {
-    height: 56,
-    borderRadius: 8,
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    fontSize: 16,
-    color: AUTH_COLORS.text.primary,
-    borderWidth: 2,
-  },
+  profileImageText: { color: AUTH_COLORS.text.secondary, fontSize: 14 },
   button: {
     backgroundColor: AUTH_COLORS.primary,
     height: 56,
@@ -312,29 +271,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: SPACING.md,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loginLink: {
-    marginTop: SPACING.xl,
-    alignItems: 'center',
-  },
-  loginText: {
-    color: AUTH_COLORS.text.secondary,
-    fontSize: 14,
-  },
-  loginTextBold: {
-    color: AUTH_COLORS.primary,
-    fontWeight: '600',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
+  loginLink: { marginTop: SPACING.xl, alignItems: 'center' },
+  loginText: { color: AUTH_COLORS.text.secondary, fontSize: 14 },
+  loginTextBold: { color: AUTH_COLORS.primary, fontWeight: '600' },
+  titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm },
 });
