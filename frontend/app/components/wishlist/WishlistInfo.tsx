@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 48, // Ensure consistent height
+    minHeight: 40, // Ensure consistent height
   },
   userInfo: {
     flexDirection: 'row',
