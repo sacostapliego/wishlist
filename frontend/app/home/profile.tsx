@@ -9,6 +9,7 @@ import { Header } from '../components/layout/Header';
 import { useLocalSearchParams } from 'expo-router';
 import { PublicUserDetailsResponse } from '../services/user';
 import userAPI from '../services/user';
+import { SizeCards } from '../components/profile/SizeCards';
 
 
 export default function ProfileScreen() {
@@ -40,15 +41,16 @@ export default function ProfileScreen() {
 
   const target = isSelf ? user : publicUser;
 
-  const sizes = {
-    shoe: target?.shoe_size || '—',
-    shirt: target?.shirt_size || '—',
-    pants: target?.pants_size || '—',
-    hat: target?.hat_size || '—',
-    ring: target?.ring_size || '—',
-    dress: target?.dress_size || '—',
-    jacket: target?.jacket_size || '—',
+  const sizeValues = {
+    shoe_size: target?.shoe_size,
+    shirt_size: target?.shirt_size,
+    pants_size: target?.pants_size,
+    hat_size: target?.hat_size,
+    ring_size: target?.ring_size,
+    dress_size: target?.dress_size,
+    jacket_size: target?.jacket_size,
   };
+
 
   const profileImage = target?.id ? `${API_URL}users/${target.id}/profile-image` : null;
   const displayName = isSelf
@@ -86,27 +88,10 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sizes</Text>
-          <View style={styles.card}>
-            <InfoRow label="Shoe" value={sizes.shoe} />
-            <InfoRow label="Shirt" value={sizes.shirt} />
-            <InfoRow label="Pants" value={sizes.pants} />
-            <InfoRow label="Hat" value={sizes.hat} />
-            <InfoRow label="Ring" value={sizes.ring} />
-            <InfoRow label="Dress" value={sizes.dress} />
-            <InfoRow label="Jacket" value={sizes.jacket} />
-          </View>
+          <SizeCards values={sizeValues} />
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
   );
 }
 
