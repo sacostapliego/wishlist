@@ -10,19 +10,24 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import userAPI from '../services/user';
 import { API_URL } from '../services/api';
-import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
 import Header from '../components/layout/Header';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ErrorBanner from '../components/common/ErrorBanner';
+import SuccessBanner from '../components/common/SuccessBanner';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useRefresh } from '../context/RefreshContext';
+
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { triggerRefresh } = useRefresh();
   const { user, refreshUser } = useAuth();
 
   const [name, setName] = useState(user?.name || '');
@@ -42,21 +47,49 @@ export default function EditProfileScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [newImageSelected, setNewImageSelected] = useState(false);
 
+  // Banner states + simple slide animation
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
+  const errorY = useSharedValue(-80);
+  const successY = useSharedValue(-80);
+  const errorAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: errorY.value }],
+  }));
+  const successAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: successY.value }],
+  }));
+  const showError = (msg: string) => {
+    setSuccessMessage(undefined);
+    successY.value = withTiming(-80, { duration: 200 });
+    setErrorMessage(msg);
+    errorY.value = withTiming(0, { duration: 200 });
+    setTimeout(() => {
+      errorY.value = withTiming(-80, { duration: 200 });
+      setErrorMessage(undefined);
+    }, 3000);
+  };
+  const showSuccess = (msg: string) => {
+    setErrorMessage(undefined);
+    errorY.value = withTiming(-80, { duration: 200 });
+    setSuccessMessage(msg);
+    successY.value = withTiming(0, { duration: 200 });
+    setTimeout(() => {
+      successY.value = withTiming(-80, { duration: 200 });
+      setSuccessMessage(undefined);
+    }, 2500);
+  };
+
   const insets = useSafeAreaInsets();
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Toast.show({
-        type: 'error',
-        text1: 'Permission Needed',
-        text2: 'We need access to your photos to update your profile picture'
-      });
+      showError('We need access to your photos to update your profile picture');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ['images'] as any, // keep current API shape used in your project
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8
@@ -74,10 +107,11 @@ export default function EditProfileScreen() {
       await userAPI.removeProfileImage(user?.id || '');
       setProfileImage(null);
       setNewImageSelected(false);
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Profile picture removed' });
       await refreshUser();
+      triggerRefresh();
+      showSuccess('Profile picture removed');
     } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to remove profile picture' });
+      showError('Failed to remove profile picture');
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +119,7 @@ export default function EditProfileScreen() {
 
   const handleUpdateProfile = async () => {
     if (!name.trim()) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Name is required' });
+      showError('Name is required');
       return;
     }
     if (!user?.id) return;
@@ -127,11 +161,11 @@ export default function EditProfileScreen() {
         }
       }
 
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Profile updated' });
+      showSuccess('Profile updated');
       await refreshUser();
-      router.push('/home');
+      triggerRefresh();
     } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to update profile' });
+      showError('Failed to update profile');
     } finally {
       setIsLoading(false);
     }
@@ -139,23 +173,37 @@ export default function EditProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Banners */}
+      <ErrorBanner message={errorMessage} animatedStyle={errorAnimatedStyle} />
+      <SuccessBanner message={successMessage} animatedStyle={successAnimatedStyle} />
+
       <Header title="Edit Profile" onBack={() => router.back()} />
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.profileImageContainer}>
-            <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
-              {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+          <TouchableOpacity onPress={pickImage} style={styles.imageWrapper} disabled={isLoading}>
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <Ionicons name="person" size={50} color={COLORS.text.secondary} />
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {profileImage && (
+            <TouchableOpacity
+              onPress={handleRemoveProfilePicture}
+              style={styles.removeImageButton}
+              disabled={isLoading}
+              activeOpacity={0.8}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <View style={styles.placeholderImage}>
-                  <Ionicons name="person" size={50} color={COLORS.text.secondary} />
-                </View>
+                <Text style={styles.removeText}>Remove Photo</Text>
               )}
             </TouchableOpacity>
-            {profileImage && (
-              <TouchableOpacity onPress={handleRemoveProfilePicture} style={styles.removeImage}>
-                <Text style={styles.removeText}>Remove Photo</Text>
-              </TouchableOpacity>
-            )}
+          )}
         </View>
 
         <Text style={styles.label}>Name</Text>
@@ -170,11 +218,11 @@ export default function EditProfileScreen() {
         <Text style={styles.label}>Username</Text>
         <TextInput
           style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Username"
-            placeholderTextColor={COLORS.inactive}
-            autoCapitalize="none"
+          value={username}
+          onChangeText={setUsername}
+          placeholder="Username"
+          placeholderTextColor={COLORS.inactive}
+          autoCapitalize="none"
         />
 
         <Text style={styles.label}>Email</Text>
@@ -268,8 +316,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  removeImage: { marginTop: SPACING.sm },
-  removeText: { color: COLORS.primary, fontSize: 14 },
+  removeImageButton: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    minWidth: 140,
+  },
+  removeText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   label: {
     fontSize: 14,
     marginTop: SPACING.md,
