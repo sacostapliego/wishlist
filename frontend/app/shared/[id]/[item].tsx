@@ -1,23 +1,36 @@
 import React from 'react';
 import { SafeAreaView, StyleSheet, View, Text, Alert, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { COLORS, SPACING } from '../../styles/theme'; // Adjust path
-import { Header } from '../../components/layout/Header'; // Adjust path
-import { LoadingState } from '../../components/common/LoadingState'; // Adjust path
-import getLightColor from '../../components/ui/LightColor'; // Adjust path
+import { COLORS, SPACING } from '../../styles/theme';
+import { Header } from '../../components/layout/Header';
+import { LoadingState } from '../../components/common/LoadingState';
+import getLightColor from '../../components/ui/LightColor';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { StatusBar } from 'expo-status-bar';
-import { useItemDetail } from '../../hooks/useItemDetail'; // Reusing the same hook
-import ItemDetailContent from '../../components/item/ItemDetailContent'; // Reusing the same component
+import { useItemDetail } from '../../hooks/useItemDetail';
+import { useItemClaiming } from '../../hooks/useItemClaiming';
+import ItemDetailContent from '../../components/item/ItemDetailContent';
+import { ItemClaimingSection } from '../../components/item/ItemClaimingSection';
 import Head from 'expo-router/head';
-
 
 export default function SharedWishlistItemScreen() {
     const router = useRouter();
     const { id: wishlistId, item: itemId } = useLocalSearchParams<{ id: string, item: string }>();
-    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, true);
-
+    const { item, wishlistColor, isLoading, error, refetchItemData } = useItemDetail(itemId, wishlistId, 0, true);
+    
+    const {
+        showGuestNameModal,
+        guestName,
+        setGuestName,
+        isClaimLoading,
+        isItemClaimed,
+        canUserUnclaim,
+        handleClaimItem,
+        handleGuestClaim,
+        handleUnclaimItem,
+        cancelGuestModal,
+    } = useItemClaiming(item, refetchItemData);
 
     const handleCustomBack = () => {
         if (router.canGoBack()) {
@@ -25,7 +38,7 @@ export default function SharedWishlistItemScreen() {
         } else if (wishlistId) {
             router.push(`/shared/${wishlistId}`);
         } else {
-            router.push('/'); // Fallback to a generic public page
+            router.push('/');
         }
     };
 
@@ -48,6 +61,25 @@ export default function SharedWishlistItemScreen() {
     const pageBackgroundColor = wishlistColor || COLORS.background;
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
+    const activeColor = wishlistColor || COLORS.primary;
+
+    const renderClaimingContent = () => (
+        <ItemClaimingSection
+            item={item!}
+            activeColor={activeColor}
+            wishlistColor={wishlistColor}
+            isItemClaimed={isItemClaimed}
+            canUserUnclaim={canUserUnclaim}
+            isClaimLoading={isClaimLoading}
+            showGuestNameModal={showGuestNameModal}
+            guestName={guestName}
+            setGuestName={setGuestName}
+            onClaimItem={handleClaimItem}
+            onUnclaimItem={handleUnclaimItem}
+            onGuestClaim={handleGuestClaim}
+            onCancelGuestModal={cancelGuestModal}
+        />
+    );
 
     if (isLoading) {
         return (
@@ -55,7 +87,7 @@ export default function SharedWishlistItemScreen() {
                 <Head>
                     <meta name="theme-color" content={getLightColor(COLORS.background)} />
                 </Head>
-                 <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
+                <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
                 <LoadingState />
             </SafeAreaView>
         );
@@ -89,13 +121,15 @@ export default function SharedWishlistItemScreen() {
                 title=""
                 onBack={handleCustomBack}
                 backgroundColor={headerBackgroundColor}
-                showOptions={false} // No options menu for shared items
+                showOptions={false}
             />
+            
             <ItemDetailContent
                 item={item}
                 wishlistColor={wishlistColor}
                 onOpenUrl={handleOpenUrl}
                 onCopyUrl={handleCopyUrl}
+                claimingContent={renderClaimingContent()}
             />
         </SafeAreaView>
     );

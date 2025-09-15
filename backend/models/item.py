@@ -19,6 +19,7 @@ class WishListItem(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     wishlist_id = Column(UUID(as_uuid=True), ForeignKey('wishlists.id'), nullable=True)
   
+    # item details
     name = Column(String, index=True, nullable=False)
     description = Column(String)
     price = Column(Float)
@@ -26,12 +27,20 @@ class WishListItem(Base):
     image = Column(String)
     is_purchased = Column(Boolean, default=False)
     priority = Column(Integer, default=0)
+    
+    # claiming functionality
+    claimed_by_user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    claimed_by_name = Column(String, nullable=True)  # For non-registered users
+    claimed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # relationships
-    user = relationship('User', back_populates='wishlist_items')
+    user = relationship('User', back_populates='wishlist_items', foreign_keys=[user_id])
     wishlist = relationship('Wishlist', back_populates='items')
+    claimed_by_user = relationship('User', foreign_keys=[claimed_by_user_id])
     
 # Pydantic models
 class WishListItemBase(BaseModel):
@@ -64,7 +73,17 @@ class WishListItemResponse(WishListItemBase):
     updated_at: Optional[datetime] = None
     image: Optional[str] = None
     
+    claimed_by_user_id: Optional[uuid.UUID] = None
+    claimed_by_name: Optional[str] = None
+    claimed_at: Optional[datetime] = None
+    
+    claimed_by_display_name: Optional[str] = None
+    
     model_config = ConfigDict(from_attributes=True)
     
 class ScrapeRequest(BaseModel):
     url: HttpUrl
+    
+class ClaimRequest(BaseModel):
+    user_id: Optional[str] = None
+    guest_name: Optional[str] = None

@@ -14,6 +14,7 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
     wishlistColor,
     onOpenUrl,
     onCopyUrl,
+    claimingContent,
 }) => {
     const itemImageUri = item.image ? `${API_URL}wishlist/${item.id}/image` : null;
     
@@ -47,6 +48,10 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
                             <Text style={styles.price}>${item.price.toFixed(2)}</Text>
                         )}
                     </View>
+                    
+                    {/* Render claiming content here, between name/price and description */}
+                    {claimingContent}
+                    
                     {item.description && (
                         <Text style={styles.description}>{item.description}</Text>
                     )}
@@ -129,12 +134,12 @@ const styles = StyleSheet.create({
         right: SPACING.md,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.cardDark, // Or another appropriate background
+        backgroundColor: COLORS.cardDark,
         borderRadius: 8,
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.sm,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)', // Example border
+        borderColor: 'rgba(255,255,255,0.1)',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,

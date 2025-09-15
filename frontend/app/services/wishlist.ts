@@ -145,8 +145,17 @@ export const wishlistAPI = {
         console.error('Error scraping URL:', error);
         throw error; // Propagate the error for handling in the component
       }
-    }
-  };
+    },
 
+    async claimItem(itemId: string, claimData: { user_id?: string; guest_name?: string }) {
+        const response = await api.post(`/wishlist/${itemId}/claim`, claimData);
+        return response.data;
+    },
+
+    async unclaimItem(itemId: string, unclaimData: { user_id?: string; guest_name?: string }) {
+        const response = await api.delete(`/wishlist/${itemId}/claim`, { data: unclaimData });
+        return response.data;
+    },
+};
 
 export default wishlistAPI;

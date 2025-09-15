@@ -13,6 +13,7 @@ import { WishlistListView } from '../components/wishlist/WishlistListView';
 import { EmptyState } from '../components/layout/EmptyState';
 import { friendsAPI } from '../services/friends';
 import { useAuth } from '../context/AuthContext';
+import { WishlistFilters, SortOption } from '../components/wishlist/WishlistFilters';
 
 type WishlistItem = {
   id: string;
@@ -36,6 +37,9 @@ export default function WishlistDetailScreen() {
 
   const isAuthenticated = !!user;
   const isGuest = !isAuthenticated;
+
+  const [sortBy, setSortBy] = useState<SortOption>('none');
+  const [selectedItemForClaim, setSelectedItemForClaim] = useState<any>(null);
 
   const { wishlist, items, ownerDisplayInfo, isLoading, refetch } = usePublicWishlistDetail(id as string, refreshTimestamp);
 
@@ -102,6 +106,16 @@ export default function WishlistDetailScreen() {
     } else {
       console.warn("Missing id or item.id for navigation in shared view");
     }
+  };
+
+  const handleSortChange = (sortOption: SortOption) => {
+    setSortBy(sortOption);
+    // Apply sorting logic to items
+  };
+
+  const handleItemClaimed = () => {
+    refetch(); // Refresh the wishlist data
+    setSelectedItemForClaim(null);
   };
 
   if (isLoading) {
@@ -185,20 +199,20 @@ export default function WishlistDetailScreen() {
       />
 
       <WishlistInfo
-        username={ownerDisplayInfo?.name || ownerDisplayInfo?.username || "Someone's Wishlist"}
+        username={ownerDisplayInfo?.name}
         description={wishlist?.description}
         profileImage={ownerDisplayInfo?.profileImageUrl}
-        hasItems={items && items.length > 0}
-        onProfilePress={() =>
-          router.push({
-            pathname: '/shared/profile/[userId]',
-            params: {
-              userId: wishlist?.user_id,
-              name: ownerDisplayInfo?.name,
-              username: ownerDisplayInfo?.username,
-            },
-          })
-        }
+        showAddFriend={shouldShowAddFriend}
+        onAddFriend={handleAddFriend}
+        isGuest={isGuest}
+        onProfilePress={() => {
+          if (wishlist?.user_id) {
+            router.push({
+              pathname: '/shared/profile/[userId]',
+              params: { userId: wishlist.user_id },
+            });
+          }
+        }}
       />
       
 {/* Sadly, removed the bento grid for now */}

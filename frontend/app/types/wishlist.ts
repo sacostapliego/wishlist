@@ -18,6 +18,10 @@ export interface WishlistItemDetails {
     url?: string;
     image?: string;
     priority?: number;
+    claimed_by_user_id?: string;
+    claimed_by_name?: string;
+    claimed_at?: string;
+    claimed_by_display_name?: string;
 }
 
 export type WishlistItem = {

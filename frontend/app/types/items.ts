@@ -14,6 +14,7 @@ export interface ItemDetailContentProps {
   wishlistColor?: string;
   onOpenUrl: () => void;
   onCopyUrl: () => void;
+  claimingContent?: React.ReactNode;
 }
 
 export interface ItemOptionsMenuProps {

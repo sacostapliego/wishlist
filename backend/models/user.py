@@ -34,8 +34,8 @@ class User(Base):
 
     # Relationships
     wishlists = relationship('Wishlist', back_populates='user', cascade='all, delete-orphan')
-    wishlist_items = relationship('WishListItem', back_populates='user', cascade='all, delete-orphan')
-
+    wishlist_items = relationship('WishListItem', back_populates='user', cascade='all, delete-orphan', foreign_keys='WishListItem.user_id')
+    
 # Pydantic models
 class UserBase(BaseModel):
     email: EmailStr
