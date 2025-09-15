@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
 import { getLightColor } from '../ui/LightColor';
 import { WishlistListViewProps } from '@/app/types/wishlist';
-
+import { WishlistFilters, SortOption } from './WishlistFilters';
 
 const formatPrice = (price?: number) => {
   if (price === undefined || price === null) return '';
   return `$${price.toFixed(2)}`;
+};
+
+const getPriorityValue = (priority?: string | number): number => {
+  if (priority === undefined || priority === null) return 1;
+  
+  const priorityStr = priority.toString().toLowerCase();
+  switch (priorityStr) {
+    case 'high':
+    case '3':
+      return 3;
+    case 'medium':
+    case '2':
+      return 2;
+    case 'low':
+    case '1':
+      return 1;
+    default:
+      return 1;
+  }
 };
 
 export const WishlistListView: React.FC<WishlistListViewProps> = ({
@@ -19,63 +38,90 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
   selectedItems,
   wishlistColor, 
 }) => {
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {items.map(item => {
-        const isSelected = selectedItems.includes(item.id);
-        const hasImage = item.id && item.image;
-        const itemBackgroundColor = wishlistColor || COLORS.cardDark; // Use wishlistColor or default
-        const lighterCardColor = getLightColor(itemBackgroundColor);
-        
+  const [sortBy, setSortBy] = useState<SortOption>('none');
 
-        return (
-          <TouchableOpacity
-            key={item.id}
-            style={[
-              styles.itemRow,
-              { backgroundColor: itemBackgroundColor }, // Apply dynamic background color
-              isSelected && styles.selectedItemRow,
-              !hasImage && styles.textOnlyItemRow, // Added style for text-only items
-            ]}
-            onPress={() => onItemPress?.(item)}
-            disabled={!onItemPress && !isSelectionMode}
-          >
-            {isSelectionMode && (
-              <View style={styles.selectionIndicator}>
-                <Ionicons
-                  name={isSelected ? "checkmark-circle" : "ellipse-outline"}
-                  size={24}
-                  color={isSelected ? COLORS.primary : COLORS.text.secondary}
-                />
-              </View>
-            )}
-            {hasImage ? (
-              <>
-                <View style={[styles.imageContainer, { backgroundColor: lighterCardColor }]}>
-                  <Image
-                    source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
-                    style={styles.itemImage}
+  const sortedItems = useMemo(() => {
+    const itemsCopy = [...items];
+    
+    switch (sortBy) {
+      case 'price-high':
+        return itemsCopy.sort((a, b) => (b.price || 0) - (a.price || 0));
+      case 'price-low':
+        return itemsCopy.sort((a, b) => (a.price || 0) - (b.price || 0));
+      case 'priority-high':
+        return itemsCopy.sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
+      default:
+        return itemsCopy;
+    }
+  }, [items, sortBy]);
+
+  const handleSortChange = (newSortOption: SortOption) => {
+    setSortBy(newSortOption);
+  };
+
+  return (
+    <View style={styles.container}>
+      <WishlistFilters sortBy={sortBy} onSortChange={handleSortChange} />
+
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+        {sortedItems.map(item => {
+          const isSelected = selectedItems.includes(item.id);
+          const hasImage = item.id && item.image;
+          const itemBackgroundColor = wishlistColor || COLORS.cardDark;
+          const lighterCardColor = getLightColor(itemBackgroundColor);
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[
+                styles.itemRow,
+                { backgroundColor: itemBackgroundColor },
+                isSelected && styles.selectedItemRow,
+                !hasImage && styles.textOnlyItemRow,
+              ]}
+              onPress={() => onItemPress?.(item)}
+              disabled={!onItemPress && !isSelectionMode}
+            >
+              {isSelectionMode && (
+                <View style={styles.selectionIndicator}>
+                  <Ionicons
+                    name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                    size={24}
+                    color={isSelected ? COLORS.primary : COLORS.text.secondary}
                   />
                 </View>
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+              )}
+              {hasImage ? (
+                <>
+                  <View style={[styles.imageContainer, { backgroundColor: lighterCardColor }]}>
+                    <Image
+                      source={{ uri: `${API_URL}wishlist/${item.id}/image` }}
+                      style={styles.itemImage}
+                    />
+                  </View>
+                  <View style={styles.itemDetails}>
+                    <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                    {item.price !== undefined && (
+                      <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+                    )}
+                  </View>
+                </>
+              ) : (
+                <View style={styles.textOnlyContainer}>
+                  <Text style={styles.textOnlyName} numberOfLines={2}>{item.name}</Text>
                   {item.price !== undefined && (
-                    <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+                    <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
+                  )}
+                  {item.priority && (
+                    <Text style={styles.textOnlyPriority}>Priority: {item.priority}</Text>
                   )}
                 </View>
-              </>
-            ) : (
-              <View style={styles.textOnlyContainer}>
-                <Text style={styles.textOnlyName} numberOfLines={2}>{item.name}</Text>
-                {item.price !== undefined && (
-                  <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
-                )}
-              </View>
-            )}
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -83,6 +129,9 @@ export default WishlistListView;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollContainer: {
     flex: 1,
   },
   contentContainer: {
@@ -121,12 +170,6 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  noImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   itemDetails: {
     flex: 1,
     justifyContent: 'center',
@@ -140,6 +183,12 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 14,
     color: COLORS.text.secondary,
+    marginBottom: SPACING.xs / 2,
+  },
+  itemPriority: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
   },
   textOnlyContainer: {
     flex: 1,
@@ -158,5 +207,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text.secondary,
     textAlign: 'center',
+    marginBottom: SPACING.xs / 2,
+  },
+  textOnlyPriority: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

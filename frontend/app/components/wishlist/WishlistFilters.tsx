@@ -1,0 +1,98 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING } from '../../styles/theme';
+
+export type SortOption = 'none' | 'price-high' | 'price-low' | 'priority-high';
+
+interface WishlistFiltersProps {
+  sortBy: SortOption;
+  onSortChange: (sortOption: SortOption) => void;
+}
+
+export const WishlistFilters: React.FC<WishlistFiltersProps> = ({
+  sortBy,
+  onSortChange,
+}) => {
+  const handleSortPress = (option: SortOption) => {
+    onSortChange(sortBy === option ? 'none' : option);
+  };
+
+  return (
+    <View style={styles.sortContainer}>
+      <View style={styles.sortButtonsContainer}>
+        {/* Price High */}
+        <TouchableOpacity
+          style={[styles.sortButton, sortBy === 'price-high' && styles.activeSortButton]}
+          onPress={() => handleSortPress('price-high')}
+        >
+          <Text style={[styles.sortSymbol, sortBy === 'price-high' && styles.activeSortSymbol]}>$</Text>
+          <Ionicons
+            name="arrow-up"
+            size={16}
+            color={sortBy === 'price-high' ? COLORS.primary : COLORS.border}
+          />
+        </TouchableOpacity>
+
+        {/* Price Low */}
+        <TouchableOpacity
+          style={[styles.sortButton, sortBy === 'price-low' && styles.activeSortButton]}
+          onPress={() => handleSortPress('price-low')}
+        >
+          <Text style={[styles.sortSymbol, sortBy === 'price-low' && styles.activeSortSymbol]}>$</Text>
+          <Ionicons
+            name="arrow-down"
+            size={16}
+            color={sortBy === 'price-low' ? COLORS.primary : COLORS.border}
+          />
+        </TouchableOpacity>
+
+        {/* Priority High */}
+        <TouchableOpacity
+          style={[styles.sortButton, sortBy === 'priority-high' && styles.activeSortButton]}
+          onPress={() => handleSortPress('priority-high')}
+        >
+          <Text style={[styles.sortSymbol, sortBy === 'priority-high' && styles.activeSortSymbol]}>!</Text>
+          <Ionicons
+            name="arrow-up"
+            size={16}
+            color={sortBy === 'priority-high' ? COLORS.primary : COLORS.border}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  sortContainer: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderTopColor: COLORS.border,
+    borderBottomColor: COLORS.border,
+  },
+  sortButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: SPACING.md,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  activeSortButton: {
+  },
+  sortSymbol: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.border,
+    marginRight: 2,
+  },
+  activeSortSymbol: {
+    color: COLORS.primary,
+  },
+});

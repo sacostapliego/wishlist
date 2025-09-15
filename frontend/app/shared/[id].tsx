@@ -201,6 +201,9 @@ export default function WishlistDetailScreen() {
         }
       />
       
+{/* Sadly, removed the bento grid for now */}
+
+{/*       
       {items && items.length > 0 && (
         <View style={styles.viewToggleContainer}>
           <TouchableOpacity
@@ -224,7 +227,9 @@ export default function WishlistDetailScreen() {
             <Text style={[styles.toggleButtonText, viewMode === 'bento' && styles.activeToggleButtonText]}>Grid</Text>
           </TouchableOpacity>
         </View>
-      )}
+      )} 
+       
+*/}
 
       {renderMainContent()}
 

@@ -107,7 +107,7 @@ export default function WishlistDetailScreen() {
           items={items}
           baseSize={baseSize}
           isSelectionMode={isSelectionMode}
-            selectedItems={selectedItems}
+          selectedItems={selectedItems}
           onItemPress={handleItemPress}
           onAddItem={handleAddItem}
           onCancelSelection={cancelSelection}
@@ -153,6 +153,9 @@ export default function WishlistDetailScreen() {
         }
       />
 
+{/* Sadly removed the bento grid option */}
+
+{/* 
       {!isSelectionMode && items && items.length > 0 && (
         <View style={styles.viewToggleContainer}>
           <TouchableOpacity
@@ -177,6 +180,7 @@ export default function WishlistDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+ */}
 
       {renderMainContent()}
 
