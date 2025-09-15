@@ -12,8 +12,7 @@ export default function HomeLayout() {
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: '#141414' }}>
-      
-      <StatusBar 
+      <StatusBar
         barStyle="light-content"
         translucent={false}
       />

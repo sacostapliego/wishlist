@@ -20,7 +20,7 @@ export default function WishlistItemScreen() {
     const { triggerRefresh, refreshTimestamp } = useRefresh();
     const [menuVisible, setMenuVisible] = useState(false);
 
-    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, refreshTimestamp);
+    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, true);
 
     const handleCustomBack = () => {
         if (router.canGoBack()) {
@@ -61,7 +61,7 @@ export default function WishlistItemScreen() {
             router.replace('/home/lists');
         }
     };
-    
+
     const pageBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
@@ -78,13 +78,13 @@ export default function WishlistItemScreen() {
         );
     }
 
-    if (error || !item) { // Combined error and no item check
+    if (error || !item) {
         return (
             <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
                 <Head>
-                    <meta name="theme-color" content={COLORS.cardDark} />
+                    <meta name="theme-color" content={headerBackgroundColor} />
                 </Head>
-                <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={COLORS.cardDark} />
+                <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={headerBackgroundColor} />
                 <View style={styles.centeredMessageContainer}>
                     <Text style={styles.errorText}>{error || "The requested item could not be found."}</Text>
                 </View>
@@ -95,7 +95,7 @@ export default function WishlistItemScreen() {
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
             <Head>
-                <meta name="theme-color" content={pageBackgroundColor} />
+                <meta name="theme-color" content={headerBackgroundColor} />
             </Head>
             <StatusBar
                 style={statusBarTextColor}
@@ -132,6 +132,7 @@ export default function WishlistItemScreen() {
 const styles = StyleSheet.create({
     screenContainer: {
         flex: 1,
+        backgroundColor: 'transparent',
     },
     centeredMessageContainer: {
         flex: 1,

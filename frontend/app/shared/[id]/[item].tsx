@@ -58,7 +58,7 @@ export default function SharedWishlistItemScreen() {
         }
     };
 
-    const pageBackgroundColor = wishlistColor || COLORS.background;
+    const pageBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
     const activeColor = wishlistColor || COLORS.primary;
@@ -82,16 +82,16 @@ export default function SharedWishlistItemScreen() {
     );
 
     if (isLoading) {
-        return (
-            <SafeAreaView style={[styles.screenContainer, { backgroundColor: COLORS.background }]}>
-                <Head>
-                    <meta name="theme-color" content={getLightColor(COLORS.background)} />
-                </Head>
-                <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
-                <LoadingState />
-            </SafeAreaView>
-        );
-    }
+            return (
+                <SafeAreaView style={[styles.screenContainer, { backgroundColor: COLORS.background }]}>
+                    <Head>
+                        <meta name="theme-color" content={getLightColor(COLORS.background)} />
+                    </Head>
+                    <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
+                    <LoadingState />
+                </SafeAreaView>
+            );
+        }
 
     if (error || !item) {
         return (
@@ -123,7 +123,6 @@ export default function SharedWishlistItemScreen() {
                 backgroundColor={headerBackgroundColor}
                 showOptions={false}
             />
-            
             <ItemDetailContent
                 item={item}
                 wishlistColor={wishlistColor}
