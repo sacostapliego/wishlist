@@ -43,7 +43,7 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
                 {isItemClaimed ? (
                     <View style={[styles.claimedContainer, { borderColor: claimedColor }]}>
                         <Ionicons name="checkmark-circle" size={20} color={claimedColor} />
-                        <Text style={styles.claimedText}>
+                        <Text style={[styles.claimedText, { color: activeColor }]}>
                             Claimed by {item.claimed_by_display_name || 'someone'}
                         </Text>
                         {canUserUnclaim && (
@@ -52,7 +52,7 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
                                 onPress={onUnclaimItem}
                                 disabled={isClaimLoading}
                             >
-                                <Text style={styles.unclaimText}>Unclaim</Text>
+                                <Text style={[styles.unclaimText, { color: activeColor }]}>Unclaim</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -148,10 +148,12 @@ const styles = StyleSheet.create({
     claimedContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: SPACING.sm,
-        borderWidth: 1,
+        justifyContent: 'flex-start',
+        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.md,
+        borderWidth: 2,
         borderRadius: 8,
-        padding: SPACING.md,
+        backgroundColor: 'transparent',
     },
     claimedText: {
         marginLeft: SPACING.xs,
@@ -162,10 +164,11 @@ const styles = StyleSheet.create({
     unclaimButton: {
         paddingHorizontal: SPACING.sm,
         paddingVertical: SPACING.xs,
+        fontSize: 16,
     },
     unclaimText: {
-        color: COLORS.text.secondary,
         fontSize: 14,
+        fontWeight: '500',
     },
     modalOverlay: {
         flex: 1,
