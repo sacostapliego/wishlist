@@ -61,7 +61,11 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
 
   return (
     <View style={styles.container}>
-      <WishlistFilters sortBy={sortBy} onSortChange={handleSortChange} />
+      <WishlistFilters 
+      sortBy={sortBy} 
+      onSortChange={handleSortChange} 
+      wishlistColor={wishlistColor}
+    />
 
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
         {sortedItems.map(item => {
