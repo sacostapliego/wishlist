@@ -111,9 +111,6 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
                   {item.price !== undefined && (
                     <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
                   )}
-                  {item.priority !== undefined && (
-                    <Text style={styles.textOnlyPriority}>Priority: {item.priority + 1}</Text>
-                  )}
                 </View>
               )}
             </TouchableOpacity>
