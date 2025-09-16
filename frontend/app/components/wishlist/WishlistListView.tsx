@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
 import { getLightColor } from '../ui/LightColor';
+import { getPriorityColor } from '../ui/PriorityColor';
 import { WishlistListViewProps } from '@/app/types/wishlist';
 import { WishlistFilters, SortOption } from './WishlistFilters';
 
@@ -13,22 +14,10 @@ const formatPrice = (price?: number) => {
 };
 
 const getPriorityValue = (priority?: string | number): number => {
-  if (priority === undefined || priority === null) return 1;
+  if (priority === undefined || priority === null) return 2; // default to medium
   
-  const priorityStr = priority.toString().toLowerCase();
-  switch (priorityStr) {
-    case 'high':
-    case '3':
-      return 3;
-    case 'medium':
-    case '2':
-      return 2;
-    case 'low':
-    case '1':
-      return 1;
-    default:
-      return 1;
-  }
+  const parsed = parseInt(priority.toString(), 10);
+  return !isNaN(parsed) && parsed >= 0 && parsed <= 4 ? parsed : 2;
 };
 
 export const WishlistListView: React.FC<WishlistListViewProps> = ({
@@ -62,16 +51,22 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
   return (
     <View style={styles.container}>
       <WishlistFilters 
-      sortBy={sortBy} 
-      onSortChange={handleSortChange} 
-      wishlistColor={wishlistColor}
-    />
+        sortBy={sortBy} 
+        onSortChange={handleSortChange} 
+        wishlistColor={wishlistColor}
+      />
 
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
         {sortedItems.map(item => {
           const isSelected = selectedItems.includes(item.id);
           const hasImage = item.id && item.image;
-          const itemBackgroundColor = wishlistColor || COLORS.cardDark;
+          const baseWishlistColor = wishlistColor || COLORS.cardDark;
+          
+          // Use priority-based color only when priority filter is active
+          const itemBackgroundColor = sortBy === 'priority-high' 
+            ? getPriorityColor(baseWishlistColor, item.priority)
+            : baseWishlistColor;
+            
           const lighterCardColor = getLightColor(itemBackgroundColor);
 
           return (
@@ -116,8 +111,8 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
                   {item.price !== undefined && (
                     <Text style={styles.textOnlyPrice}>{formatPrice(item.price)}</Text>
                   )}
-                  {item.priority && (
-                    <Text style={styles.textOnlyPriority}>Priority: {item.priority}</Text>
+                  {item.priority !== undefined && (
+                    <Text style={styles.textOnlyPriority}>Priority: {item.priority + 1}</Text>
                   )}
                 </View>
               )}
@@ -131,6 +126,7 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
 
 export default WishlistListView;
 
+// ...existing styles remain the same...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
