@@ -78,3 +78,5 @@ const styles = StyleSheet.create({
   buttonSuccess: { backgroundColor: AUTH_COLORS.primary },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
 });
+
+export default SubmitButton;

@@ -115,14 +115,29 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
 
       if (image && image !== initialValues.currentImageUri) {
           try {
-            const uriParts = image.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-            
             if (Platform.OS === 'web') {
-              const response = await fetch(image);
-              const blob = await response.blob();
-              imageFile = new File([blob], `item-image.${fileType}`, { type: `image/${fileType}` });
+              // On web, image picker returns base64 data URLs
+              if (image.startsWith('data:')) {
+                // Extract the actual file type from the data URL
+                const mimeMatch = image.match(/data:([^;]+);/);
+                const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+                const fileExtension = mimeType.split('/')[1] || 'png';
+                
+                const response = await fetch(image);
+                const blob = await response.blob();
+                imageFile = new File([blob], `item-image.${fileExtension}`, { type: mimeType });
+              } else {
+                // Fallback: treat as regular file path
+                const uriParts = image.split('.');
+                const fileType = uriParts[uriParts.length - 1];
+                const response = await fetch(image);
+                const blob = await response.blob();
+                imageFile = new File([blob], `item-image.${fileType}`, { type: `image/${fileType}` });
+              }
             } else { 
+              // On mobile, image picker returns file paths
+              const uriParts = image.split('.');
+              const fileType = uriParts[uriParts.length - 1];
               imageFile = {
                 uri: image,
                 name: `item-image-${Date.now()}.${fileType}`,

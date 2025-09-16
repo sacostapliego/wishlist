@@ -15,7 +15,7 @@ export const WishlistInfo = ({
   onAddFriend,
   isGuest = false
 }: WishlistInfoProps) => {
-  const hasDescription = description && description.trim().length > 0;
+  const hasDescription = typeof description === 'string' && description.trim().length > 0;
   const hasActionButtons = (showAddFriend && onAddFriend) || (onAddPress && hasItems);
   
   return (

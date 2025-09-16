@@ -23,7 +23,7 @@ export function useRegisterAnimations(onSuccess?: () => void, successDelay = 800
     Animated.timing(errorSlideY, {
       toValue: 0,
       duration: 250,
-      useNativeDriver: true,
+      useNativeDriver: false,
       easing: Easing.out(Easing.ease),
     }).start();
 
@@ -65,3 +65,5 @@ export function useRegisterAnimations(onSuccess?: () => void, successDelay = 800
     successScale,
   };
 }
+
+export default useRegisterAnimations;

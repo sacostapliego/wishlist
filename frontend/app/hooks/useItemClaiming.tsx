@@ -13,8 +13,6 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
     const handleClaimItem = async () => {
         if (!item) return;
 
-        console.log('Claiming item:', item.id, 'User:', user?.id);
-        
         // If user is not authenticated, show guest modal immediately
         if (!user?.id) {
             setShowGuestNameModal(true);
@@ -24,12 +22,7 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
         setIsClaimLoading(true);
         try {
             const result = await wishlistAPI.claimItem(item.id, { user_id: user.id });
-            console.log('Claim result:', result);
-            Alert.alert('Success', 'You have claimed this item!');
-            
-            console.log('Refetching item data...');
             await refetchItemData();
-            console.log('Updated item:', item);
         } catch (error) {
             console.error('Error claiming item:', error);
             Alert.alert('Error', 'Failed to claim item. It may already be claimed.');
@@ -116,3 +109,5 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
         cancelGuestModal,
     };
 };
+
+export default useItemClaiming;

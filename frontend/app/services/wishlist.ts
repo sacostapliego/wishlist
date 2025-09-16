@@ -16,7 +16,7 @@ export const wishlistAPI = {
       return response.data;
     },
     
-    createItem: async (item: any, image?: File) => {
+    createItem: async (item: any, image?: File | string) => {
       const formData = new FormData();
       
       // Add all item properties to form data
@@ -26,9 +26,40 @@ export const wishlistAPI = {
         }
       });
       
-      // Append image if it exists
+      // Handle image properly
       if (image) {
-        formData.append('image', image);
+        if (typeof image === 'string' && image.startsWith('data:')) {
+          // Convert base64 data URL to blob
+          try {
+            const response = await fetch(image);
+            const blob = await response.blob();
+            formData.append('image', blob, 'image.png');
+          } catch (error) {
+            console.error('Error converting base64 to blob:', error);
+            throw new Error('Failed to process image data');
+          }
+        } else if (image instanceof File) {
+          // Check if this is a malformed File object with base64 in the filename
+          if (image.name && image.name.startsWith('item-image.data:')) {
+            
+            // Extract the base64 data from the filename
+            const base64Data = image.name.replace('item-image.', '');
+            
+            try {
+              const response = await fetch(base64Data);
+              const blob = await response.blob();
+              formData.append('image', blob, 'image.png');
+            } catch (error) {
+              console.error('Error converting malformed File base64 to blob:', error);
+              throw new Error('Failed to process malformed image data');
+            }
+          } else {
+            // Normal File object, append directly
+            formData.append('image', image);
+          }
+        } else {
+          console.warn('Image is neither File nor base64 string:', typeof image);
+        }
       }
       
       const response = await api.post('/wishlist/', formData, {
@@ -39,7 +70,7 @@ export const wishlistAPI = {
       return response.data;
     },
     
-    updateItem: async (id: string, item: any, image?: File) => {
+    updateItem: async (id: string, item: any, image?: File | string) => {
       const formData = new FormData();
       
       // Add all item properties to form data
@@ -49,9 +80,24 @@ export const wishlistAPI = {
         }
       });
       
-      // Append image if it exists
+      // Handle image properly - check if it's base64 or File
       if (image) {
-        formData.append('image', image);
+        if (typeof image === 'string' && image.startsWith('data:')) {
+          // Convert base64 data URL to blob
+          try {
+            const response = await fetch(image);
+            const blob = await response.blob();
+            formData.append('image', blob, 'image.png');
+          } catch (error) {
+            console.error('Error converting base64 to blob:', error);
+            throw new Error('Failed to process image data');
+          }
+        } else if (image instanceof File) {
+          // Already a proper file, append directly
+          formData.append('image', image);
+        } else {
+          console.warn('Image is neither File nor base64 string:', typeof image);
+        }
       }
       
       const response = await api.put(`/wishlist/${id}`, formData, {

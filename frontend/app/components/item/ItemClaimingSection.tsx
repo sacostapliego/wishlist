@@ -116,6 +116,8 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
     );
 };
 
+export default ItemClaimingSection;
+
 const styles = StyleSheet.create({
     claimSection: {
         paddingHorizontal: SPACING.md,

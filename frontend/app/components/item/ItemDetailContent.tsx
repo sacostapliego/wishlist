@@ -140,10 +140,7 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.sm,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.00,
+        boxShadow: '0px -2px 3px rgba(0, 0, 0, 0.1)',
         elevation: 5,
     },
     urlLinkTouchable: {

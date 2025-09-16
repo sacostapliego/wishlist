@@ -161,7 +161,7 @@ export default function WishlistDetailScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              viewMode === 'list' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },,
+              viewMode === 'list' && { ...styles.activeToggleButton, backgroundColor: activeColor, borderColor: activeColor },
             ]}
             onPress={() => setViewMode('list')}
           >

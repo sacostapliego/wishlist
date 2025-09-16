@@ -68,6 +68,8 @@ export const WishlistFilters: React.FC<WishlistFiltersProps> = ({
   );
 };
 
+export default WishlistFilters;
+
 const styles = StyleSheet.create({
   sortContainer: {
     paddingHorizontal: SPACING.md,
