@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message';
 import { wishlistAPI } from '../../services/wishlist';
 import { COLORS } from '../../styles/theme';
 import ConfirmDialog from '../modals/Confirm';
@@ -16,6 +15,7 @@ export const ItemActionsMenu = ({
   menuVisible,
   onMenuClose,
   onItemDeleted,
+  onError,
 }: ItemActionsMenuProps) => {
   const router = useRouter();
   const { triggerRefresh } = useRefresh();
@@ -28,7 +28,6 @@ export const ItemActionsMenu = ({
   };
 
   const handleDeletePress = () => {
-    // onMenuClose(); // Optional: close main menu before showing confirm dialog
     setConfirmDeleteVisible(true);
   };
 
@@ -37,15 +36,10 @@ export const ItemActionsMenu = ({
     setIsDeleting(true);
     try {
       await wishlistAPI.deleteItem(itemId);
-      // Toast and navigation are handled by onItemDeleted in the parent screen
       onItemDeleted();
     } catch (error) {
       console.error('Failed to delete item:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to delete item. Please try again.',
-      });
+      onError?.('Failed to delete item. Please try again.');
     } finally {
       setIsDeleting(false);
       onMenuClose(); // Ensure menu is closed after action

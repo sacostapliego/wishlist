@@ -7,6 +7,7 @@ export interface ItemActionsMenuProps {
   menuVisible: boolean;
   onMenuClose: () => void;
   onItemDeleted: () => void;
+  onError?: (message: string) => void;
 }
 
 export interface ItemDetailContentProps {
