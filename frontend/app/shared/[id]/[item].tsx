@@ -60,7 +60,7 @@ export default function SharedWishlistItemScreen() {
 
     const pageBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
-    const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
+    const statusBarTextColor = Platform.OS === 'ios' ? 'light' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
     const activeColor = wishlistColor || COLORS.primary;
 
     const renderClaimingContent = () => (

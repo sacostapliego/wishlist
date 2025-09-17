@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, TextInput, StyleSheet } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../styles/theme';
 import { WishlistItemDetails } from '../../types/wishlist';
+import getLightColor from '../ui/LightColor';
 
 interface ItemClaimingSectionProps {
     item: WishlistItemDetails;
@@ -35,7 +36,7 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
     onGuestClaim,
     onCancelGuestModal,
 }) => {
-    const claimedColor = wishlistColor || COLORS.primary;
+    const claimedColor = getLightColor(wishlistColor || COLORS.primary);
 
     return (
         <>
@@ -43,7 +44,7 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
                 {isItemClaimed ? (
                     <View style={[styles.claimedContainer, { borderColor: claimedColor }]}>
                         <Ionicons name="checkmark-circle" size={20} color={claimedColor} />
-                        <Text style={[styles.claimedText, { color: activeColor }]}>
+                        <Text style={[styles.claimedText, { color: claimedColor }]}>
                             Claimed by {item.claimed_by_display_name || 'someone'}
                         </Text>
                         {canUserUnclaim && (
@@ -52,22 +53,22 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
                                 onPress={onUnclaimItem}
                                 disabled={isClaimLoading}
                             >
-                                <Text style={[styles.unclaimText, { color: activeColor }]}>Unclaim</Text>
+                                <Text style={[styles.unclaimText, { color: claimedColor }]}>Unclaim</Text>
                             </TouchableOpacity>
                         )}
                     </View>
                 ) : (
                     <TouchableOpacity
-                        style={[styles.claimButton, { borderColor: activeColor }]}
+                        style={[styles.claimButton, { borderColor: claimedColor }]}
                         onPress={onClaimItem}
                         disabled={isClaimLoading}
                     >
                         <Ionicons 
                             name="checkmark-circle-outline" 
                             size={20} 
-                            color={activeColor} 
+                            color={claimedColor} 
                         />
-                        <Text style={[styles.claimButtonText, { color: activeColor }]}>
+                        <Text style={[styles.claimButtonText, { color: claimedColor }]}>
                             I'm getting this
                         </Text>
                     </TouchableOpacity>
@@ -102,7 +103,7 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
                                 <Text style={styles.cancelButtonText}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={[styles.confirmButton, { backgroundColor: activeColor }]}
+                                style={[styles.confirmButton, { backgroundColor: claimedColor }]}
                                 onPress={onGuestClaim}
                                 disabled={isClaimLoading}
                             >
@@ -140,11 +141,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.md,
         borderWidth: 2,
         borderRadius: 8,
-        backgroundColor: 'transparent',
+        backgroundColor: COLORS.cardDark,
     },
     claimButtonText: {
         marginLeft: SPACING.xs,
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '500',
     },
     claimedContainer: {
