@@ -20,7 +20,7 @@ export default function WishlistItemScreen() {
     const { triggerRefresh, refreshTimestamp } = useRefresh();
     const [menuVisible, setMenuVisible] = useState(false);
 
-    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, true);
+    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, false);
 
     const handleCustomBack = () => {
         if (router.canGoBack()) {
