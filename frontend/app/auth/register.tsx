@@ -69,6 +69,12 @@ export default function RegisterScreen() {
       showError('Please fill in all required fields.');
       return;
     }
+
+    if (/\s/.test(username)) {
+      showError('Username cannot contain spaces.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       showError('Passwords do not match.');
       return;
