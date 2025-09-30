@@ -1,148 +1,29 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, View, Text, Alert, Platform, Linking } from 'react-native';
-import Head from "expo-router/head";
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { COLORS, SPACING } from '../../../styles/theme';
-import { Header } from '../../../components/layout/Header';
-import { LoadingState } from '../../../components/common/LoadingState';
-import getLightColor from '@/app/components/common/LightColor';
-import * as Clipboard from 'expo-clipboard';
-import ItemActionsMenu from '@/app/components/features/item/ItemActionsMenu';
-import Toast from 'react-native-toast-message';
-import { useRefresh } from '@/app/context/RefreshContext';
-import { StatusBar } from 'expo-status-bar';
-import { useItemDetail } from '../../../hooks/useItemDetail';
-import ItemDetailContent from '@/app/components/features/item/ItemDetailContent';
+import React from 'react';
+import { useAuth } from '@/app/context/AuthContext';
+import OwnerWishlistItemScreen from '@/app/components/features/item/screens/WishlistItemScreen'; 
+import SharedWishlistItemScreen from '@/app/components/features/item/screens/SharedWishlistItemScreen';
+import { LoadingState } from '@/app/components/common/LoadingState'; 
+import { useLocalSearchParams } from 'expo-router';
 
-export default function WishlistItemScreen() {
-    const router = useRouter();
-    const { id: wishlistId, item: itemId } = useLocalSearchParams<{ id: string, item: string }>();
-    const { triggerRefresh, refreshTimestamp } = useRefresh();
-    const [menuVisible, setMenuVisible] = useState(false);
-
-    const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, false);
-
-    const handleCustomBack = () => {
-        if (router.canGoBack()) {
-            router.back();
-        } else if (wishlistId) {
-            router.push(`/home/lists/${wishlistId}`);
-        } else {
-            router.push('/home');
-        }
-    };
-
-    const handleCopyUrl = async () => {
-        if (item?.url) {
-            await Clipboard.setStringAsync(item.url);
-            Alert.alert("Copied", "URL copied to clipboard!");
-        }
-    };
-
-    const handleOpenUrl = () => {
-        if (item?.url) {
-            Linking.openURL(item.url).catch(err => {
-                console.error("Couldn't load page", err);
-                Toast.show({ type: 'error', text1: 'Error', text2: "Could not open URL."});
-            });
-        }
-    };
-
-    const handleItemDeleted = () => {
-        Toast.show({
-            type: 'success',
-            text1: 'Item Deleted',
-            text2: `${item?.name || 'The item'} has been deleted.`,
-        });
-        triggerRefresh(); 
-        if (wishlistId) {
-            router.replace(`/home/lists/${wishlistId}`);
-        } else {
-            router.replace('/home/lists');
-        }
-    };
-
-    const pageBackgroundColor = getLightColor(wishlistColor || COLORS.background);
-    const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
-    const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
-
-    if (isLoading) {
-        return (
-            <SafeAreaView style={[styles.screenContainer, { backgroundColor: COLORS.background }]}>
-                <Head>
-                    <meta name="theme-color" content={getLightColor(COLORS.background)} />
-                </Head>
-                <Header title="Loading..." onBack={handleCustomBack} backgroundColor={getLightColor(COLORS.background)} />
-                <LoadingState />
-            </SafeAreaView>
-        );
-    }
-
-    if (error || !item) {
-        return (
-            <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
-                <Head>
-                    <meta name="theme-color" content={headerBackgroundColor} />
-                </Head>
-                <Header title={!item ? "Item Not Found" : "Error"} onBack={handleCustomBack} backgroundColor={headerBackgroundColor} />
-                <View style={styles.centeredMessageContainer}>
-                    <Text style={styles.errorText}>{error || "The requested item could not be found."}</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
+export default function WishlistItemRouteSelector() {
+    const { user, loading: isAuthLoading } = useAuth();
     
-    return (
-        <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
-            <Head>
-                <meta name="theme-color" content={headerBackgroundColor} />
-            </Head>
-            <StatusBar
-                style={statusBarTextColor}
-                backgroundColor={headerBackgroundColor}
-                translucent={false}
-            />
-            <Header
-                title=""
-                onBack={handleCustomBack}
-                backgroundColor={headerBackgroundColor}
-                showOptions={true}
-                onOptionsPress={() => setMenuVisible(true)}
-            />
-            <ItemDetailContent
-                item={item}
-                wishlistColor={wishlistColor}
-                onOpenUrl={handleOpenUrl}
-                onCopyUrl={handleCopyUrl}
-            />
-            {itemId && wishlistId && item && (
-                <ItemActionsMenu
-                    itemId={itemId}
-                    wishlistId={wishlistId}
-                    itemName={item.name}
-                    menuVisible={menuVisible}
-                    onMenuClose={() => setMenuVisible(false)}
-                    onItemDeleted={handleItemDeleted}
-                />
-            )}
-        </SafeAreaView>
-    );
-}
+    const params = useLocalSearchParams(); 
 
-const styles = StyleSheet.create({
-    screenContainer: {
-        flex: 1,
-        backgroundColor: 'transparent',
-    },
-    centeredMessageContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: SPACING.md,
-    },
-    errorText: {
-        fontSize: 16,
-        color: COLORS.error,
-        textAlign: 'center',
-    },
-});
+    if (isAuthLoading) {
+        return <LoadingState />; 
+    }
+
+    // 1. If the user is authenticated:
+    // This is the /home/lists route, so we assume they want the owner/private view logic.
+    // The OwnerWishlistItemScreen should handle fetching the private (isPublic: false) item data.
+    if (user) {
+        return <OwnerWishlistItemScreen />;
+    } 
+    
+    // 2. If the user is NOT authenticated (Guest):
+    // They should not be on the /home/lists route. If they somehow landed here, 
+    // it's an error or a route mismatch. Redirect them to the /shared view,
+    // or, for simplicity in a broken state, show them the read-only Shared view.
+    return <SharedWishlistItemScreen />;
+}

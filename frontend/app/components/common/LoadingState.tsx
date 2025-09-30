@@ -11,7 +11,7 @@ type LoadingStateProps = {
 export const LoadingState = ({ 
   fullscreen = true, 
   size = 'large',
-  color = COLORS.primary
+  color = COLORS.primary,
 }: LoadingStateProps) => {
   return (
     <View style={[styles.loadingContainer, fullscreen && styles.fullscreen]}>
@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: COLORS.background,
   },
   fullscreen: {
     flex: 1,
