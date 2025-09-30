@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SPACING, COLORS } from '@/app/styles/theme';
 
-import TabButton from '@/app/components/friends/TabButton';
+import TabButton from '@/app/components/features/friends/TabButton';
 import { useFriendsData } from '@/app/hooks/useFriendsData';
 import WishlistsTab from './tabs/WishlistsTab';
 import FriendsTab from './tabs/FriendsTab';

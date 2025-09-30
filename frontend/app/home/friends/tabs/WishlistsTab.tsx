@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../styles/theme';
 import { WishlistData } from '../../../types/lists';
-import EmptyState from '@/app/components/friends/EmptyState';
+import EmptyState from '@/app/components/features/friends/EmptyState';
 import { useRouter } from 'expo-router';
 
 export default function WishlistsTab({ wishlists }: { wishlists: WishlistData[] }) {

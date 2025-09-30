@@ -6,16 +6,16 @@ import { useAuth } from '../../context/AuthContext';
 import { COLORS, SPACING } from '../../styles/theme';
 import { API_URL } from '../../services/api';
 import { Header } from '../../components/layout/Header';
-import { WishlistInfo } from '../../components/wishlist/WishlistInfo';
-import { LoadingState } from '../../components/common/LoadingState';
+import { WishlistInfo } from '../../components/features/wishlist/WishlistInfo';
 import { useWishlistDetail } from '../../hooks/useWishListDetail';
 import { useRefresh } from '../../context/RefreshContext';
-import { SelectionHeader } from '../../components/wishlist/SelectionHeader';
-import { WishlistActions } from '../../components/wishlist/WishlistActions';
-import { ItemSelectionManager } from '../../components/wishlist/ItemSelectionManager';
-import { WishlistContent } from '../../components/wishlist/WishlistContent';
-import { WishlistListView } from '../../components/wishlist/WishlistListView';
-import { EmptyState } from '../../components/layout/EmptyState';
+import { SelectionHeader } from '../../components/features/wishlist/SelectionHeader';
+import { WishlistActions } from '../../components/features/wishlist/WishlistActions';
+import { ItemSelectionManager } from '../../components/features/wishlist/ItemSelectionManager';
+import { WishlistContent } from '../../components/features/wishlist/WishlistContent';
+import { WishlistListView } from '../../components/features/wishlist/WishlistListView';
+import LoadingState from '@/app/components/common/LoadingState';
+import EmptyState from '@/app/components/layout/EmptyState';
 
 export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

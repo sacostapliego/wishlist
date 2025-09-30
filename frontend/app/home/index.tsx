@@ -1,8 +1,8 @@
 import { ScrollView, Text, StyleSheet, SafeAreaView, View, TouchableOpacity, Image} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams, useRouter } from 'expo-router';
-import FriendsListGrid from '../components/lists/FriendsListGrid';
-import PersonalListStack from '../components/lists/PersonalListStack';
+import FriendsListGrid from '../components/features/lists/FriendsListGrid';
+import PersonalListStack from '../components/features/lists/PersonalListStack';
 import { COLORS, PROFILE_RIGHT_MARGIN, SPACING } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { wishlistAPI } from '../services/wishlist';

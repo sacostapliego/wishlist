@@ -6,7 +6,7 @@ import { COLORS, SPACING } from '../styles/theme';
 import { wishlistAPI } from '../services/wishlist';
 import { Ionicons } from '@expo/vector-icons';
 import { WishlistFormData } from '../types/lists';
-import WishlistForm, { WishlistFormRef } from '../components/forms/WishListForm';
+import WishlistForm, { WishlistFormRef } from '../components/features/forms/WishListForm';
 import Toast from 'react-native-toast-message';
 import { useRefresh } from '../context/RefreshContext';
 

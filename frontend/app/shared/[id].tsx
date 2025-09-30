@@ -4,16 +4,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../styles/theme';
 import { Header } from '../components/layout/Header';
-import { WishlistInfo } from '../components/wishlist/WishlistInfo';
+import { WishlistInfo } from '../components/features/wishlist/WishlistInfo';
 import { LoadingState } from '../components/common/LoadingState';
 import { usePublicWishlistDetail } from '../hooks/usePublicWishlistDetail';
 import { useRefresh } from '../context/RefreshContext';
-import { WishlistContent } from '../components/wishlist/WishlistContent';
-import { WishlistListView } from '../components/wishlist/WishlistListView';
+import { WishlistContent } from '../components/features/wishlist/WishlistContent';
+import { WishlistListView } from '../components/features/wishlist/WishlistListView';
 import { EmptyState } from '../components/layout/EmptyState';
 import { friendsAPI } from '../services/friends';
 import { useAuth } from '../context/AuthContext';
-import { WishlistFilters, SortOption } from '../components/wishlist/WishlistFilters';
+import { WishlistFilters, SortOption } from '../components/features/wishlist/WishlistFilters';
 
 type WishlistItem = {
   id: string;

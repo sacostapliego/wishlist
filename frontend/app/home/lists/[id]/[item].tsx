@@ -5,14 +5,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../../../styles/theme';
 import { Header } from '../../../components/layout/Header';
 import { LoadingState } from '../../../components/common/LoadingState';
-import getLightColor from '@/app/components/ui/LightColor';
+import getLightColor from '@/app/components/common/LightColor';
 import * as Clipboard from 'expo-clipboard';
-import { ItemActionsMenu } from '@/app/components/item/ItemActionsMenu';
+import ItemActionsMenu from '@/app/components/features/item/ItemActionsMenu';
 import Toast from 'react-native-toast-message';
 import { useRefresh } from '@/app/context/RefreshContext';
 import { StatusBar } from 'expo-status-bar';
 import { useItemDetail } from '../../../hooks/useItemDetail';
-import ItemDetailContent from '../../../components/item/ItemDetailContent'; 
+import ItemDetailContent from '@/app/components/features/item/ItemDetailContent';
 
 export default function WishlistItemScreen() {
     const router = useRouter();

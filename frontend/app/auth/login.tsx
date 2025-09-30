@@ -9,9 +9,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { AUTH_COLORS, SPACING } from '../styles/theme';
-import GradientBorderInput from '../components/forms/GradientBorderInput';
+import GradientBorderInput from '../components/common/GradientBorderInput';
 import ErrorBanner from '../components/common/ErrorBanner';
-import { SubmitButton } from '../components/forms/SubmitButton';
+import { SubmitButton } from '../components/common/SubmitButton';
 import { useRegisterAnimations } from '../hooks/useRegisterAnimations';
 
 export default function LoginScreen() {

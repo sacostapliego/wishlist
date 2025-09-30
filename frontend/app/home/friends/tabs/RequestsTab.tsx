@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../../../styles/theme';
-import EmptyState from '@/app/components/friends/EmptyState';
-import Avatar from '@/app/components/friends/Avatar';
+import EmptyState from '@/app/components/features/friends/EmptyState';
+import Avatar from '@/app/components/features/friends/Avatar';
 import { FriendRequestInfo } from '../../../services/friends';
 
 export default function RequestsTab({

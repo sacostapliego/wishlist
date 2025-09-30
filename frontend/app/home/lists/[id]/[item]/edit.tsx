@@ -8,7 +8,7 @@ import Toast from 'react-native-toast-message';
 import { useRefresh } from '@/app/context/RefreshContext';
 import { Header } from '@/app/components/layout/Header';
 import { LoadingState } from '@/app/components/common/LoadingState';
-import ItemForm, { ItemFormRef, ItemFormData } from '@/app/components/forms/ItemForm';
+import ItemForm, { ItemFormRef, ItemFormData } from '@/app/components/features/forms/ItemForm';
 import { API_URL } from '@/app/services/api';
 import { WishlistItemDetails } from '@/app/types/wishlist'; 
 

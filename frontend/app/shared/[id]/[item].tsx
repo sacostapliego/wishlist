@@ -4,14 +4,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../../styles/theme';
 import { Header } from '../../components/layout/Header';
 import { LoadingState } from '../../components/common/LoadingState';
-import getLightColor from '../../components/ui/LightColor';
+import getLightColor from '../../components/common/LightColor';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { StatusBar } from 'expo-status-bar';
 import { useItemDetail } from '../../hooks/useItemDetail';
 import { useItemClaiming } from '../../hooks/useItemClaiming';
-import ItemDetailContent from '../../components/item/ItemDetailContent';
-import { ItemClaimingSection } from '../../components/item/ItemClaimingSection';
+import ItemDetailContent from '../../components/features/item/ItemDetailContent';
+import { ItemClaimingSection } from '../../components/features/item/ItemClaimingSection';
 import Head from 'expo-router/head';
 
 export default function SharedWishlistItemScreen() {

@@ -15,8 +15,8 @@ import Toast from 'react-native-toast-message';
 import { wishlistAPI } from '../services/wishlist';
 import { WishlistApiResponse } from '../types/lists';
 import { useRefresh } from '../context/RefreshContext';
-import ItemForm, { ItemFormData, ItemFormRef } from '../components/forms/ItemForm';
-import { ScrapeUrlForm } from '../components/forms/ScrapeUrlForm';
+import ItemForm, { ItemFormData, ItemFormRef } from '../components/features/forms/ItemForm';
+import ScrapeUrlForm from '../components/features/forms/ScrapeUrlForm';
 
 export default function AddItemScreen() {
   const router = useRouter();

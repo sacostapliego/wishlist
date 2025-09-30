@@ -9,7 +9,7 @@ import { Header } from '../components/layout/Header';
 import { useLocalSearchParams } from 'expo-router';
 import { PublicUserDetailsResponse } from '../services/user';
 import userAPI from '../services/user';
-import { SizeCards } from '../components/profile/SizeCards';
+import { SizeCards } from '../components/features/profile/SizeCards';
 
 
 export default function ProfileScreen() {
