@@ -66,9 +66,15 @@ export default function HomeLayout() {
             ),
           }}
         />
+        <Tabs.Screen
+          name="lists"
+          options={{
+            href: null, 
+            tabBarStyle: { display: 'none' },
+          }}
+        />
         {/* Don't feel like reconstructing the entire dir for the frontned, temp/permanent fix */}
         <Tabs.Screen name="friends" options={{ href: null }} />
-        <Tabs.Screen name="lists" options={{ href: null }} />
         <Tabs.Screen name="create-wishlist" options={{ href: null}} />
         <Tabs.Screen name="add-item" options={{ href: null}} />
         <Tabs.Screen name="profile" options={{ href: null }} />
