@@ -24,8 +24,7 @@ export default function HomeLayout() {
           tabBarActiveTintColor: COLORS.text.primary,
           tabBarInactiveTintColor: '#64748b', 
           tabBarStyle: {
-            backgroundColor: 'transparent',
-            borderTopWidth: 1,
+            backgroundColor: '#141414',
             borderTopColor: 'transparent',
             paddingBottom: insets.bottom,
             paddingTop: 10,
