@@ -21,7 +21,7 @@ export default function HomeLayout() {
 
       <Head>
         <style>{`body { background: #141414 !important; }`}</style>
-        <meta name="color-scheme" content="light" />
+        <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content={COLORS.background} />
       </Head>
 
