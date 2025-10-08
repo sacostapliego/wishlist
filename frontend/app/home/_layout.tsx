@@ -5,17 +5,25 @@ import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-cont
 import AddModal from '../components/features/modals/AddModal';
 import { useState } from 'react';
 import { COLORS } from '../styles/theme';
+import Head from 'expo-router/head';
 
 export default function HomeLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
+    
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: '#141414' }}>
       <StatusBar
         barStyle="light-content"
         translucent={false}
       />
+
+      <Head>
+        <style>{`body { background: #141414 !important; }`}</style>
+        <meta name="color-scheme" content="dark light" />
+        <meta name="theme-color" content={COLORS.background} />
+      </Head>
 
       <Tabs
         screenOptions={{

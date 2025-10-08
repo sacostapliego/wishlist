@@ -94,9 +94,11 @@ export default function WishlistItemScreen() {
     
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
-            <Head>
-                <meta name="theme-color" content={headerBackgroundColor} />
-            </Head>
+               <Head>
+                 <style>{`body { background: ${headerBackgroundColor} !important; }`}</style>
+                 <meta name="color-scheme" content="dark" />
+                 <meta name="theme-color" content={headerBackgroundColor} />
+               </Head>
             <StatusBar
                 style={statusBarTextColor}
                 backgroundColor={headerBackgroundColor}
