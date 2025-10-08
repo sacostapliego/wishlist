@@ -91,7 +91,7 @@ export default function HomeScreen() {
       <Head>
         <meta name="theme-color" content={COLORS.background} />
       </Head>
-      <StatusBar style="light" backgroundColor={COLORS.background} />
+      <StatusBar style="dark" backgroundColor={COLORS.background} />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={[

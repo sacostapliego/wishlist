@@ -64,7 +64,7 @@ export default function WishlistItemScreen() {
 
     const pageBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
-    const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
+    const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'dark');
 
     if (isLoading) {
         return (
