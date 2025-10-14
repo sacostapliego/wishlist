@@ -5,7 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import PrioritySlider from './PrioritySlider';
 import { SelectList } from 'react-native-dropdown-select-list';
-import { WishlistApiResponse } from '@/app/types/lists'; // Assuming this type is available
+import { WishlistApiResponse } from '@/app/types/lists';
+import { wishlistAPI } from '@/app/services/wishlist';
+import SuccessBanner from '@/app/components/common/SuccessBanner';
+import ErrorBanner from '@/app/components/common/ErrorBanner';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
+
 
 export interface ItemFormData {
   name: string;
@@ -58,6 +63,33 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
     const [url, setUrl] = useState(initialValues.url || '');
     const [image, setImage] = useState<string | undefined>(initialValues.currentImageUri || initialValues.newImageUri || undefined);
     const [priority, setPriority] = useState(initialValues.priority || 0);
+    const [isProcessingImage, setIsProcessingImage] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | undefined>();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+    // Animation for banners
+    const bannerOffsetY = useSharedValue(-100);
+    const animatedBannerStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateY: bannerOffsetY.value }],
+      };
+    });
+
+    const showBanner = (type: 'success' | 'error', message: string) => {
+      if (type === 'success') {
+        setSuccessMessage(message);
+        setErrorMessage(undefined);
+      } else {
+        setErrorMessage(message);
+        setSuccessMessage(undefined);
+      }
+
+      bannerOffsetY.value = withSequence(
+        withTiming(0, { duration: 300 }), // Slide in
+        withTiming(0, { duration: 3000 }), // Stay
+        withTiming(-100, { duration: 300 }) // Slide out
+      );
+    };
 
     useEffect(() => {
         setName(initialValues.name || '');
@@ -101,6 +133,45 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       }
     };
 
+    const handleRemoveBackground = async () => {
+      if (!image) return;
+  
+      setIsProcessingImage(true);
+      try {
+        let imageFile: File | { uri: string; name: string; type: string };
+        
+        // Convert the current image (URI or base64) to a file object for the API
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const fileName = image.split('/').pop() || 'image.jpg';
+        const fileType = blob.type || 'image/jpeg';
+
+        if (Platform.OS === 'web') {
+            imageFile = new File([blob], fileName, { type: fileType });
+        } else {
+            imageFile = {
+              uri: image,
+              name: fileName,
+              type: fileType,
+            };
+        }
+  
+        const result = await wishlistAPI.processImageForBackgroundRemoval(imageFile);
+  
+        if (result && result.image_data_url) {
+          setImage(result.image_data_url);
+          showBanner('success', 'Background removed successfully!');
+        } else {
+          throw new Error("Invalid response from server.");
+        }
+      } catch (error) {
+        console.error("Failed to remove background:", error);
+        showBanner('error', 'Could not remove background. Please try again.');
+      } finally {
+        setIsProcessingImage(false);
+      }
+    };
+
     const handleSubmit = async () => {
       if (!name.trim()) {
         Alert.alert("Validation Error", "Item name is required.");
@@ -116,24 +187,12 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       if (image && image !== initialValues.currentImageUri) {
           try {
             if (Platform.OS === 'web') {
-              // On web, image picker returns base64 data URLs
-              if (image.startsWith('data:')) {
-                // Extract the actual file type from the data URL
-                const mimeMatch = image.match(/data:([^;]+);/);
-                const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-                const fileExtension = mimeType.split('/')[1] || 'png';
-                
-                const response = await fetch(image);
-                const blob = await response.blob();
-                imageFile = new File([blob], `item-image.${fileExtension}`, { type: mimeType });
-              } else {
-                // Fallback: treat as regular file path
-                const uriParts = image.split('.');
-                const fileType = uriParts[uriParts.length - 1];
-                const response = await fetch(image);
-                const blob = await response.blob();
-                imageFile = new File([blob], `item-image.${fileType}`, { type: `image/${fileType}` });
-              }
+              // On web, image can be a new base64 data URL from processing or a file path
+              const response = await fetch(image);
+              const blob = await response.blob();
+              const mimeType = blob.type || 'image/png';
+              const fileExtension = mimeType.split('/')[1] || 'png';
+              imageFile = new File([blob], `item-image.${fileExtension}`, { type: mimeType });
             } else { 
               // On mobile, image picker returns file paths
               const uriParts = image.split('.');
@@ -156,6 +215,8 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
 
     return (
       <View style={styles.formContainer}>
+        <SuccessBanner message={successMessage} animatedStyle={animatedBannerStyle} />
+        <ErrorBanner message={errorMessage} animatedStyle={animatedBannerStyle} />
         {/* Select Wishlist - Conditionally render if not in edit mode and wishlists are provided */}
         {!isEditMode && !hideWishlistSelector && onWishlistChange && (
           <>
@@ -188,7 +249,7 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           value={name}
           onChangeText={setName}
           placeholder="Enter item name"
-          placeholderTextColor={'rgba(255, 255, 255, 0.3)'} // From add-item
+          placeholderTextColor={'rgba(255, 255, 255, 0.3)'}
         />
 
         <Text style={styles.label}>Image</Text>
@@ -203,13 +264,27 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           )}
         </TouchableOpacity>
 
+        {image && (
+          <TouchableOpacity 
+            style={styles.removeBgButton} 
+            onPress={handleRemoveBackground}
+            disabled={isProcessingImage}
+          >
+            {isProcessingImage ? (
+              <ActivityIndicator size="small" color={COLORS.white} />
+            ) : (
+              <Text style={styles.removeBgButtonText}>Remove Background</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
         <Text style={styles.label}>Price</Text>
         <TextInput
           style={styles.input}
           value={price}
           onChangeText={(text) => setPrice(text.replace(/[^0-9.]/g, ''))}
           placeholder="Enter price (e.g., 29.99)"
-          placeholderTextColor={'rgba(255, 255, 255, 0.3)'} // From add-item
+          placeholderTextColor={'rgba(255, 255, 255, 0.3)'}
           keyboardType="decimal-pad"
         />
 
@@ -218,8 +293,8 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           style={styles.input}
           value={url}
           onChangeText={setUrl}
-          placeholder="URL or location" // From add-item
-          placeholderTextColor={'rgba(255, 255, 255, 0.3)'} // From add-item
+          placeholder="URL or location"
+          placeholderTextColor={'rgba(255, 255, 255, 0.3)'}
           keyboardType="url"
           autoCapitalize="none"
         />
@@ -230,9 +305,9 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           value={description}
           onChangeText={setDescription}
           placeholder="Add details about this item"
-          placeholderTextColor="rgba(255, 255, 255, 0.3)" // From add-item
+          placeholderTextColor="rgba(255, 255, 255, 0.3)"
           multiline
-          numberOfLines={4} // From add-item
+          numberOfLines={4}
           textAlignVertical="top"
         />
         
@@ -267,6 +342,7 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
 
 const styles = StyleSheet.create({
   formContainer: {
+    position: 'relative',
   },
   label: {
     fontSize: 16,
@@ -295,7 +371,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderColor: '#fff',
     borderWidth: 1,
-    marginBottom: SPACING.md,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -314,6 +389,22 @@ const styles = StyleSheet.create({
     color: COLORS.inactive,
     marginTop: SPACING.md,
   },
+  removeBgButton: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: SPACING.sm,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    alignSelf: 'center',
+    width: '60%',
+    minHeight: 36,
+  },
+  removeBgButtonText: {
+    color: COLORS.text.primary,
+    fontWeight: '600',
+  },
   submitButton: {
     backgroundColor: COLORS.primary,
     flexDirection: 'row',
@@ -321,7 +412,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.lg, // Adjusted from md
+    marginTop: SPACING.lg,
   },
   disabledButton: {
     opacity: 0.6,

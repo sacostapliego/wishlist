@@ -15,7 +15,7 @@ export const wishlistAPI = {
       const response = await api.get('/wishlist/'); 
       return response.data;
     },
-    
+
     createItem: async (item: any, image?: File | string) => {
       const formData = new FormData();
       
@@ -181,6 +181,23 @@ export const wishlistAPI = {
         console.error(`Error fetching item ${itemId}:`, error);
         throw error;
       }
+    },
+
+    processImageForBackgroundRemoval: async (imageFile: File | { uri: string; name: string; type: string }) => {
+      const formData = new FormData();
+      formData.append('image', imageFile as any);
+
+      const response = await api.post('/wishlist/process-image/remove-background', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data; // This will return { image_data_url: "data:image/png;base64,..." }
+    },
+
+    removeItemBackground: async (itemId: string) => {
+      const response = await api.post(`/wishlist/${itemId}/remove-background`);
+      return response.data;
     },
 
     scrapeUrl: async (url: string) => {

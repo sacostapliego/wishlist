@@ -26,3 +26,4 @@ beautifulsoup4
 requests
 
 sqlalchemy-utils
+pillow

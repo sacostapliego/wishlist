@@ -1,10 +1,14 @@
 import os
+import uuid
+import io
+import base64
 from fastapi import APIRouter, Depends, HTTPException, Form, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload
 from typing import List, Optional
-import uuid
+from PIL import Image
+
 
 from models.user import User
 from models.wishlist import Wishlist
@@ -25,6 +29,44 @@ async def scrape_item_from_url(scrape_request: ScrapeRequest, current_user: dict
     if "error" in scraped_data:
         raise HTTPException(status_code=400, detail=scraped_data["error"])
     return scraped_data
+
+@router.post('/process-image/remove-background', tags=['image-processing'])
+async def process_image_remove_background(image: UploadFile = File(...)):
+    """
+    Receives an image, removes the white background, and returns the new image as a base64 string.
+    """
+    try:
+        image_data = await image.read()
+        
+        # Use the existing helper to process the image
+        processed_image_data = _remove_white_background(image_data)
+        
+        # Encode the result as a base64 data URL to send back to the client
+        base64_encoded_image = base64.b64encode(processed_image_data).decode('utf-8')
+        data_url = f"data:image/png;base64,{base64_encoded_image}"
+        
+        return {"image_data_url": data_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
+
+""" Helper function to remove white background """
+def _remove_white_background(image_data: bytes) -> bytes:
+    """Processes image data with Pillow to remove white background."""
+    img = Image.open(io.BytesIO(image_data)).convert("RGBA")
+    datas = img.getdata()
+    newData = []
+    # Tolerance for "off-white" colors
+    tolerance = 20 
+    for item_pixel in datas:
+        if item_pixel[0] > 255 - tolerance and item_pixel[1] > 255 - tolerance and item_pixel[2] > 255 - tolerance:
+            newData.append((255, 255, 255, 0))
+        else:
+            newData.append(item_pixel)
+    img.putdata(newData)
+    buffer = io.BytesIO()
+    img.save(buffer, "PNG")
+    buffer.seek(0)
+    return buffer.getvalue()
 
 ''' Create a new item '''
 @router.post('/', response_model=WishListItemResponse)
@@ -220,7 +262,6 @@ def delete_wishlist_item(
     db.commit()
     return {'detail': 'Item deleted successfully'}
 
-
 """ Get another user's wishlist """
 @router.get('/user/{user_id}', response_model=List[WishListItemResponse])
 def read_user_wishlist(
@@ -251,6 +292,69 @@ def read_user_wishlist(
     
     return response_items
 
+""" Remove white background from an item's image """
+@router.post('/{item_id}/remove-background', response_model=dict)
+async def remove_item_image_background(
+    item_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Removes the white background from an item's image and saves it back to S3.
+    """
+    item = db.query(WishListItem).filter(WishListItem.id == item_id).first()
+    if not item or not item.image:
+        raise HTTPException(status_code=404, detail="Item or item image not found")
+    
+    wishlist = db.query(Wishlist).filter(Wishlist.id == item.wishlist_id).first()
+    if not wishlist or wishlist.owner_id != uuid.UUID(current_user['id']):
+        raise HTTPException(status_code=403, detail="Not authorized to modify this item")
+
+    try:
+        # 1. Download image from S3
+        s3_key = item.image.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
+        response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+        image_data = response['Body'].read()
+        
+        # 2. Process with Pillow
+        img = Image.open(io.BytesIO(image_data)).convert("RGBA")
+        datas = img.getdata()
+
+        newData = []
+        # Set a tolerance for "off-white" colors
+        tolerance = 20 
+        for item_pixel in datas:
+            # If the pixel is close to white, make it transparent
+            if item_pixel[0] > 255 - tolerance and item_pixel[1] > 255 - tolerance and item_pixel[2] > 255 - tolerance:
+                newData.append((255, 255, 255, 0))
+            else:
+                newData.append(item_pixel)
+        
+        img.putdata(newData)
+
+        # 3. Save processed image to a buffer
+        buffer = io.BytesIO()
+        img.save(buffer, "PNG")
+        buffer.seek(0)
+
+        # 4. Upload the new transparent image back to S3, overwriting the old one
+        # The s3_key should point to the same object to overwrite it.
+        # Ensure the content type is 'image/png' for transparency.
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=s3_key,
+            Body=buffer,
+            ContentType='image/png',
+            ACL='public-read' # Or your default ACL
+        )
+        
+        # The URL remains the same, so no DB update is needed.
+        
+        return {"message": "Background removed successfully."}
+
+    except Exception as e:
+        print(f"Error removing background: {e}")
+        raise HTTPException(status_code=500, detail="Failed to remove image background.")
 
 """Get an item's image directly from S3"""
 @router.get('/{item_id}/image', response_class=Response)
@@ -279,8 +383,7 @@ async def get_item_image(
     except Exception as e:
         print(f"Error retrieving item image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve item image")
-    
-    
+        
 """ Get items from a public wishlist without authentication """
 @router.get('/public/{wishlist_id}', response_model=List[WishListItemResponse])
 def read_public_wishlist_items(
@@ -320,7 +423,6 @@ def read_public_wishlist_items(
         response_items.append(WishListItemResponse(**item_dict))
     
     return response_items
-
 
 """ Claim an item for purchase """
 @router.post('/{item_id}/claim')

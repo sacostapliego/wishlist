@@ -10,6 +10,8 @@ def scrape_url(url: str):
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'Connection': 'keep-alive',
+        'DNT': '1', # Do Not Track Request Header
+        'Upgrade-Insecure-Requests': '1'
     }
     try:
         # Add a timeout to prevent the request from hanging indefinitely
@@ -29,7 +31,7 @@ def scrape_url(url: str):
         # Price
         price = None
         # Try to find price in a couple of common locations
-        price_element = soup.select_one('.a-price .a-offscreen') or soup.select_one('.a-price-whole')
+        price_element = soup.select_one('.a-price .a-offscreen')
         if price_element:
             price_text = price_element.get_text(strip=True).replace('$', '').replace(',', '')
             try:
@@ -38,8 +40,24 @@ def scrape_url(url: str):
                 price = None
 
         # Image
-        image_element = soup.select_one('#landingImage') or soup.select_one('#imgBlkFront')
-        image_url = image_element['src'] if image_element else None
+        image_url = None
+        # New method: Look for the dynamic image data attribute
+        image_container = soup.select_one('#imgTagWrapperId img')
+        if image_container and 'data-a-dynamic-image' in image_container.attrs:
+            try:
+                # The attribute contains a JSON string mapping URLs to resolutions
+                image_data = json.loads(image_container['data-a-dynamic-image'])
+                # Get the first (and often largest) image URL from the JSON
+                image_url = list(image_data.keys())[0]
+            except (json.JSONDecodeError, IndexError):
+                image_url = None
+        
+        # Fallback to the old method if the new one fails
+        if not image_url:
+            image_element = soup.select_one('#landingImage') or soup.select_one('#imgBlkFront')
+            if image_element and 'src' in image_element.attrs:
+                image_url = image_element['src']
+
 
         # If we can't find the main details, it's likely the page structure is different or we were blocked.
         if not title and not price:
