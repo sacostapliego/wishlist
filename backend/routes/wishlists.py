@@ -4,6 +4,7 @@ from sqlalchemy import func
 from typing import List
 import uuid
 
+from services.s3_service import delete_file_from_s3
 from models.base import get_db
 from models.wishlist import Wishlist, WishlistCreate, WishlistUpdate, WishlistResponse
 from models.item import WishListItem
@@ -137,6 +138,11 @@ def delete_wishlist(
     
     if not db_wishlist:
         raise HTTPException(status_code=404, detail="Wishlist not found")
+    
+    # Delete associated images from S3
+    for item in db_wishlist.items:
+        if item.image:
+            delete_file_from_s3(item.image)
     
     db.delete(db_wishlist)
     db.commit()

@@ -257,7 +257,6 @@ def delete_wishlist_item(
     # Delete image from S3 if it exists
     if db_item.image:
         delete_file_from_s3(db_item.image)
-    
     db.delete(db_item)
     db.commit()
     return {'detail': 'Item deleted successfully'}
