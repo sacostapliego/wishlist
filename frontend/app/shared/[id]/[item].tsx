@@ -110,6 +110,8 @@ export default function SharedWishlistItemScreen() {
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
             <Head>
+                <style>{`body { background: ${headerBackgroundColor} !important; }`}</style>
+                <meta name="color-scheme" content="dark" />
                 <meta name="theme-color" content={headerBackgroundColor} />
             </Head>
             <StatusBar

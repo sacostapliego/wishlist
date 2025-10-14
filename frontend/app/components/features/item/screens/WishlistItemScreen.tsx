@@ -64,7 +64,7 @@ export default function WishlistItemScreen() {
 
     const pageBackgroundColor = getLightColor(wishlistColor || COLORS.background);
     const headerBackgroundColor = getLightColor(wishlistColor || COLORS.background);
-    const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'light');
+    const statusBarTextColor = Platform.OS === 'ios' ? 'dark' : (wishlistColor && wishlistColor !== COLORS.background ? 'dark' : 'dark');
 
     if (isLoading) {
         return (
@@ -94,9 +94,11 @@ export default function WishlistItemScreen() {
     
     return (
         <SafeAreaView style={[styles.screenContainer, { backgroundColor: pageBackgroundColor }]}>
-            <Head>
-                <meta name="theme-color" content={headerBackgroundColor} />
-            </Head>
+               <Head>
+                 <style>{`body { background: ${headerBackgroundColor} !important; }`}</style>
+                 <meta name="color-scheme" content="dark" />
+                 <meta name="theme-color" content={headerBackgroundColor} />
+               </Head>
             <StatusBar
                 style={statusBarTextColor}
                 backgroundColor={headerBackgroundColor}

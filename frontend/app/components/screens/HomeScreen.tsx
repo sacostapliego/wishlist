@@ -88,10 +88,6 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Head>
-        <meta name="theme-color" content={COLORS.background} />
-      </Head>
-      <StatusBar style="light" backgroundColor={COLORS.background} />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={[

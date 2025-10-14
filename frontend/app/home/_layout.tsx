@@ -1,21 +1,29 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
 import AddModal from '../components/features/modals/AddModal';
 import { useState } from 'react';
 import { COLORS } from '../styles/theme';
+import Head from 'expo-router/head';
+import { StatusBar } from 'expo-status-bar';
 
 export default function HomeLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
+    
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: '#141414' }}>
       <StatusBar
-        barStyle="light-content"
-        translucent={false}
+        style="light"
       />
+
+      <Head>
+        <style>{`body { background: #141414 !important; }`}</style>
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content={COLORS.background} />
+      </Head>
 
       <Tabs
         screenOptions={{
@@ -24,8 +32,7 @@ export default function HomeLayout() {
           tabBarActiveTintColor: COLORS.text.primary,
           tabBarInactiveTintColor: '#64748b', 
           tabBarStyle: {
-            backgroundColor: 'transparent',
-            borderTopWidth: 1,
+            backgroundColor: '#141414',
             borderTopColor: 'transparent',
             paddingBottom: insets.bottom,
             paddingTop: 10,
