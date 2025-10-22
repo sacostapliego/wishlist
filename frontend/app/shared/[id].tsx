@@ -14,6 +14,7 @@ import { EmptyState } from '../components/layout/EmptyState';
 import { friendsAPI } from '../services/friends';
 import { useAuth } from '../context/AuthContext';
 import { WishlistFilters, SortOption } from '../components/features/wishlist/WishlistFilters';
+import Head from 'expo-router/head';
 
 type WishlistItem = {
   id: string;
@@ -188,6 +189,13 @@ export default function WishlistDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Head>
+        <style>{`body { background: #141414 !important; }`}</style>
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content={COLORS.background} />
+      </Head>
+
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
         {...(isAuthenticated
