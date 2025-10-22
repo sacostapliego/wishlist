@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '@/app/styles/theme';
@@ -15,6 +15,9 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
     onCopyUrl,
     claimingContent,
 }) => {
+    const [contentHeight, setContentHeight] = useState(0);
+    const [scrollViewHeight, setScrollViewHeight] = useState(0);
+
     const itemImageUri = item.image ? `${API_URL}wishlist/${item.id}/image` : null;
     
     const dynamicImageHeight = screenHeight * 0.40;
@@ -27,7 +30,8 @@ export const ItemDetailContent: React.FC<ItemDetailContentProps> = ({
     };
 
     const fixedUrlContainerHeight = item.url ? (SPACING.sm * 2) + 24 + SPACING.md : 0;
-    const scrollPaddingBottom = (styles.scrollContent.paddingBottom || 0) + fixedUrlContainerHeight;
+    const isContentScrollable = contentHeight > scrollViewHeight;
+    const scrollPaddingBottom = (styles.scrollContent.paddingBottom || 0) + (isContentScrollable ? fixedUrlContainerHeight : 0);
 
     return (
         <>
