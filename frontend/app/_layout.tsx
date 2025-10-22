@@ -6,6 +6,8 @@ import { RefreshProvider } from './context/RefreshContext';
 import { useEffect } from 'react';
 import DeviceFrame from './context/FrameContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Head from 'expo-router/head';
+import { COLORS } from './styles/theme';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -25,6 +27,11 @@ export default function RootLayout() {
           <Toast />
           <SafeAreaProvider>
             <DeviceFrame>
+              <Head>
+                <style>{`body { background: #141414 !important; }`}</style>
+                <meta name="color-scheme" content="light dark" />
+                <meta name="theme-color" content={COLORS.background} />
+              </Head>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen
