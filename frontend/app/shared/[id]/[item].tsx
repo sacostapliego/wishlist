@@ -139,6 +139,7 @@ export default function SharedWishlistItemScreen() {
 const styles = StyleSheet.create({
     screenContainer: {
         flex: 1,
+        backgroundColor: 'transparent',
     },
     centeredMessageContainer: {
         flex: 1,
