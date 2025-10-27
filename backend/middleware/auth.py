@@ -11,6 +11,7 @@ load_dotenv()
 # JWT
 JWT_SECRET = os.getenv('JWT_SECRET')
 
+# Get current user from JWT token
 async def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail='No token provided')

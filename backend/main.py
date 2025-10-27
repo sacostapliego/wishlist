@@ -20,7 +20,6 @@ app = FastAPI(
 
 # CORS
 
-#TODO: Change to only allow certain origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

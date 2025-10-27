@@ -11,6 +11,7 @@ from datetime import datetime
 
 from .base import Base
 
+# Model for Wish List Item
 class WishListItem(Base):
     
     __tablename__ = 'wishlist_items'
