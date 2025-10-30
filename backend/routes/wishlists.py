@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
@@ -8,6 +9,7 @@ from services.s3_service import delete_file_from_s3
 from models.base import get_db
 from models.wishlist import Wishlist, WishlistCreate, WishlistUpdate, WishlistResponse
 from models.item import WishListItem
+from models.user import User
 from middleware.auth import get_current_user
 
 router = APIRouter(prefix='/wishlists', tags=['wishlists'])
@@ -200,3 +202,66 @@ def get_public_wishlist(
     response_data['item_count'] = item_count
     
     return response_data
+
+@router.get('/shared/{wishlist_id}', response_class=HTMLResponse)
+def get_shared_wishlist_meta_page(
+    wishlist_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Serve HTML with Open Graph meta tags for shared wishlists"""
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id,
+        Wishlist.is_public == True
+    ).first()
+    
+    if not db_wishlist:
+        raise HTTPException(status_code=404, detail="Wishlist not found")
+    
+    # Get user info for the owner
+    owner = db.query(User).filter(User.id == db_wishlist.user_id).first()
+    owner_name = owner.name or owner.username if owner else "User"
+    
+    # Determine the image URL
+    og_image = "https://cardinal-wishlist.onrender.com/favicon.ico"  # default
+    if db_wishlist.image and (db_wishlist.image.startswith('http://') or db_wishlist.image.startswith('https://')):
+        og_image = db_wishlist.image
+    elif owner and owner.pfp:
+        og_image = owner.pfp
+    
+    title = db_wishlist.title or "Shared Wishlist"
+    description = db_wishlist.description or f"{owner_name}'s wishlist"
+    frontend_url = f"https://cardinal-wishlist.onrender.com/shared/{wishlist_id}"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{title}</title>
+        <meta name="description" content="{description}">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{frontend_url}">
+        <meta property="og:title" content="{title}">
+        <meta property="og:description" content="{description}">
+        <meta property="og:image" content="{og_image}">
+        
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{frontend_url}">
+        <meta name="twitter:title" content="{title}">
+        <meta name="twitter:description" content="{description}">
+        <meta name="twitter:image" content="{og_image}">
+        
+        <!-- Redirect to frontend after meta tags are read -->
+        <meta http-equiv="refresh" content="0;url={frontend_url}">
+    </head>
+    <body>
+        <p>Redirecting to {title}...</p>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_content)
