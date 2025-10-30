@@ -1,6 +1,11 @@
 import React from 'react';
 import Head from 'expo-router/head';
 
+const isAbsoluteUrl = (str: string | null | undefined): str is string => {
+  if (!str) return false;
+  return str.startsWith('http://') || str.startsWith('https://');
+};
+
 export interface SharedWishlistHeadProps {
   id: string;
   title?: string | null;
@@ -19,12 +24,26 @@ export const SharedWishlistHead: React.FC<SharedWishlistHeadProps> = ({
   ownerName 
 }) => {
   const safeTitle = title ?? 'Shared Wishlist';
-  const safeDescription = description ?? `${ownerName ?? 'User'}'s wishlist`;
+  const safeDescription = description || `${ownerName || 'User'}'s wishlist`;
   
-  const ogImage = wishlistImage ?? profileImageUrl ?? 'https://cardinal-wishlist.onrender.com/favicon.ico';
+  // Determine the final image URL, prioritizing valid, absolute URLs.
+  let finalOgImage = 'https://cardinal-wishlist.onrender.com/favicon.ico'; // Default fallback
+  if (isAbsoluteUrl(wishlistImage)) {
+    finalOgImage = wishlistImage;
+  } else if (isAbsoluteUrl(profileImageUrl)) {
+    finalOgImage = profileImageUrl;
+  }
 
-  const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'http://localhost:8081';
-  const url = `${appUrl}shared/${id}`;
+  let webBaseUrl = process.env.EXPO_PUBLIC_APP_URL;
+  const url = `${webBaseUrl}/shared/${id}`;
+
+  console.log({
+    title: safeTitle,
+    description: safeDescription,
+    ogImage: finalOgImage,
+    url: url,
+    props: { id, title, description, wishlistImage, profileImageUrl, ownerName }
+  });
 
   return (
     <Head>
@@ -33,12 +52,12 @@ export const SharedWishlistHead: React.FC<SharedWishlistHeadProps> = ({
       <meta property="og:type" content="website" />
       <meta property="og:title" content={safeTitle} />
       <meta property="og:description" content={safeDescription} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={finalOgImage} />
       <meta property="og:url" content={url} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={safeTitle} />
       <meta name="twitter:description" content={safeDescription} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content={finalOgImage} />
     </Head>
   );
 };
