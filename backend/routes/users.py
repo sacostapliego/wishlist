@@ -14,6 +14,7 @@ from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_clien
 router = APIRouter(prefix='/users', tags=['users'])
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
+# CRUD Operations
 @router.get('/me', response_model=UserResponse)
 def get_current_user_profile(
     current_user: dict = Depends(get_current_user),
@@ -25,6 +26,7 @@ def get_current_user_profile(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+# List all users (for admin purposes)
 @router.get('/', response_model=List[UserResponse])
 def read_users(
     skip: int = 0,
@@ -34,6 +36,7 @@ def read_users(
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
+# Get a specific user by ID
 @router.get('/{user_id}', response_model=UserResponse)
 def read_user(
     user_id: uuid.UUID,
@@ -44,6 +47,7 @@ def read_user(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+# Create a new user
 @router.post('/', response_model=UserResponse)
 async def create_user(
     email: str = Form(...),
@@ -107,6 +111,7 @@ async def create_user(
             delete_file_from_s3(pfp_url)  # Clean up if user creation fails
         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
+# Update an existing user
 @router.put('/{user_id}', response_model=UserResponse)
 async def update_user(
     user_id: uuid.UUID,
@@ -200,6 +205,7 @@ async def update_user(
     db.refresh(db_user)
     return db_user
 
+# Delete a user
 @router.delete('/{user_id}', response_model=dict)
 def delete_user(
     user_id: uuid.UUID,
@@ -223,6 +229,7 @@ def delete_user(
     
     return {"message": "User deleted successfully"}
 
+# Get user profile image
 @router.get('/{user_id}/profile-image', response_class=Response)
 async def get_user_profile_image(
     user_id: uuid.UUID,
@@ -249,7 +256,8 @@ async def get_user_profile_image(
     except Exception as e:
         print(f"Error retrieving profile image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve profile image")
-    
+
+# Get public user details   
 @router.get("/public/{user_id}", response_model=PublicUserResponse)
 def get_public_user_details(user_id: uuid.UUID, db: Session = Depends(get_db)):
     """
