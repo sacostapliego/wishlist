@@ -22,7 +22,9 @@ export const SharedWishlistHead: React.FC<SharedWishlistHeadProps> = ({
   const safeDescription = description ?? `${ownerName ?? 'User'}'s wishlist`;
   
   const ogImage = wishlistImage ?? profileImageUrl ?? 'https://cardinal-wishlist.onrender.com/favicon.ico';
-  const url = `'http://localhost:8081'/shared/${id}`;
+  
+  const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'http://localhost:8081';
+  const url = `${appUrl}/shared/${id}`;
 
   return (
     <Head>
