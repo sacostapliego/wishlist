@@ -37,14 +37,6 @@ export const SharedWishlistHead: React.FC<SharedWishlistHeadProps> = ({
   let webBaseUrl = process.env.EXPO_PUBLIC_APP_URL;
   const url = `${webBaseUrl}/shared/${id}`;
 
-  console.log({
-    title: safeTitle,
-    description: safeDescription,
-    ogImage: finalOgImage,
-    url: url,
-    props: { id, title, description, wishlistImage, profileImageUrl, ownerName }
-  });
-
   return (
     <Head>
       <title>{safeTitle}</title>

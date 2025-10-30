@@ -1,3 +1,5 @@
+from html import escape
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -9,8 +11,8 @@ from services.s3_service import delete_file_from_s3
 from models.base import get_db
 from models.wishlist import Wishlist, WishlistCreate, WishlistUpdate, WishlistResponse
 from models.item import WishListItem
-from models.user import User
 from middleware.auth import get_current_user
+from models.user import User
 
 router = APIRouter(prefix='/wishlists', tags=['wishlists'])
 
@@ -217,51 +219,68 @@ def get_shared_wishlist_meta_page(
     if not db_wishlist:
         raise HTTPException(status_code=404, detail="Wishlist not found")
     
-    # Get user info for the owner
+    # Owner
     owner = db.query(User).filter(User.id == db_wishlist.user_id).first()
-    owner_name = owner.name or owner.username if owner else "User"
-    
-    # Determine the image URL
-    og_image = "https://cardinal-wishlist.onrender.com/favicon.ico"  # default
-    if db_wishlist.image and (db_wishlist.image.startswith('http://') or db_wishlist.image.startswith('https://')):
+    owner_name = (owner.name or owner.username) if owner else "User"
+
+    # Bases (configure via env)
+    frontend_base = (os.getenv('PUBLIC_FRONTEND_URL', 'https://cardinal-wishlist.onrender.com') or '').rstrip('/')
+    api_base = (os.getenv('PUBLIC_API_URL', 'https://cardinal-wishlist-api.onrender.com') or '').rstrip('/')
+
+    def is_absolute(url: str) -> bool:
+        return url.startswith('http://') or url.startswith('https://')
+
+    # Frontend URL that users land on
+    frontend_url = f"{frontend_base}/shared/{wishlist_id}"
+
+    # OG image:
+    # 1) If wishlist.image is an absolute URL, use it
+    # 2) Else if owner exists and has a pfp, use the public API proxy: /users/{id}/profile-image
+    # 3) Else fallback to frontend favicon
+    og_image = f"{frontend_base}/favicon.ico"
+    if db_wishlist.image and is_absolute(db_wishlist.image):
         og_image = db_wishlist.image
     elif owner and owner.pfp:
-        og_image = owner.pfp
-    
+        og_image = f"{api_base}/users/{owner.id}/profile-image"
+
     title = db_wishlist.title or "Shared Wishlist"
-    description = db_wishlist.description or f"{owner_name}'s wishlist"
-    frontend_url = f"https://cardinal-wishlist.onrender.com/shared/{wishlist_id}"
-    
+    description = (db_wishlist.description or f"{owner_name}'s wishlist") or ""
+
+    # Escape to keep HTML safe
+    safe_title = escape(title)
+    safe_description = escape(description)
+    safe_frontend_url = escape(frontend_url)
+    safe_og_image = escape(og_image)
+
     html_content = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{title}</title>
-        <meta name="description" content="{description}">
+        <title>{safe_title}</title>
+        <meta name="description" content="{safe_description}">
         
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
-        <meta property="og:url" content="{frontend_url}">
-        <meta property="og:title" content="{title}">
-        <meta property="og:description" content="{description}">
-        <meta property="og:image" content="{og_image}">
+        <meta property="og:url" content="{safe_frontend_url}">
+        <meta property="og:title" content="{safe_title}">
+        <meta property="og:description" content="{safe_description}">
+        <meta property="og:image" content="{safe_og_image}">
         
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:url" content="{frontend_url}">
-        <meta name="twitter:title" content="{title}">
-        <meta name="twitter:description" content="{description}">
-        <meta name="twitter:image" content="{og_image}">
+        <meta name="twitter:url" content="{safe_frontend_url}">
+        <meta name="twitter:title" content="{safe_title}">
+        <meta name="twitter:description" content="{safe_description}">
+        <meta name="twitter:image" content="{safe_og_image}">
         
         <!-- Redirect to frontend after meta tags are read -->
-        <meta http-equiv="refresh" content="0;url={frontend_url}">
+        <meta http-equiv="refresh" content="0;url={safe_frontend_url}">
     </head>
     <body>
-        <p>Redirecting to {title}...</p>
+        <p>Redirecting...</p>
     </body>
     </html>
     """
-    
     return HTMLResponse(content=html_content)
