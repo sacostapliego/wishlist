@@ -260,27 +260,50 @@ def get_shared_wishlist_meta_page(
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{safe_title}</title>
         <meta name="description" content="{safe_description}">
-        
+        <link rel="canonical" href="{safe_frontend_url}">
+        <meta name="robots" content="noindex, nofollow">
+
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
         <meta property="og:url" content="{safe_frontend_url}">
         <meta property="og:title" content="{safe_title}">
         <meta property="og:description" content="{safe_description}">
         <meta property="og:image" content="{safe_og_image}">
-        
+
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:url" content="{safe_frontend_url}">
         <meta name="twitter:title" content="{safe_title}">
         <meta name="twitter:description" content="{safe_description}">
         <meta name="twitter:image" content="{safe_og_image}">
-        
-        <!-- Redirect to frontend after meta tags are read -->
+
+        <!-- Fallback redirect for no-JS environments (crawlers still see meta tags) -->
         <meta http-equiv="refresh" content="0;url={safe_frontend_url}">
+
+        <!-- Minimal styling so the page is just a dark background -->
+        <style>
+          html, body {{
+            background: #141414;
+            margin: 0;
+            height: 100%;
+          }}
+        </style>
+
+        <!-- Instant JS redirect for real users to avoid flicker -->
+        <script>
+          (function() {{
+            try {{
+              window.location.replace("{safe_frontend_url}");
+            }} catch (e) {{
+              window.location.href = "{safe_frontend_url}";
+            }}
+          }})();
+        </script>
     </head>
-    <body>
-        <p>Redirecting...</p>
-    </body>
+    <body></body>
     </html>
     """
-    return HTMLResponse(content=html_content)
+    return HTMLResponse(
+            content=html_content,
+            headers={"Cache-Control": "public, max-age=600"}
+        )
