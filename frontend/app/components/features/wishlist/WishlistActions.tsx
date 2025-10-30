@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useRefresh } from '@/app/context/RefreshContext';
 import ShareLinkModal from '../modals/ShareLinkModal';
 import { WishlistActionsProps } from '@/app/types/wishlist';
+import { API_URL } from '@/app/services/api';
 
 export const WishlistActions = ({
   wishlistId,
@@ -60,7 +61,8 @@ export const WishlistActions = ({
       await wishlistAPI.updateWishlist(wishlistId, { is_public: true });
 
       let webBaseUrl = process.env.EXPO_PUBLIC_APP_URL;
-      shareUrlResult = `${webBaseUrl}shared/${wishlistId}`;
+      const backendMetaUrl = `${API_URL}wishlists/shared/${wishlistId}`;
+      shareUrlResult = backendMetaUrl
     } catch (error) {
       shareUrlResult = null; 
     } finally {
