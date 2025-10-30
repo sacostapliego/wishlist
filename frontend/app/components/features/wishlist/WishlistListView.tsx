@@ -123,7 +123,6 @@ export const WishlistListView: React.FC<WishlistListViewProps> = ({
 
 export default WishlistListView;
 
-// ...existing styles remain the same...
 const styles = StyleSheet.create({
   container: {
     flex: 1,

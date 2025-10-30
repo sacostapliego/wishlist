@@ -15,6 +15,7 @@ import { friendsAPI } from '../services/friends';
 import { useAuth } from '../context/AuthContext';
 import { WishlistFilters, SortOption } from '../components/features/wishlist/WishlistFilters';
 import Head from 'expo-router/head';
+import SharedWishlistHead from './components/SharedWishlistHead';
 
 type WishlistItem = {
   id: string;
@@ -204,6 +205,15 @@ export default function WishlistDetailScreen() {
         showOptions={showOptionsIcon}
         onOptionsPress={() => setOptionsVisible(true)}
         rightIcon="ellipsis-vertical"
+      />
+
+      <SharedWishlistHead
+        id={id as string}
+        title={wishlist?.title}
+        description={wishlist?.description}
+        wishlistImage={wishlist?.image}
+        profileImageUrl={ownerDisplayInfo?.profileImageUrl}
+        ownerName={ownerDisplayInfo?.name}
       />
 
       <WishlistInfo
