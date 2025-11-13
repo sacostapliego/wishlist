@@ -31,8 +31,15 @@ app.add_middleware(
         
     ],
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*']
+    allow_methods=['GET','POST','PUT','PATCH','DELETE','OPTIONS', 'HEAD'],
+    allow_headers=[
+        'Authorization',
+        'Content-Type',
+        'Accept',
+        'Origin',
+        'X-Requested-With',
+        'X-CSRF-Token'
+    ],
 )
 
 # routes
