@@ -205,6 +205,7 @@ def get_public_wishlist(
     
     return response_data
 
+""" Serve HTML with Open Graph meta tags for shared wishlists (Testing purposes) """
 @router.get('/shared/{wishlist_id}', response_class=HTMLResponse)
 def get_shared_wishlist_meta_page(
     wishlist_id: uuid.UUID,

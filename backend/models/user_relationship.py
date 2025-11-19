@@ -25,9 +25,6 @@ class UserRelationship(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Remove the problematic relationships for now
-    # We'll add them back properly after fixing the User model
-
 # Pydantic models
 class RelationshipBase(BaseModel):
     friend_id: uuid.UUID
