@@ -25,6 +25,7 @@ export default function HomeLayout() {
         <meta name="theme-color" content={COLORS.background} />
       </Head>
 
+      {/* Three tabs for navigation: Home, Add, Settings */}
       <Tabs
         screenOptions={{
           headerShown: false,
