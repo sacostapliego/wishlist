@@ -16,6 +16,7 @@ import { WishlistContent } from '@/app/components/features/wishlist/WishlistCont
 import { WishlistListView } from '@/app/components/features/wishlist/WishlistListView';
 import LoadingState from '@/app/components/common/LoadingState';
 import EmptyState from '@/app/components/layout/EmptyState';
+import { useAppNavigation } from '@/app/hooks/useAppNavigation';
 
 export default function WishlistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,6 +24,7 @@ export default function WishlistDetailScreen() {
   const { width } = useWindowDimensions();
   const { user } = useAuth();
   const { refreshTimestamp } = useRefresh();
+  const { navigate, navigateBack } = useAppNavigation();
 
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -65,10 +67,8 @@ export default function WishlistDetailScreen() {
     if (isSelectionMode) {
       toggleItemSelection(item.id);
     } else {
-      router.push({
-        pathname: `/home/lists/[id]/[item]`, // Dynamic path
-        params: { id: id, item: item.id } // Pass wishlistId as 'id' and itemId as 'item'
-      });
+      // Use push for item navigation
+      navigate(`/home/lists/${id}/${item.id}`, false);
     }
   };
 
@@ -121,7 +121,7 @@ export default function WishlistDetailScreen() {
     <SafeAreaView style={styles.container}>
       <Header
         title={wishlist?.title || 'Wishlist'}
-        onBack={() => router.back()}
+        onBack={() => navigateBack('/home/lists')}
         showOptions={!isSelectionMode}
         onOptionsPress={() => setMenuVisible(true)}
         rightIcon="ellipsis-vertical"

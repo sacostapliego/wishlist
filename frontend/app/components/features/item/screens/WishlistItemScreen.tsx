@@ -12,10 +12,12 @@ import Toast from 'react-native-toast-message';
 import { useRefresh } from '@/app/context/RefreshContext';
 import { StatusBar } from 'expo-status-bar';
 import { useItemDetail } from '@/app/hooks/useItemDetail';
+import { useAppNavigation } from '@/app/hooks/useAppNavigation';
 import ItemDetailContent from '@/app/components/features/item/ItemDetailContent';
 
 export default function WishlistItemScreen() {
     const router = useRouter();
+    const { navigateBack } = useAppNavigation();
     const { id: wishlistId, item: itemId } = useLocalSearchParams<{ id: string, item: string }>();
     const { triggerRefresh, refreshTimestamp } = useRefresh();
     const [menuVisible, setMenuVisible] = useState(false);
@@ -23,13 +25,8 @@ export default function WishlistItemScreen() {
     const { item, wishlistColor, isLoading, error } = useItemDetail(itemId, wishlistId, 0, false);
 
     const handleCustomBack = () => {
-        if (router.canGoBack()) {
-            router.back();
-        } else if (wishlistId) {
-            router.push(`/home/lists/${wishlistId}`);
-        } else {
-            router.push('/home');
-        }
+        const fallbackPath = wishlistId ? `/home/lists/${wishlistId}` : '/home';
+        navigateBack(fallbackPath);
     };
 
     const handleCopyUrl = async () => {
