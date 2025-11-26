@@ -20,7 +20,7 @@ export default function SettingsScreen() {
   };
 
   const navigateToEditProfile = () => {
-    router.replace('/auth/edit-user');
+    router.push('/auth/edit-user');
   };
 
   return (
