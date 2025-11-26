@@ -235,55 +235,7 @@ export default function EditProfileScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
         />
-
-        {/* Size Inputs */}
-        <Text style={styles.sectionHeader}>Sizes (Optional)</Text>
-
-        <Text style={styles.label}>Shoe Size</Text>
-        <TextInput
-          style={styles.input}
-          value={shoeSize}
-          onChangeText={setShoeSize}
-          placeholder="e.g. 10 US"
-          placeholderTextColor={COLORS.inactive}
-        />
-
-        <Text style={styles.label}>Shirt Size</Text>
-        <TextInput
-          style={styles.input}
-          value={shirtSize}
-          onChangeText={setShirtSize}
-          placeholder="e.g. L"
-          placeholderTextColor={COLORS.inactive}
-        />
-
-        <Text style={styles.label}>Pants Size</Text>
-        <TextInput
-          style={styles.input}
-          value={pantsSize}
-          onChangeText={setPantsSize}
-          placeholder="e.g. 32x32"
-          placeholderTextColor={COLORS.inactive}
-        />
-
-        <Text style={styles.label}>Hat Size</Text>
-        <TextInput
-          style={styles.input}
-          value={hatSize}
-          onChangeText={setHatSize}
-          placeholder="e.g. 7 1/4 / M"
-          placeholderTextColor={COLORS.inactive}
-        />
-
-        <Text style={styles.label}>Ring Size</Text>
-        <TextInput
-          style={styles.input}
-          value={ringSize}
-          onChangeText={setRingSize}
-          placeholder="e.g. 9"
-          placeholderTextColor={COLORS.inactive}
-        />
-
+        
         <TouchableOpacity
           style={[styles.saveButton, (isLoading || !name.trim()) && styles.disabledButton]}
           onPress={handleUpdateProfile}

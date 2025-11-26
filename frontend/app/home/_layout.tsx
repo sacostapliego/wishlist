@@ -87,6 +87,7 @@ export default function HomeLayout() {
         <Tabs.Screen name="add-item" options={{ href: null}} />
         <Tabs.Screen name="profile" options={{ href: null }} />
         <Tabs.Screen name="add-friend" options={{ href: null }} />
+        <Tabs.Screen name="edit-preferences" options={{ href: null }} />
 
       </Tabs>
       <AddModal
