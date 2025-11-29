@@ -8,7 +8,9 @@ import { Header } from '@/app/components/layout/Header';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRefresh } from '@/app/context/RefreshContext';
 import { useAppNavigation } from '@/app/hooks/useAppNavigation';
-import Toast from 'react-native-toast-message';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
+import SuccessBanner from '@/app/components/common/SuccessBanner';
+import ErrorBanner from '@/app/components/common/ErrorBanner';
 
 export default function EditPreferences() {
   const router = useRouter();
@@ -26,6 +28,35 @@ export default function EditPreferences() {
   const [jacketSize, setJacketSize] = useState(user?.jacket_size || '');
   
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const bannerTranslateY = useSharedValue(-100);
+
+  const bannerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: bannerTranslateY.value }],
+  }));
+
+  const showBanner = (type: 'success' | 'error', message: string) => {
+    if (type === 'success') {
+      setSuccessMessage(message);
+      setErrorMessage('');
+    } else {
+      setErrorMessage(message);
+      setSuccessMessage('');
+    }
+
+    bannerTranslateY.value = withSequence(
+      withTiming(0, { duration: 300 }),
+      withTiming(0, { duration: 2000 }),
+      withTiming(-100, { duration: 300 })
+    );
+
+    setTimeout(() => {
+      setSuccessMessage('');
+      setErrorMessage('');
+    }, 2600);
+  };
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -33,30 +64,25 @@ export default function EditPreferences() {
     setIsLoading(true);
     try {
       await userAPI.updateUserProfile(user.id, {
-        shoe_size: shoeSize || null,
-        shirt_size: shirtSize || null,
-        pants_size: pantsSize || null,
-        hat_size: hatSize || null,
-        ring_size: ringSize || null,
-        dress_size: dressSize || null,
-        jacket_size: jacketSize || null,
+        shoe_size: shoeSize.trim() || null,
+        shirt_size: shirtSize.trim() || null,
+        pants_size: pantsSize.trim() || null,
+        hat_size: hatSize.trim() || null,
+        ring_size: ringSize.trim() || null,
+        dress_size: dressSize.trim() || null,
+        jacket_size: jacketSize.trim() || null,
       });
 
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Size preferences updated',
-      });
+      showBanner('success', 'Size preferences updated');
       
       await refreshUser();
       triggerRefresh();
-      navigateBack('/home/profile');
+      
+      setTimeout(() => {
+        navigateBack('/home/profile');
+      }, 1500);
     } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to update preferences',
-      });
+      showBanner('error', 'Failed to update preferences');
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +94,9 @@ export default function EditPreferences() {
         title="Edit Size Preferences" 
         onBack={() => navigateBack('/home/profile')} 
       />
+      
+      <SuccessBanner message={successMessage} animatedStyle={bannerStyle} />
+      <ErrorBanner message={errorMessage} animatedStyle={bannerStyle} />
       
       <ScrollView 
         style={styles.content} 
