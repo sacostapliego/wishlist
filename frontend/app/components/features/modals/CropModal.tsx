@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Dimensions } from 'react-native';
 import { COLORS, SPACING } from '@/app/styles/theme';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -80,6 +80,9 @@ export default function ImageCropModal({
   // Only render on web
   if (Platform.OS !== 'web') return null;
 
+  const windowHeight = Dimensions.get('window').height;
+  const maxImageHeight = windowHeight * 0.6; // 60% of screen height for image
+
   return (
     <Modal
       visible={visible}
@@ -92,7 +95,7 @@ export default function ImageCropModal({
           <View style={styles.cropModalHeader}>
             <Text style={styles.cropModalTitle}>{title}</Text>
           </View>
-          <View style={styles.cropImageContainer}>
+          <View style={[styles.cropImageContainer, { maxHeight: maxImageHeight }]}>
             {imageUri && (
               <ReactCrop
                 crop={crop}
@@ -103,7 +106,13 @@ export default function ImageCropModal({
                 <img
                   ref={imgRef}
                   src={imageUri}
-                  style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: maxImageHeight - 32, // Account for padding
+                    width: 'auto',
+                    height: 'auto',
+                    display: 'block'
+                  }}
                   alt="Crop preview"
                 />
               </ReactCrop>
@@ -133,12 +142,10 @@ const styles = StyleSheet.create({
   },
   cropModalContainer: {
     width: '100%',
-    maxWidth: 800,
+    maxWidth: 900,
     backgroundColor: COLORS.background,
     borderRadius: 12,
     overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
   },
   cropModalHeader: {
     padding: SPACING.lg,
@@ -150,18 +157,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cropImageContainer: {
-    flex: 1,
     padding: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.background,
-    minHeight: 400,
-    overflow: 'hidden',
+    minHeight: 300,
   },
   cropModalActions: {
     flexDirection: 'row',
     padding: SPACING.lg,
     gap: SPACING.md,
+    backgroundColor: COLORS.background,
   },
   cropCancelButton: {
     flex: 1,

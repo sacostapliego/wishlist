@@ -309,7 +309,6 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
                 <ActivityIndicator size="small" color={COLORS.text.primary} />
               ) : (
                 <>
-                  <Ionicons name="color-wand-outline" size={16} color={COLORS.text.primary} style={{ marginRight: 6 }} />
                   <Text style={styles.imageActionButtonText}>Remove Background</Text>
                 </>
               )}
