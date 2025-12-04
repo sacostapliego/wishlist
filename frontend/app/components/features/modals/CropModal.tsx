@@ -30,15 +30,22 @@ export default function ImageCropModal({
 
     const image = imgRef.current;
     const canvas = document.createElement('canvas');
+    
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Enable image smoothing for better quality
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Calculate the scale between the image's natural size and displayed size
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    canvas.width = completedCrop.width;
-    canvas.height = completedCrop.height;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) return null;
-
+    // Draw the cropped portion
     ctx.drawImage(
       image,
       completedCrop.x * scaleX,
@@ -51,16 +58,8 @@ export default function ImageCropModal({
       completedCrop.height
     );
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          resolve(null);
-          return;
-        }
-        const croppedUrl = URL.createObjectURL(blob);
-        resolve(croppedUrl);
-      }, 'image/png');
-    });
+    // Return PNG with maximum quality (no compression)
+    return canvas.toDataURL('image/png');
   };
 
   const handleConfirm = async () => {
@@ -81,7 +80,7 @@ export default function ImageCropModal({
   if (Platform.OS !== 'web') return null;
 
   const windowHeight = Dimensions.get('window').height;
-  const maxImageHeight = windowHeight * 0.6; // 60% of screen height for image
+  const maxImageHeight = windowHeight * 0.6;
 
   return (
     <Modal
@@ -108,12 +107,26 @@ export default function ImageCropModal({
                   src={imageUri}
                   style={{ 
                     maxWidth: '100%', 
-                    maxHeight: maxImageHeight - 32, // Account for padding
+                    maxHeight: maxImageHeight - 32,
                     width: 'auto',
                     height: 'auto',
-                    display: 'block'
+                    display: 'block',
+                    objectFit: 'contain'
                   }}
                   alt="Crop preview"
+                  onLoad={() => {
+                    if (imgRef.current) {
+                      const { width, height } = imgRef.current;
+                      const size = Math.min(width, height) * 0.5;
+                      setCrop({
+                        unit: 'px',
+                        width: size,
+                        height: size,
+                        x: (width - size) / 2,
+                        y: (height - size) / 2,
+                      });
+                    }
+                  }}
                 />
               </ReactCrop>
             )}
