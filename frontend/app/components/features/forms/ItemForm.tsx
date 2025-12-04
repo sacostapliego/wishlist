@@ -10,6 +10,7 @@ import { wishlistAPI } from '@/app/services/wishlist';
 import SuccessBanner from '@/app/components/common/SuccessBanner';
 import ErrorBanner from '@/app/components/common/ErrorBanner';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
+import ImageCropModal from '../modals/CropModal';
 
 export interface ItemFormData {
   name: string;
@@ -65,6 +66,10 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
     const [isProcessingImage, setIsProcessingImage] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | undefined>();
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+    // Crop modal state
+    const [showCropModal, setShowCropModal] = useState(false);
+    const [imageToCrop, setImageToCrop] = useState<string | undefined>();
 
     // Animation for banners
     const bannerOffsetY = useSharedValue(-100);
@@ -124,16 +129,35 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
         Alert.alert('Permission Needed', 'We need access to your photos.');
         return;
       }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1], // Square aspect ratio
+        allowsEditing: Platform.OS !== 'web',
+        aspect: Platform.OS !== 'web' ? [1, 1] : undefined,
         quality: 1,
       });
 
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setImage(result.assets[0].uri);
       }
+    };
+
+    const handleOpenCropModal = () => {
+      if (!image) return;
+      setImageToCrop(image);
+      setShowCropModal(true);
+    };
+
+    const handleCropConfirm = (croppedImageUri: string) => {
+      setImage(croppedImageUri);
+      setShowCropModal(false);
+      setImageToCrop(undefined);
+      showBanner('success', 'Image cropped successfully!');
+    };
+
+    const handleCropCancel = () => {
+      setShowCropModal(false);
+      setImageToCrop(undefined);
     };
 
     const handleRemoveBackground = async () => {
@@ -266,6 +290,16 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
 
         {image && (
           <View style={styles.imageActionsContainer}>
+            {Platform.OS === 'web' && (
+              <TouchableOpacity 
+                style={styles.imageActionButton} 
+                onPress={handleOpenCropModal}
+              >
+                <Ionicons name="crop-outline" size={16} color={COLORS.text.primary} style={{ marginRight: 6 }} />
+                <Text style={styles.imageActionButtonText}>Crop Image</Text>
+              </TouchableOpacity>
+            )}
+            
             <TouchableOpacity 
               style={styles.imageActionButton} 
               onPress={handleRemoveBackground}
@@ -275,6 +309,7 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
                 <ActivityIndicator size="small" color={COLORS.text.primary} />
               ) : (
                 <>
+                  <Ionicons name="color-wand-outline" size={16} color={COLORS.text.primary} style={{ marginRight: 6 }} />
                   <Text style={styles.imageActionButtonText}>Remove Background</Text>
                 </>
               )}
@@ -339,6 +374,18 @@ const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
             </>
           )}
         </TouchableOpacity>
+
+        {/* Crop Modal */}
+        {imageToCrop && (
+          <ImageCropModal
+            visible={showCropModal}
+            imageUri={imageToCrop}
+            onConfirm={handleCropConfirm}
+            onCancel={handleCropCancel}
+            aspectRatio={1}
+            title="Crop Image"
+          />
+        )}
       </View>
     );
   }
@@ -454,6 +501,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: SPACING.md,
     marginBottom: SPACING.sm,
+    gap: SPACING.sm,
   },
   imageActionButton: {
     flex: 1,
@@ -465,7 +513,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     backgroundColor: COLORS.cardDark,
     borderWidth: 1,
-    borderColor: '#fff', 
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   imageActionButtonText: {
     color: COLORS.text.primary,
