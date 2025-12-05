@@ -36,7 +36,12 @@ export const ItemClaimingSection: React.FC<ItemClaimingSectionProps> = ({
     onGuestClaim,
     onCancelGuestModal,
 }) => {
-    const claimedColor = getLightColor(wishlistColor || COLORS.primary);
+    const baseLightColor = getLightColor(wishlistColor || COLORS.primary);
+
+    const isBlack = wishlistColor?.toLowerCase().includes('rgb(0, 0, 0)') || 
+                    wishlistColor?.toLowerCase().includes('rgb(27, 27, 27)');
+
+    const claimedColor = isBlack ? 'rgb(255, 255, 255)' : baseLightColor;
 
     return (
         <>
