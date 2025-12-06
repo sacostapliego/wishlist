@@ -5,6 +5,7 @@ from models.base import get_db
 from models.user_relationship import UserRelationship, RelationshipStatus
 from models.user import User
 from models.wishlist import Wishlist
+from models.saved_wishlist import SavedWishlist, SavedWishlistCreate
 from middleware.auth import get_current_user
 
 from pydantic import BaseModel
@@ -220,40 +221,29 @@ def decline_friend_request(
     
     return {"message": "Friend request declined"}
 
-@router.get("/wishlists")
+@router.get("/wishlists", response_model=List[FriendWishlistResponse])
 def get_friends_wishlists(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get public wishlists from friends"""
-    # Normalize to UUID to compare correctly with DB UUIDs
+    """Get saved wishlists only (not all friends' wishlists)"""
     user_id = uuid.UUID(str(current_user["user_id"]))
     
-    # Get accepted friendships
-    friendships = db.query(UserRelationship).filter(
-        or_(
-            (UserRelationship.user_id == user_id),
-            (UserRelationship.friend_id == user_id)
-        ),
-        UserRelationship.status == RelationshipStatus.ACCEPTED
+    # Get saved wishlists
+    saved_wishlists = db.query(SavedWishlist).filter(
+        SavedWishlist.user_id == user_id
     ).all()
     
-    friend_ids: set[uuid.UUID] = set()
-    for fr in friendships:
-        # Always pick "the other" user
-        other_id = fr.friend_id if fr.user_id == user_id else fr.user_id
-        # Guard against self being added accidentally
-        if other_id != user_id:
-            friend_ids.add(other_id)
-    
-    if not friend_ids:
+    if not saved_wishlists:
         return []
     
-    # Get public wishlists from friends
+    wishlist_ids = [sw.wishlist_id for sw in saved_wishlists]
+    
+    # Get wishlist details
     wishlists = db.query(Wishlist, User).join(
         User, Wishlist.user_id == User.id
     ).filter(
-        Wishlist.user_id.in_(list(friend_ids)),
+        Wishlist.id.in_(wishlist_ids),
         Wishlist.is_public == True
     ).all()
     
@@ -306,3 +296,76 @@ def get_friends_list(
 
     friends = db.query(User).filter(User.id.in_(list(friend_ids))).all()
     return [FriendInfo(id=str(u.id), username=u.username, name=u.name) for u in friends]
+
+@router.post("/wishlists/save")
+def save_wishlist(
+    request: SavedWishlistCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Save a friend's wishlist to user's saved list"""
+    user_id = uuid.UUID(str(current_user["user_id"]))
+    wishlist_id = request.wishlist_id
+    
+    # Check if wishlist exists and is public
+    wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id,
+        Wishlist.is_public == True
+    ).first()
+    
+    if not wishlist:
+        raise HTTPException(status_code=404, detail="Wishlist not found or not public")
+    
+    # Check if already saved
+    existing = db.query(SavedWishlist).filter(
+        SavedWishlist.user_id == user_id,
+        SavedWishlist.wishlist_id == wishlist_id
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Wishlist already saved")
+    
+    # Create saved wishlist entry
+    saved = SavedWishlist(user_id=user_id, wishlist_id=wishlist_id)
+    db.add(saved)
+    db.commit()
+    
+    return {"message": "Wishlist saved successfully"}
+
+@router.delete("/wishlists/save/{wishlist_id}")
+def unsave_wishlist(
+    wishlist_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Remove a wishlist from saved list"""
+    user_id = uuid.UUID(str(current_user["user_id"]))
+    
+    saved = db.query(SavedWishlist).filter(
+        SavedWishlist.user_id == user_id,
+        SavedWishlist.wishlist_id == uuid.UUID(wishlist_id)
+    ).first()
+    
+    if not saved:
+        raise HTTPException(status_code=404, detail="Saved wishlist not found")
+    
+    db.delete(saved)
+    db.commit()
+    
+    return {"message": "Wishlist removed from saved list"}
+
+@router.get("/wishlists/check-saved/{wishlist_id}")
+def check_wishlist_saved(
+    wishlist_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Check if a wishlist is saved by current user"""
+    user_id = uuid.UUID(str(current_user["user_id"]))
+    
+    saved = db.query(SavedWishlist).filter(
+        SavedWishlist.user_id == user_id,
+        SavedWishlist.wishlist_id == uuid.UUID(wishlist_id)
+    ).first()
+    
+    return {"is_saved": saved is not None}
