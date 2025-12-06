@@ -10,7 +10,16 @@ import { useLocalSearchParams } from 'expo-router';
 import { PublicUserDetailsResponse } from '@/app/services/user';
 import userAPI from '@/app/services/user';
 import { SizeCards } from '@/app/components/features/profile/SizeCards';
+import wishlistAPI from '@/app/services/wishlist';
 
+interface PublicWishlist {
+  id: string;
+  title: string;
+  description?: string;
+  color?: string;
+  item_count: number;
+  image?: string;
+}
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -20,12 +29,15 @@ export default function ProfileScreen() {
 
   const isSelf = !userId || userId === user?.id;
   const [publicUser, setPublicUser] = useState<PublicUserDetailsResponse | null>(null);
+  const [publicWishlists, setPublicWishlists] = useState<PublicWishlist[]>([]);
+  const [loadingWishlists, setLoadingWishlists] = useState(false);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       if (isSelf || !userId) {
         setPublicUser(null);
+        setPublicWishlists([]);
         return;
       }
       try {
@@ -36,6 +48,33 @@ export default function ProfileScreen() {
       }
     };
     load();
+    return () => { active = false; };
+  }, [userId, isSelf]);
+
+  // Load public wishlists for non-self profiles
+  useEffect(() => {
+    let active = true;
+    const loadWishlists = async () => {
+      if (isSelf || !userId) {
+        setPublicWishlists([]);
+        return;
+      }
+      
+      setLoadingWishlists(true);
+      try {
+        const wishlists = await wishlistAPI.getUserWishlists(userId);
+        // Filter only public wishlists
+        const publicOnly = wishlists.filter((w: any) => w.is_public);
+        if (active) setPublicWishlists(publicOnly);
+      } catch (error) {
+        console.error('Error loading public wishlists:', error);
+        if (active) setPublicWishlists([]);
+      } finally {
+        if (active) setLoadingWishlists(false);
+      }
+    };
+    
+    loadWishlists();
     return () => { active = false; };
   }, [userId, isSelf]);
 
@@ -51,11 +90,18 @@ export default function ProfileScreen() {
     jacket_size: target?.jacket_size,
   };
 
-
   const profileImage = target?.id ? `${API_URL}users/${target.id}/profile-image` : null;
   const displayName = isSelf
     ? (user?.name || user?.username || 'Guest')
     : (paramName || target?.name || paramUsername || target?.username || 'User');
+
+  const renderImageOrIcon = (source?: string | null, size = 22) => {
+    if (!source) return <Ionicons name="gift-outline" size={size} color="#fff" />;
+    if (source.startsWith('http')) {
+      return <Image source={{ uri: source }} style={{ width: size, height: size, tintColor: '#fff' }} resizeMode="contain" />;
+    }
+    return <Ionicons name={source as any} size={size} color="#fff" />;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -90,6 +136,46 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Sizes</Text>
           <SizeCards values={sizeValues} />
         </View>
+
+        {/* Public Wishlists Section - Only show for non-self profiles */}
+        {!isSelf && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Public Wishlists</Text>
+            {loadingWishlists ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Loading wishlists...</Text>
+              </View>
+            ) : publicWishlists.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No public wishlists</Text>
+                <Text style={styles.emptySubtext}>This user hasn't shared any wishlists yet</Text>
+              </View>
+            ) : (
+              <View style={styles.wishlistsContainer}>
+                {publicWishlists.map(wishlist => (
+                  <TouchableOpacity
+                    key={wishlist.id}
+                    style={styles.wishlistCard}
+                    onPress={() => router.push(`/shared/${wishlist.id}`)}
+                  >
+                    <View style={[styles.wishlistIconStrip, { backgroundColor: wishlist.color || 'rgba(255,255,255,0.15)' }]}>
+                      {renderImageOrIcon(wishlist.image, 28)}
+                    </View>
+                    <View style={styles.wishlistContent}>
+                      <View style={styles.wishlistText}>
+                        <Text style={styles.wishlistTitle}>{wishlist.title}</Text>
+                        <Text style={styles.wishlistSub}>
+                          {wishlist.item_count} item{wishlist.item_count === 1 ? '' : 's'}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={COLORS.text.secondary} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -139,4 +225,52 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, gap: 12 },
   rowLabel: { color: COLORS.text.secondary },
   rowValue: { color: COLORS.text.primary, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+  
+  // Wishlist styles
+  wishlistsContainer: { gap: SPACING.md },
+  wishlistCard: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderRadius: 4,
+    overflow: 'hidden',
+    minHeight: 64,
+    backgroundColor: 'transparent',
+  },
+  wishlistContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.cardDarkLight,
+  },
+  wishlistIconStrip: {
+    width: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
+  wishlistText: { flex: 1 },
+  wishlistTitle: { color: COLORS.text.primary, fontWeight: '700', marginBottom: 2 },
+  wishlistSub: { color: COLORS.text.secondary, fontSize: 12 },
+  emptyContainer: {
+    padding: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.cardDark,
+    borderRadius: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });

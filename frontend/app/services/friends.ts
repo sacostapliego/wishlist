@@ -114,7 +114,38 @@ export const friendsAPI = {
       console.error('Failed to check friendship status:', error);
       return false;
     }
-  }
+  },
+  async saveWishlist(wishlistId: string) {
+    try {
+      const response = await api.post('/friends/wishlists/save', { 
+        wishlist_id: wishlistId 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Save wishlist error:', error);
+      throw new Error('Failed to save wishlist');
+    }
+  },
+
+  async unsaveWishlist(wishlistId: string) {
+    try {
+      const response = await api.delete(`/friends/wishlists/save/${wishlistId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Unsave wishlist error:', error);
+      throw new Error('Failed to unsave wishlist');
+    }
+  },
+
+  async checkWishlistSaved(wishlistId: string): Promise<{ is_saved: boolean }> {
+    try {
+      const response = await api.get(`/friends/wishlists/check-saved/${wishlistId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Check wishlist saved error:', error);
+      return { is_saved: false };
+    }
+  },
 };
 
 

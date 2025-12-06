@@ -8,6 +8,8 @@ export interface WishlistInfoProps {
   showAddFriend?: boolean;
   onAddFriend?: () => void;
   isGuest?: boolean;
+  isWishlistSaved?: boolean;
+  onSaveWishlist?: () => void;
 }
 
 export interface WishlistItemDetails {

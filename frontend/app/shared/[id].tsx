@@ -37,6 +37,9 @@ export default function WishlistDetailScreen() {
   const [isCheckingFriendship, setIsCheckingFriendship] = useState(true);
   const [optionsVisible, setOptionsVisible] = useState(false);
 
+  const [isWishlistSaved, setIsWishlistSaved] = useState(false);
+  const [isCheckingSaved, setIsCheckingSaved] = useState(true);
+
   const isAuthenticated = !!user;
   const isGuest = !isAuthenticated;
 
@@ -64,11 +67,9 @@ export default function WishlistDetailScreen() {
       }
 
       try {
-        const friendsWishlists = await friendsAPI.getFriendsWishlists();
-        // Consider owner_id, or fall back to username
-        const isFriend =
-          friendsWishlists.some(w => w.owner_id === wishlist.user_id) ||
-          friendsWishlists.some(w => w.owner_username === ownerDisplayInfo?.username);
+        // Check the actual friends list, not wishlists
+        const friendsList = await friendsAPI.getFriendsList();
+        const isFriend = friendsList.some(friend => friend.id === wishlist.user_id);
         setIsAlreadyFriend(isFriend);
       } catch (error) {
         console.error('Failed to check friendship status:', error);
@@ -96,6 +97,49 @@ export default function WishlistDetailScreen() {
     } catch (error) {
       console.error('Friend request error:', error);
       Alert.alert('Error', 'Failed to send friend request');
+    }
+  };
+
+  // Check if wishlist is saved
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      if (!id || !user?.id || wishlist?.user_id === user.id) {
+        setIsCheckingSaved(false);
+        return;
+      }
+
+      try {
+        const result = await friendsAPI.checkWishlistSaved(id as string);
+        setIsWishlistSaved(result.is_saved);
+      } catch (error) {
+        console.error('Failed to check saved status:', error);
+        setIsWishlistSaved(false);
+      } finally {
+        setIsCheckingSaved(false);
+      }
+    };
+
+    if (wishlist) {
+      checkSavedStatus();
+    }
+  }, [id, user, wishlist]);
+
+  const handleSaveWishlist = async () => {
+    if (!id) return;
+
+    try {
+      if (isWishlistSaved) {
+        await friendsAPI.unsaveWishlist(id as string);
+        Alert.alert('Success', 'Wishlist removed from your saved lists');
+        setIsWishlistSaved(false);
+      } else {
+        await friendsAPI.saveWishlist(id as string);
+        Alert.alert('Success', 'Wishlist saved to your friends lists!');
+        setIsWishlistSaved(true);
+      }
+    } catch (error) {
+      console.error('Save wishlist error:', error);
+      Alert.alert('Error', 'Failed to save wishlist');
     }
   };
 
@@ -178,13 +222,18 @@ export default function WishlistDetailScreen() {
   };
 
   // Determine if we should show the Add Friend button
-  const shouldShowAddFriend = !isGuest &&
+  const shouldShowAddFriend = isAuthenticated &&
     !isCheckingFriendship &&
     !isAlreadyFriend &&
     wishlist?.user_id !== user?.id;
 
+  const shouldShowSaveWishlist = isAuthenticated && 
+    wishlist?.user_id !== user?.id && 
+    !isCheckingSaved;
+
   // For guests, we can show a disabled Add button or no button at all
-  const showOptionsIcon = isGuest || shouldShowAddFriend;
+  const showOptionsIcon = isGuest || shouldShowAddFriend || (!isCheckingSaved && wishlist?.user_id !== user?.id);
+
 
   const handleCreateAccount = () => router.push('/auth/register');
 
@@ -220,9 +269,9 @@ export default function WishlistDetailScreen() {
         username={ownerDisplayInfo?.name}
         description={wishlist?.description}
         profileImage={ownerDisplayInfo?.profileImageUrl}
-        showAddFriend={shouldShowAddFriend}
-        onAddFriend={handleAddFriend}
         isGuest={isGuest}
+        isWishlistSaved={isWishlistSaved}
+        onSaveWishlist={shouldShowSaveWishlist ? handleSaveWishlist : undefined}
         onProfilePress={() => {
           if (wishlist?.user_id) {
             router.push({
@@ -286,16 +335,38 @@ export default function WishlistDetailScreen() {
                   <Text style={styles.optionsMenuText}>Create an account</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity
-                  style={styles.optionsMenuItem}
-                  onPress={() => {
-                    setOptionsVisible(false);
-                    handleAddFriend();
-                  }}
-                >
-                  <Ionicons name="person-add-outline" size={22} color={COLORS.text.primary} />
-                  <Text style={styles.optionsMenuText}>Add Friend</Text>
-                </TouchableOpacity>
+                 <>
+                  {shouldShowAddFriend && (
+                    <TouchableOpacity
+                      style={styles.optionsMenuItem}
+                      onPress={() => {
+                        setOptionsVisible(false);
+                        handleAddFriend();
+                      }}
+                    >
+                      <Ionicons name="person-add-outline" size={22} color={COLORS.text.primary} />
+                      <Text style={styles.optionsMenuText}>Add Friend</Text>
+                    </TouchableOpacity>
+                  )}
+                  {shouldShowSaveWishlist && (
+                    <TouchableOpacity
+                      style={styles.optionsMenuItem}
+                      onPress={() => {
+                        setOptionsVisible(false);
+                        handleSaveWishlist();
+                      }}
+                    >
+                      <Ionicons 
+                        name={isWishlistSaved ? "bookmark" : "bookmark-outline"} 
+                        size={22} 
+                        color={COLORS.text.primary} 
+                      />
+                      <Text style={styles.optionsMenuText}>
+                        {isWishlistSaved ? 'Remove from Saved' : 'Save Wishlist'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           </Pressable>

@@ -13,10 +13,14 @@ export const WishlistInfo = ({
   onProfilePress,
   showAddFriend = false,
   onAddFriend,
-  isGuest = false
+  isGuest = false,
+  isWishlistSaved = false,
+  onSaveWishlist,
 }: WishlistInfoProps) => {
   const hasDescription = typeof description === 'string' && description.trim().length > 0;
-  const hasActionButtons = (showAddFriend && onAddFriend) || (onAddPress && hasItems);
+  // Only show save button if not saved yet, not a guest, and callback exists
+  const showSaveButton = onSaveWishlist && !isGuest && !isWishlistSaved;
+  const hasActionButtons = showSaveButton || (onAddPress && hasItems);
   
   return (
     <View style={styles.wishlistInfo}>
@@ -42,11 +46,20 @@ export const WishlistInfo = ({
 
         {hasActionButtons && (
           <View style={styles.actionButtons}>
-            {/* Add Friend button - shown when showAddFriend is true */}
-            {showAddFriend && onAddFriend && (
-              <TouchableOpacity onPress={onAddFriend} style={styles.addFriendButton}>
-                <Ionicons name="person-add-outline" size={20} color="#fff" />
-                <Text style={styles.addFriendText}>Add Friend</Text>
+            {/* Save Wishlist button - only shown when not saved */}
+            {showSaveButton && (
+              <TouchableOpacity 
+                onPress={onSaveWishlist} 
+                style={styles.saveWishlistButton}
+              >
+                <Ionicons 
+                  name="bookmark-outline" 
+                  size={20} 
+                  color="#fff" 
+                />
+                <Text style={styles.saveWishlistText}>
+                  Save
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -78,7 +91,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 40, // Ensure consistent height
+    minHeight: 40,
   },
   userInfo: {
     flexDirection: 'row',
@@ -122,16 +135,16 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: SPACING.xs,
   },
-  addFriendButton: {
+  saveWishlistButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
     borderRadius: 8,
     gap: SPACING.xs,
   },
-  addFriendText: {
+  saveWishlistText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
