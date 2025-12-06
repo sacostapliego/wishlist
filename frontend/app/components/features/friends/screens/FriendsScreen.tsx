@@ -31,7 +31,7 @@ export default function FriendsScreen() {
       />
 
       <View style={styles.tabs}>
-        <TabButton label="Wishlists" icon="gift-outline" active={activeTab === 'wishlists'} onPress={() => setActiveTab('wishlists')} />
+        <TabButton label="Saved" icon="bookmark-outline" active={activeTab === 'wishlists'} onPress={() => setActiveTab('wishlists')} />
         <TabButton label="Friends" icon="people-outline" active={activeTab === 'friends'} onPress={() => setActiveTab('friends')} />
         <TabButton label="Requests" icon="person-add-outline" active={activeTab === 'requests'} onPress={() => setActiveTab('requests')} />
       </View>

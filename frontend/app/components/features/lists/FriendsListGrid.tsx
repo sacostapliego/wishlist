@@ -73,23 +73,32 @@ export default function FriendsListGrid({ title, lists, maxItems = 6 }: ListGrid
       </View>
 
       <View style={styles.gridContainer}>
-        {rows.map((row, rowIndex) => (
-          <View key={`row-${rowIndex}`} style={styles.row}>
-            {row.map((wishlist, colIndex) => (
-              <View key={wishlist.id ?? `col-${colIndex}`} style={styles.column}>
-                <ListItem
-                  title={wishlist.title}
-                  username={wishlist.ownerName || wishlist.ownerUsername || 'Friend'}
-                  itemCount={wishlist.itemCount}
-                  color={wishlist.color}
-                  image={wishlist.image}
-                  onPress={() => handleListPress(wishlist.id)}
-                />
-              </View>
-            ))}
-            {row.length === 1 && <View style={styles.column} />}
+        {rows.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No saved wishlists yet</Text>
+            <Text style={styles.emptySubtext}>
+              Visit a friend's wishlist and tap "Save Wishlist" to see it here
+            </Text>
           </View>
-        ))}
+        ) : (
+          rows.map((row, rowIndex) => (
+            <View key={`row-${rowIndex}`} style={styles.row}>
+              {row.map((wishlist, colIndex) => (
+                <View key={wishlist.id ?? `col-${colIndex}`} style={styles.column}>
+                  <ListItem
+                    title={wishlist.title}
+                    username={wishlist.ownerName || wishlist.ownerUsername || 'Friend'}
+                    itemCount={wishlist.itemCount}
+                    color={wishlist.color}
+                    image={wishlist.image}
+                    onPress={() => handleListPress(wishlist.id)}
+                  />
+                </View>
+              ))}
+              {row.length === 1 && <View style={styles.column} />}
+            </View>
+          ))
+        )}
       </View>
     </Section>
   );
@@ -165,5 +174,23 @@ const styles = StyleSheet.create({
   itemCount: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.6)',
+  },
+  emptyContainer: {
+    padding: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
