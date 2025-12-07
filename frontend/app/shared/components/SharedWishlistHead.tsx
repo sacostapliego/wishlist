@@ -25,7 +25,6 @@ export const SharedWishlistHead: React.FC<SharedWishlistHeadProps> = ({
 }) => {
   const safeTitle = title ?? 'Shared Wishlist';
   const safeDescription = description || `${ownerName || 'User'}'s wishlist`;
-  
   // Determine the final image URL, prioritizing valid, absolute URLs.
   let finalOgImage = 'https://cardinal-wishlist.onrender.com/favicon.ico'; // Default fallback
   if (isAbsoluteUrl(wishlistImage)) {
@@ -39,7 +38,6 @@ export const SharedWishlistHead: React.FC<SharedWishlistHeadProps> = ({
 
   return (
     <Head>
-      <title>{safeTitle}</title>
       <meta name="description" content={safeDescription} />
       <meta property="og:type" content="website" />
       <meta property="og:title" content={safeTitle} />
