@@ -15,12 +15,14 @@ import { wishlistAPI } from '@/app/services/wishlist';
 import { WishlistApiResponse } from '@/app/types/lists';
 import Toast from 'react-native-toast-message';
 import { useRefresh } from '@/app/context/RefreshContext';
+import { useAppNavigation } from '@/app/hooks/useAppNavigation';
 
 export default function ListsScreen() {
   const router = useRouter();
   const [wishlists, setWishlists] = useState<WishlistApiResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { refreshTimestamp, triggerRefresh } = useRefresh();
+  const { navigateBack } = useAppNavigation();
 
   useEffect(() => {
     fetchWishlists();
@@ -81,7 +83,7 @@ export default function ListsScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => router.back()}
+           onPress={() => navigateBack('/home')}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>

@@ -5,13 +5,8 @@ export function useAppNavigation() {
   const router = useRouter();
 
   const navigateBack = (fallbackPath: string) => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      if (document.referrer && window.history.length > 1) {
-        window.history.back();
-      } else {
-        // No referrer means direct access, use fallback
-        window.location.href = fallbackPath;
-      }
+    if (Platform.OS === 'web') {
+      router.replace(fallbackPath as any);
     } else {
       // On native, use standard back navigation
       if (router.canGoBack()) {

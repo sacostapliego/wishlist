@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { WishlistFilters, SortOption } from '../components/features/wishlist/WishlistFilters';
 import Head from 'expo-router/head';
 import SharedWishlistHead from './components/SharedWishlistHead';
+import { useAppNavigation } from '../hooks/useAppNavigation';
 
 type WishlistItem = {
   id: string;
@@ -31,6 +32,7 @@ export default function WishlistDetailScreen() {
   const { width } = useWindowDimensions();
   const { refreshTimestamp } = useRefresh();
   const { user } = useAuth();
+  const { navigateBack } = useAppNavigation();
 
   const [viewMode, setViewMode] = useState<'bento' | 'list'>('list');
   const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
@@ -249,7 +251,7 @@ export default function WishlistDetailScreen() {
       <Header
         title={wishlist?.title || 'Shared Wishlist'}
         {...(isAuthenticated
-          ? { onBack: () => (router.canGoBack() ? router.back() : router.replace('/')) }
+          ? { onBack: () => navigateBack('/home/friends') }
           : {})}
         showOptions={showOptionsIcon}
         onOptionsPress={() => setOptionsVisible(true)}

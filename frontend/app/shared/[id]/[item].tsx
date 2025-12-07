@@ -13,9 +13,11 @@ import { useItemClaiming } from '../../hooks/useItemClaiming';
 import ItemDetailContent from '../../components/features/item/ItemDetailContent';
 import { ItemClaimingSection } from '../../components/features/item/ItemClaimingSection';
 import Head from 'expo-router/head';
+import { useAppNavigation } from '@/app/hooks/useAppNavigation';
 
 export default function SharedWishlistItemScreen() {
     const router = useRouter();
+    const { navigateBack } = useAppNavigation();
     const { id: wishlistId, item: itemId } = useLocalSearchParams<{ id: string, item: string }>();
     const { item, wishlistColor, isLoading, error, refetchItemData } = useItemDetail(itemId, wishlistId, 0, true);
     
@@ -33,13 +35,7 @@ export default function SharedWishlistItemScreen() {
     } = useItemClaiming(item, refetchItemData);
 
     const handleCustomBack = () => {
-        if (router.canGoBack()) {
-            router.back();
-        } else if (wishlistId) {
-            router.push(`/shared/${wishlistId}`);
-        } else {
-            router.push('/');
-        }
+        navigateBack(`/shared/${wishlistId}`);
     };
 
     const handleCopyUrl = async () => {
