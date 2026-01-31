@@ -26,6 +26,7 @@ app.add_middleware(
         'http://localhost:3000',                        # Local development
         'http://localhost:8000',                        # 
         'http://localhost:8081',                        # 
+        'http://localhost:5173',                        # Vite dev server
         'https://cardinal-wishlist.onrender.com',       # Production frontend
         'https://cardinal-wishlist-api.onrender.com',   # Production API
         
