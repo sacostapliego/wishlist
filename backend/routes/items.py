@@ -10,7 +10,6 @@ from typing import List, Optional
 from PIL import Image
 
 
-from models.user import User
 from models.wishlist import Wishlist
 from models.base import get_db
 from models.item import ClaimRequest, WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse, ScrapeRequest
@@ -489,3 +488,35 @@ def unclaim_item(
     db.refresh(item)
     
     return {"message": "Item unclaimed successfully"}
+
+""" Get claimed items for the current user """
+@router.get('/claimed/my-items', response_model=List[dict])
+def get_my_claimed_items(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all items claimed by the current authenticated user"""
+    items = db.query(WishListItem).options(
+        joinedload(WishListItem.user),
+        joinedload(WishListItem.wishlist)
+    ).filter(
+        WishListItem.claimed_by_user_id == uuid.UUID(current_user["user_id"])
+    ).all()
+    
+    response_items = []
+    for item in items:
+        owner = item.user
+        
+        response_items.append({
+            "id": str(item.id),
+            "name": item.name,
+            "price": item.price,
+            "image": item.image,
+            "owner_id": str(item.user_id),
+            "owner_name": owner.name if owner and owner.name else owner.username if owner else "Unknown",
+            "wishlist_id": str(item.wishlist_id) if item.wishlist_id else None,
+            "wishlist_color": item.wishlist.color if item.wishlist else None,
+            "claimed_at": item.claimed_at.isoformat() if item.claimed_at else None
+        })
+    
+    return response_items
