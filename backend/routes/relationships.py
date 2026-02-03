@@ -42,6 +42,8 @@ class FriendWishlistResponse(BaseModel):
     owner_name: str
     owner_username: str
     image: str | None = None
+    updated_at: str | None = None
+    created_at: str | None = None
     
 class FriendInfo(BaseModel):
     id: str
@@ -263,7 +265,9 @@ def get_friends_wishlists(
             owner_id=str(user.id),
             owner_name=user.name or user.username,
             owner_username=user.username,
-            image=wishlist.image
+            image=wishlist.image,
+            updated_at=wishlist.updated_at.isoformat() if wishlist.updated_at else wishlist.created_at.isoformat() if wishlist.created_at else None,
+            created_at=wishlist.created_at.isoformat() if wishlist.created_at else None
         ))
     
     return result
