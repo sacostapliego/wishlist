@@ -1,13 +1,13 @@
 from html import escape
 import os
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List
+from typing import List, Optional
 import uuid
 
-from services.s3_service import delete_file_from_s3
+from services.s3_service import upload_file_to_s3, delete_file_from_s3
 from models.base import get_db
 from models.wishlist import Wishlist, WishlistCreate, WishlistUpdate, WishlistResponse
 from models.item import WishListItem
@@ -16,31 +16,54 @@ from models.user import User
 
 router = APIRouter(prefix='/wishlists', tags=['wishlists'])
 
+def build_wishlist_response(db_wishlist: Wishlist, item_count: int) -> dict:
+    """Helper to build a wishlist response dict with item count"""
+    response_data = {k: v for k, v in db_wishlist.__dict__.items() if not k.startswith('_')}
+    response_data['item_count'] = item_count
+    return response_data
+
 @router.post('/', response_model=WishlistResponse)
-def create_wishlist(
-    wishlist: WishlistCreate,
+async def create_wishlist(
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
+    is_public: bool = Form(False),
+    image: Optional[str] = Form(None),
+    thumbnail_type: Optional[str] = Form('icon'),
+    thumbnail_icon: Optional[str] = Form(None),
+    thumbnail_image: Optional[UploadFile] = File(None),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create a new wishlist"""
+    thumbnail_image_url: Optional[str] = None
+
+    if thumbnail_type == 'image' and thumbnail_image is not None:
+        try:
+            thumbnail_image_url = await upload_file_to_s3(thumbnail_image, folder="wishlist_thumbnails")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
+
     db_wishlist = Wishlist(
         user_id=current_user["user_id"],
-        **wishlist.model_dump()
+        title=title,
+        description=description,
+        color=color,
+        is_public=is_public,
+        image=image,
+        thumbnail_type=thumbnail_type if thumbnail_type is not None else 'icon',
+        thumbnail_icon=thumbnail_icon if thumbnail_type == 'icon' else None,
+        thumbnail_image=thumbnail_image_url
     )
     db.add(db_wishlist)
     db.commit()
     db.refresh(db_wishlist)
-    
-    # Count items (will be 0 for new wishlist)
+
     item_count = db.query(func.count(WishListItem.id)).filter(
         WishListItem.wishlist_id == db_wishlist.id
     ).scalar() or 0
-    
-    # Create response with item count
-    response_data = db_wishlist.__dict__.copy()
-    response_data['item_count'] = item_count
-    
-    return response_data
+
+    return build_wishlist_response(db_wishlist, item_count)
 
 @router.get('/', response_model=List[WishlistResponse])
 def get_wishlists(
@@ -53,18 +76,14 @@ def get_wishlists(
     wishlists = db.query(Wishlist).filter(
         Wishlist.user_id == current_user["user_id"]
     ).offset(skip).limit(limit).all()
-    
-    # Add item counts to each wishlist
+
     result = []
     for wishlist in wishlists:
         item_count = db.query(func.count(WishListItem.id)).filter(
             WishListItem.wishlist_id == wishlist.id
         ).scalar() or 0
-        
-        wishlist_dict = wishlist.__dict__.copy()
-        wishlist_dict['item_count'] = item_count
-        result.append(wishlist_dict)
-    
+        result.append(build_wishlist_response(wishlist, item_count))
+
     return result
 
 @router.get('/{wishlist_id}', response_model=WishlistResponse)
@@ -78,25 +97,28 @@ def get_wishlist(
         Wishlist.id == wishlist_id,
         Wishlist.user_id == current_user["user_id"]
     ).first()
-    
-    if not db_wishlist:
+
+    if db_wishlist is None:
         raise HTTPException(status_code=404, detail="Wishlist not found")
-    
-    # Count items
+
     item_count = db.query(func.count(WishListItem.id)).filter(
         WishListItem.wishlist_id == db_wishlist.id
     ).scalar() or 0
-    
-    # Create response with item count
-    response_data = db_wishlist.__dict__.copy()
-    response_data['item_count'] = item_count
-    
-    return response_data
+
+    return build_wishlist_response(db_wishlist, item_count)
 
 @router.put('/{wishlist_id}', response_model=WishlistResponse)
-def update_wishlist(
+async def update_wishlist(
     wishlist_id: uuid.UUID,
-    wishlist: WishlistUpdate,
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
+    is_public: Optional[bool] = Form(None),
+    image: Optional[str] = Form(None),
+    thumbnail_type: Optional[str] = Form(None),
+    thumbnail_icon: Optional[str] = Form(None),
+    thumbnail_image: Optional[UploadFile] = File(None),
+    remove_thumbnail_image: bool = Form(False),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -105,28 +127,47 @@ def update_wishlist(
         Wishlist.id == wishlist_id,
         Wishlist.user_id == current_user["user_id"]
     ).first()
-    
-    if not db_wishlist:
+
+    if db_wishlist is None:
         raise HTTPException(status_code=404, detail="Wishlist not found")
-    
-    # Update the wishlist with the provided values
-    update_data = wishlist.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_wishlist, key, value)
-    
+
+    # Handle thumbnail image upload
+    if thumbnail_image is not None:
+        if db_wishlist.thumbnail_image is not None:
+            delete_file_from_s3(db_wishlist.thumbnail_image)
+        try:
+            db_wishlist.thumbnail_image = await upload_file_to_s3(thumbnail_image, folder="wishlist_thumbnails")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
+    elif remove_thumbnail_image:
+        if db_wishlist.thumbnail_image is not None:
+            delete_file_from_s3(db_wishlist.thumbnail_image)
+            db_wishlist.thumbnail_image = None
+
+    # Update scalar fields
+    if title is not None:
+        db_wishlist.title = title
+    if description is not None:
+        db_wishlist.description = description
+    if color is not None:
+        db_wishlist.color = color
+    if is_public is not None:
+        db_wishlist.is_public = is_public
+    if image is not None:
+        db_wishlist.image = image
+    if thumbnail_type is not None:
+        db_wishlist.thumbnail_type = thumbnail_type
+    if thumbnail_icon is not None:
+        db_wishlist.thumbnail_icon = thumbnail_icon
+
     db.commit()
     db.refresh(db_wishlist)
-    
-    # Count items
+
     item_count = db.query(func.count(WishListItem.id)).filter(
         WishListItem.wishlist_id == db_wishlist.id
     ).scalar() or 0
-    
-    # Create response with item count
-    response_data = db_wishlist.__dict__.copy()
-    response_data['item_count'] = item_count
-    
-    return response_data
+
+    return build_wishlist_response(db_wishlist, item_count)
 
 @router.delete('/{wishlist_id}', response_model=dict)
 def delete_wishlist(
@@ -139,18 +180,20 @@ def delete_wishlist(
         Wishlist.id == wishlist_id,
         Wishlist.user_id == current_user["user_id"]
     ).first()
-    
-    if not db_wishlist:
+
+    if db_wishlist is None:
         raise HTTPException(status_code=404, detail="Wishlist not found")
-    
-    # Delete associated images from S3
+
     for item in db_wishlist.items:
-        if item.image:
-            delete_file_from_s3(item.image)
-    
+        if item.image is not None:
+            delete_file_from_s3(str(item.image))
+
+    if db_wishlist.thumbnail_image is not None:
+        delete_file_from_s3(db_wishlist.thumbnail_image)
+
     db.delete(db_wishlist)
     db.commit()
-    
+
     return {"message": "Wishlist deleted successfully"}
 
 @router.get('/user/{user_id}', response_model=List[WishlistResponse])
@@ -165,21 +208,16 @@ def get_user_wishlists(
         Wishlist.user_id == user_id,
         Wishlist.is_public == True
     ).offset(skip).limit(limit).all()
-    
-    # Add item counts to each wishlist
+
     result = []
     for wishlist in wishlists:
         item_count = db.query(func.count(WishListItem.id)).filter(
             WishListItem.wishlist_id == wishlist.id
         ).scalar() or 0
-        
-        wishlist_dict = wishlist.__dict__.copy()
-        wishlist_dict['item_count'] = item_count
-        result.append(wishlist_dict)
-    
+        result.append(build_wishlist_response(wishlist, item_count))
+
     return result
 
-# Public wishlist endpoint
 @router.get('/public/{wishlist_id}', response_model=WishlistResponse)
 def get_public_wishlist(
     wishlist_id: uuid.UUID,
@@ -188,24 +226,18 @@ def get_public_wishlist(
     """Get a public wishlist without authentication"""
     db_wishlist = db.query(Wishlist).filter(
         Wishlist.id == wishlist_id,
-        Wishlist.is_public == True  # Only allow access to public wishlists
+        Wishlist.is_public == True
     ).first()
-    
-    if not db_wishlist:
-        raise HTTPException(status_code=404, detail="Wishlist not found")
-    
-    # Count items
+
+    if db_wishlist is None:
+        raise HTTPException(status_code=404, detail="Public wishlist not found")
+
     item_count = db.query(func.count(WishListItem.id)).filter(
         WishListItem.wishlist_id == db_wishlist.id
     ).scalar() or 0
-    
-    # Create response with item count
-    response_data = db_wishlist.__dict__.copy()
-    response_data['item_count'] = item_count
-    
-    return response_data
 
-""" Serve HTML with Open Graph meta tags for shared wishlists (Testing purposes) """
+    return build_wishlist_response(db_wishlist, item_count)
+
 @router.get('/shared/{wishlist_id}', response_class=HTMLResponse)
 def get_shared_wishlist_meta_page(
     wishlist_id: uuid.UUID,
@@ -216,40 +248,32 @@ def get_shared_wishlist_meta_page(
         Wishlist.id == wishlist_id,
         Wishlist.is_public == True
     ).first()
-    
-    if not db_wishlist:
-        raise HTTPException(status_code=404, detail="Wishlist not found")
-    
-    # Owner
-    owner = db.query(User).filter(User.id == db_wishlist.user_id).first()
-    owner_name = (owner.name or owner.username) if owner else "User"
 
-    # Bases (configure via env)
+    if db_wishlist is None:
+        raise HTTPException(status_code=404, detail="Wishlist not found")
+
+    owner = db.query(User).filter(User.id == db_wishlist.user_id).first()
+    owner_name = (str(owner.name) if owner.name else str(owner.username)) if owner is not None else "User"
+
     frontend_base = (os.getenv('PUBLIC_FRONTEND_URL', 'https://cardinal-wishlist.onrender.com') or '').rstrip('/')
     api_base = (os.getenv('PUBLIC_API_URL', 'https://cardinal-wishlist-api.onrender.com') or '').rstrip('/')
 
     def is_absolute(url: str) -> bool:
         return url.startswith('http://') or url.startswith('https://')
 
-    # Frontend URL that users land on
     frontend_url = f"{frontend_base}/shared/{wishlist_id}"
 
-    # OG image:
-    # 1) If wishlist.image is an absolute URL, use it
-    # 2) Else if owner exists and has a pfp, use the public API proxy: /users/{id}/profile-image
-    # 3) Else fallback to frontend favicon
     og_image = f"{frontend_base}/favicon.ico"
-    if db_wishlist.image and is_absolute(db_wishlist.image):
+    if db_wishlist.image is not None and is_absolute(db_wishlist.image):
         og_image = db_wishlist.image
-    elif owner and owner.pfp:
+    elif owner is not None and owner.pfp is not None:
         og_image = f"{api_base}/users/{owner.id}/profile-image"
 
-    title = db_wishlist.title or "Shared Wishlist"
-    description = (db_wishlist.description or f"{owner_name}'s wishlist") or ""
+    title_str = db_wishlist.title if db_wishlist.title is not None else "Shared Wishlist"
+    desc_str = db_wishlist.description if db_wishlist.description is not None else f"{owner_name}'s wishlist"
 
-    # Escape to keep HTML safe
-    safe_title = escape(title)
-    safe_description = escape(description)
+    safe_title = escape(title_str)
+    safe_description = escape(desc_str)
     safe_frontend_url = escape(frontend_url)
     safe_og_image = escape(og_image)
 

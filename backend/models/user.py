@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
-from pydantic import BaseModel, EmailStr, ConfigDict, HttpUrl
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 from datetime import datetime
 import uuid
@@ -14,23 +14,23 @@ class User(Base):
     
     # Information
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)
-    name = Column(String, nullable=True)
-    pfp = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    username: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    password: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    pfp: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # User sizes
-    hat_size = Column(String(50), nullable=True)
-    shirt_size = Column(String(50), nullable=True)
-    pants_size = Column(String(50), nullable=True)
-    shoe_size = Column(String(50), nullable=True)
-    dress_size = Column(String(50), nullable=True)
-    jacket_size = Column(String(50), nullable=True)
-    ring_size = Column(String(50), nullable=True)
+    hat_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    shirt_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    pants_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    shoe_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    dress_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    jacket_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    ring_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     # Relationships
     wishlists = relationship('Wishlist', back_populates='user', cascade='all, delete-orphan')

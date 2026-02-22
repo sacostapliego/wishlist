@@ -148,6 +148,45 @@ def read_wishlist_items(
     
     return response_items
 
+''' Get items by wishlist '''
+@router.get('/items/{wishlist_id}', response_model=List[WishListItemResponse])
+def get_items_by_wishlist(
+    wishlist_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all items in a specific wishlist owned by the current user"""
+    # Verify the wishlist belongs to the current user
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id,
+        Wishlist.user_id == current_user["user_id"]
+    ).first()
+    
+    if not db_wishlist:
+        raise HTTPException(status_code=404, detail="Wishlist not found")
+    
+    items = db.query(WishListItem).options(
+        joinedload(WishListItem.claimed_by_user)
+    ).filter(
+        WishListItem.wishlist_id == wishlist_id
+    ).all()
+    
+    # Convert to response format with claimed_by_display_name
+    response_items = []
+    for item in items:
+        item_dict = WishListItemResponse.model_validate(item).model_dump()
+        
+        if item.claimed_by_user_id and item.claimed_by_user:
+            item_dict['claimed_by_display_name'] = item.claimed_by_user.name or item.claimed_by_user.username
+        elif item.claimed_by_name:
+            item_dict['claimed_by_display_name'] = item.claimed_by_name
+        else:
+            item_dict['claimed_by_display_name'] = None
+            
+        response_items.append(WishListItemResponse(**item_dict))
+    
+    return response_items
+
 """ Get a single item """
 @router.get('/{item_id}', response_model=WishListItemResponse)
 def read_wishlist_item(
