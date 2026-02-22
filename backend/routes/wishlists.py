@@ -1,6 +1,6 @@
 from html import escape
 import os
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -13,6 +13,10 @@ from models.wishlist import Wishlist, WishlistCreate, WishlistUpdate, WishlistRe
 from models.item import WishListItem
 from middleware.auth import get_current_user
 from models.user import User
+
+from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
+BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+
 
 router = APIRouter(prefix='/wishlists', tags=['wishlists'])
 
@@ -237,6 +241,32 @@ def get_public_wishlist(
     ).scalar() or 0
 
     return build_wishlist_response(db_wishlist, item_count)
+
+@router.get('/{wishlist_id}/thumbnail', response_class=Response)
+async def get_wishlist_thumbnail(
+    wishlist_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Get a wishlist's thumbnail image directly from S3"""
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id
+    ).first()
+
+    if db_wishlist is None or db_wishlist.thumbnail_image is None:
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+    try:
+        s3_key = db_wishlist.thumbnail_image.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
+
+        s3_response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
+        image_data = s3_response['Body'].read()
+
+        content_type = s3_response.get('ContentType', 'image/jpeg')
+        return Response(content=image_data, media_type=content_type)
+
+    except Exception as e:
+        print(f"Error retrieving wishlist thumbnail: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve thumbnail")
 
 @router.get('/shared/{wishlist_id}', response_class=HTMLResponse)
 def get_shared_wishlist_meta_page(
