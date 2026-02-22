@@ -269,7 +269,7 @@ def get_public_user_details(user_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     
     return PublicUserResponse(
-        id=user.id,
+        id=uuid.UUID(str(user.id)),
         name=user.name,
         username=user.username,
         pfp=user.pfp,
