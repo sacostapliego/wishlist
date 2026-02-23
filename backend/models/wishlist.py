@@ -1,17 +1,18 @@
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Date, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from .base import Base
 
 class Wishlist(Base):
     __tablename__ = 'wishlists'
 
+    # Primary fields
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
@@ -19,13 +20,22 @@ class Wishlist(Base):
     color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    # Thumbnail fields
+    
+    # Added fields (2026)
+    use_item_colors: Mapped[bool] = mapped_column(Boolean, default=False)
+    default_view: Mapped[str] = mapped_column(String(10), default='list', nullable=False)  # 'list' or 'list'
+    due_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    
+    # Thumbnail fields (2026)
     thumbnail_type: Mapped[Optional[str]] = mapped_column(String(10), default='icon', nullable=True)
     thumbnail_icon: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     thumbnail_image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    
+    # timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
+    
+    # relationships
     user = relationship('User', back_populates='wishlists')
     items = relationship('WishListItem', back_populates='wishlist', cascade='all, delete-orphan')
 
@@ -40,6 +50,9 @@ class WishlistBase(BaseModel):
     image: Optional[str] = None
     thumbnail_type: Optional[str] = 'icon'
     thumbnail_icon: Optional[str] = None
+    use_item_colors: bool = False
+    default_view: str = 'list'
+    due_date: Optional[date] = None
 
 class WishlistCreate(WishlistBase):
     pass
@@ -52,6 +65,9 @@ class WishlistUpdate(BaseModel):
     image: Optional[str] = None
     thumbnail_type: Optional[str] = None
     thumbnail_icon: Optional[str] = None
+    use_item_colors: Optional[bool] = None
+    default_view: Optional[str] = None
+    due_date: Optional[date] = None
 
 class WishlistResponse(BaseModel):
     id: uuid.UUID
@@ -64,6 +80,9 @@ class WishlistResponse(BaseModel):
     thumbnail_type: Optional[str] = 'icon'
     thumbnail_icon: Optional[str] = None
     thumbnail_image: Optional[str] = None
+    use_item_colors: bool = False
+    default_view: str = 'list'
+    due_date: Optional[date] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     item_count: Optional[int] = 0

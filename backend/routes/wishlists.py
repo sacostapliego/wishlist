@@ -36,10 +36,14 @@ async def create_wishlist(
     thumbnail_type: Optional[str] = Form('icon'),
     thumbnail_icon: Optional[str] = Form(None),
     thumbnail_image: Optional[UploadFile] = File(None),
+    use_item_colors: bool = Form(False),
+    default_view: str = Form('list'),
+    due_date: Optional[str] = Form(None),  # Accept as string, parse below
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create a new wishlist"""
+    from datetime import date as date_type
     thumbnail_image_url: Optional[str] = None
 
     if thumbnail_type == 'image' and thumbnail_image is not None:
@@ -47,6 +51,13 @@ async def create_wishlist(
             thumbnail_image_url = await upload_file_to_s3(thumbnail_image, folder="wishlist_thumbnails")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
+
+    parsed_due_date: Optional[date_type] = None
+    if due_date:
+        try:
+            parsed_due_date = date_type.fromisoformat(due_date)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid due_date format. Use YYYY-MM-DD.")
 
     db_wishlist = Wishlist(
         user_id=current_user["user_id"],
@@ -57,7 +68,10 @@ async def create_wishlist(
         image=image,
         thumbnail_type=thumbnail_type if thumbnail_type is not None else 'icon',
         thumbnail_icon=thumbnail_icon if thumbnail_type == 'icon' else None,
-        thumbnail_image=thumbnail_image_url
+        thumbnail_image=thumbnail_image_url,
+        use_item_colors=use_item_colors,
+        default_view=default_view,
+        due_date=parsed_due_date
     )
     db.add(db_wishlist)
     db.commit()
@@ -123,10 +137,15 @@ async def update_wishlist(
     thumbnail_icon: Optional[str] = Form(None),
     thumbnail_image: Optional[UploadFile] = File(None),
     remove_thumbnail_image: bool = Form(False),
+    use_item_colors: Optional[bool] = Form(None),
+    default_view: Optional[str] = Form(None),
+    due_date: Optional[str] = Form(None),
+    remove_due_date: bool = Form(False),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Update a wishlist"""
+    from datetime import date as date_type
     db_wishlist = db.query(Wishlist).filter(
         Wishlist.id == wishlist_id,
         Wishlist.user_id == current_user["user_id"]
@@ -148,6 +167,15 @@ async def update_wishlist(
             delete_file_from_s3(db_wishlist.thumbnail_image)
             db_wishlist.thumbnail_image = None
 
+    # Handle due date
+    if remove_due_date:
+        db_wishlist.due_date = None
+    elif due_date is not None:
+        try:
+            db_wishlist.due_date = date_type.fromisoformat(due_date)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid due_date format. Use YYYY-MM-DD.")
+
     # Update scalar fields
     if title is not None:
         db_wishlist.title = title
@@ -163,6 +191,10 @@ async def update_wishlist(
         db_wishlist.thumbnail_type = thumbnail_type
     if thumbnail_icon is not None:
         db_wishlist.thumbnail_icon = thumbnail_icon
+    if use_item_colors is not None:
+        db_wishlist.use_item_colors = use_item_colors
+    if default_view is not None:
+        db_wishlist.default_view = default_view
 
     db.commit()
     db.refresh(db_wishlist)
@@ -267,6 +299,9 @@ async def get_wishlist_thumbnail(
     except Exception as e:
         print(f"Error retrieving wishlist thumbnail: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve thumbnail")
+
+
+
 
 @router.get('/shared/{wishlist_id}', response_class=HTMLResponse)
 def get_shared_wishlist_meta_page(
