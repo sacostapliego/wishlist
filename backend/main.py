@@ -28,6 +28,7 @@ app.add_middleware(
         'http://localhost:8081',                        # 
         'http://localhost:5173',                        # Vite dev server
         'https://cardinal-wishlist.onrender.com',       # Production frontend
+        'https://cardinalwishlist.vercel.app',         # Production frontend
         'https://cardinal-wishlist-api.onrender.com',   # Production API
         
     ],
