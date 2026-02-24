@@ -397,3 +397,107 @@ def get_shared_wishlist_meta_page(
             content=html_content,
             headers={"Cache-Control": "public, max-age=600"}
         )
+
+@router.get('/shared/vercel/{wishlist_id}', response_class=HTMLResponse)
+def get_shared_wishlist_meta_page_vercel(
+    wishlist_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    """Serve HTML with Open Graph meta tags for shared wishlists (Vercel frontend)"""
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_id,
+        Wishlist.is_public == True
+    ).first()
+
+    if db_wishlist is None:
+        raise HTTPException(status_code=404, detail="Wishlist not found")
+
+    owner = db.query(User).filter(User.id == db_wishlist.user_id).first()
+    owner_name = (str(owner.name) if owner.name else str(owner.username)) if owner is not None else "User"
+
+    frontend_base = "https://cardinalwishlist.vercel.app"
+    api_base = (os.getenv('PUBLIC_API_URL', 'https://cardinal-wishlist-api.onrender.com') or '').rstrip('/')
+
+    def is_absolute(url: str) -> bool:
+        return url.startswith('http://') or url.startswith('https://')
+
+    # Redirect to the actual wishlist page on the Vercel frontend
+    frontend_url = f"{frontend_base}/wishlist/{wishlist_id}"
+
+    # Resolve OG image based on thumbnail type
+    og_image = f"{frontend_base}/favicon.png"
+
+    if db_wishlist.thumbnail_type == 'image' and db_wishlist.thumbnail_image:
+        image_path = str(db_wishlist.thumbnail_image)
+        if is_absolute(image_path):
+            og_image = image_path
+        else:
+            og_image = f"{api_base}/{image_path.lstrip('/')}"
+    elif db_wishlist.image is not None and is_absolute(str(db_wishlist.image)):
+        og_image = str(db_wishlist.image)
+    elif owner is not None and owner.pfp is not None:
+        # Icon type or no thumbnail — fall back to owner's profile picture
+        og_image = f"{api_base}/users/{owner.id}/profile-image"
+
+    title_str = db_wishlist.title if db_wishlist.title is not None else "Shared Wishlist"
+    desc_str = db_wishlist.description if db_wishlist.description is not None else f"{owner_name}'s wishlist"
+
+    safe_title = escape(title_str)
+    safe_description = escape(desc_str)
+    safe_frontend_url = escape(frontend_url)
+    safe_og_image = escape(og_image)
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{safe_title}</title>
+        <meta name="description" content="{safe_description}">
+        <link rel="canonical" href="{safe_frontend_url}">
+        <meta name="robots" content="noindex, nofollow">
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{safe_frontend_url}">
+        <meta property="og:title" content="{safe_title}">
+        <meta property="og:description" content="{safe_description}">
+        <meta property="og:image" content="{safe_og_image}">
+
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{safe_frontend_url}">
+        <meta name="twitter:title" content="{safe_title}">
+        <meta name="twitter:description" content="{safe_description}">
+        <meta name="twitter:image" content="{safe_og_image}">
+
+        <!-- Fallback redirect for no-JS environments (crawlers still see meta tags above) -->
+        <meta http-equiv="refresh" content="0;url={safe_frontend_url}">
+
+        <style>
+          html, body {{
+            background: #141414;
+            margin: 0;
+            height: 100%;
+          }}
+        </style>
+
+        <!-- Instant JS redirect for real users -->
+        <script>
+          (function() {{
+            try {{
+              window.location.replace("{safe_frontend_url}");
+            }} catch (e) {{
+              window.location.href = "{safe_frontend_url}";
+            }}
+          }})();
+        </script>
+    </head>
+    <body></body>
+    </html>
+    """
+    return HTMLResponse(
+        content=html_content,
+        headers={"Cache-Control": "public, max-age=600"}
+    )
