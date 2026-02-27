@@ -44,6 +44,12 @@ class FriendWishlistResponse(BaseModel):
     image: str | None = None
     updated_at: str | None = None
     created_at: str | None = None
+    thumbnail_type: str | None = None
+    thumbnail_icon: str | None = None
+    thumbnail_image: str | None = None
+    use_item_colors: bool = False
+    default_view: str | None = None
+    due_date: str | None = None
     
 class FriendInfo(BaseModel):
     id: str
@@ -267,7 +273,13 @@ def get_friends_wishlists(
             owner_username=user.username,
             image=wishlist.image,
             updated_at=wishlist.updated_at.isoformat() if wishlist.updated_at else wishlist.created_at.isoformat() if wishlist.created_at else None,
-            created_at=wishlist.created_at.isoformat() if wishlist.created_at else None
+            created_at=wishlist.created_at.isoformat() if wishlist.created_at else None,
+            thumbnail_type=wishlist.thumbnail_type,
+            thumbnail_icon=wishlist.thumbnail_icon,
+            thumbnail_image=wishlist.thumbnail_image,
+            use_item_colors=wishlist.use_item_colors or False,
+            default_view=wishlist.default_view,
+            due_date=wishlist.due_date.isoformat() if wishlist.due_date else None,
         ))
     
     return result
