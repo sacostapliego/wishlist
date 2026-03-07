@@ -23,20 +23,20 @@ class FriendRequestResponse(BaseModel):
 class UserSearchResponse(BaseModel):
     id: str
     username: str
-    name: str = None
+    name: str | None = None 
 
 class FriendRequestInfo(BaseModel):
     id: str
     user_id: str
     username: str
-    name: str = None
+    name: str | None = None 
     created_at: str
 
 class FriendWishlistResponse(BaseModel):
     id: str
     title: str
-    description: str = None
-    color: str = None
+    description: str | None = None
+    color: str | None = None
     item_count: int = 0
     owner_id: str
     owner_name: str
