@@ -545,6 +545,12 @@ def get_my_claimed_items(
     response_items = []
     for item in items:
         owner = item.user
+        wishlist = item.wishlist
+        
+        # Items inherit due date from their parent wishlist
+        wishlist_due_date = None
+        if wishlist and wishlist.due_date:
+            wishlist_due_date = wishlist.due_date.isoformat() if hasattr(wishlist.due_date, 'isoformat') else str(wishlist.due_date)
         
         response_items.append({
             "id": str(item.id),
@@ -554,7 +560,8 @@ def get_my_claimed_items(
             "owner_id": str(item.user_id),
             "owner_name": owner.name if owner and owner.name else owner.username if owner else "Unknown",
             "wishlist_id": str(item.wishlist_id) if item.wishlist_id else None,
-            "wishlist_color": item.wishlist.color if item.wishlist else None,
+            "wishlist_color": wishlist.color if wishlist else None,
+            "wishlist_due_date": wishlist_due_date,
             "claimed_at": item.claimed_at.isoformat() if item.claimed_at else None
         })
     
