@@ -1,1 +1,1 @@
-https://cardinal-wishlist.onrender.com
+https://cardinalwishlist.vercel.app/
