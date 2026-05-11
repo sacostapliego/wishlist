@@ -87,7 +87,7 @@ export default function Header({ brand = 'BluJays Wishlist', transparentUntil = 
             w="100%"
             maxW="7xl"
             px={{ base: 4, md: 6 }}
-            h="96px"
+            h={{ base: "96px" , "2xl": "150px" }}
             align="center"
             justify="space-between"
           >
