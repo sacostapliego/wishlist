@@ -1,0 +1,35 @@
+{
+  "name": "wishlist-desktop",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^3.31.0",
+    "@emotion/react": "^11.14.0",
+    "@eslint/eslintrc": "^3.3.4",
+    "@vercel/analytics": "^1.6.1",
+    "axios": "^1.13.4",
+    "browser-image-compression": "^2.0.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "next": "^15.3.0",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0",
+    "react-image-crop": "^11.0.10"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^15.3.0",
+    "typescript": "~5.9.3"
+  }
+}

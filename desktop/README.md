@@ -1,0 +1,1 @@
+Creating a desktop version seperated from the app version of my wishlist app
