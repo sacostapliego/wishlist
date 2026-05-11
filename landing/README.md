@@ -1,0 +1,1 @@
+https://cardinal-wishlist.vercel.app/

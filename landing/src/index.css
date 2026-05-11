@@ -1,0 +1,22 @@
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Height of the scrollbar (for horizontal scrollbars) */
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(25, 25, 25, 1); /* Background of the scrollbar track */
+  border-radius: 10px; /* Rounded corners for the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(32, 32, 32, 1); /* Color of the scrollbar thumb */
+  border-radius: 10px; /* Rounded corners for the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(21, 21, 21, 1); /* Darker color on hover */
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(21, 21, 21, 1); /* Even darker color when active */
+}
