@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 const protectedPaths = new Set([
-  '/',
   '/wishlists/friends',
   '/wishlists/mine',
   '/items/claimed',
