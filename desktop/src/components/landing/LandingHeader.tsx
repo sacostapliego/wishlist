@@ -126,35 +126,36 @@ export function LandingHeader({
                 key={l.label}
                 asChild
                 variant="ghost"
-                size="lg"
+                size={{ base: 'lg', '2xl': 'xl' }}
                 fontWeight="semibold"
                 borderRadius="8px"
                 _hover={{ '& .nav-icon': { transform: 'rotate(-15deg)' } }}
               >
                 <NextLink href={l.href}>
-                  <HStack gap={2}>
+                  <HStack gap={{ base: 2, '2xl': 3 }}>
                     <Box
                       as={Icon}
                       className="nav-icon"
-                      fontSize="lg"
+                      fontSize={{ base: 'lg', '2xl': '2xl' }}
                       transition="transform 200ms ease"
                       willChange="transform"
                     />
-                    <Text>{l.label}</Text>
+                    <Text fontSize={{ base: 'md', '2xl': 'xl' }}>{l.label}</Text>
                   </HStack>
                 </NextLink>
               </Button>
             )
           })}
-          <HStack gap={2} pl={2}>
+          <HStack gap={{ base: 2, '2xl': 4 }} pl={{ base: 2, '2xl': 4 }}>
             <HoverArrowButton
               href={appEntryHref}
               bg="#1e1e1e"
               color="white"
-              px={6}
+              px='6'
+              py='8'
+              fontSize={{ base: 'md', '2xl': 'xl' }}
               borderRadius="16px"
               leftIcon={FaSafari}
-              py={8}
             >
               Go To Wishlist App
             </HoverArrowButton>
