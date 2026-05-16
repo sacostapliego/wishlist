@@ -48,7 +48,7 @@ export function WishlistItem({
       flexShrink={0}
       bg={color || COLORS.cardGray}
     >
-      <Image src={thumbnail.url} alt={title} w="100%" h="100%" objectFit="cover" />
+      <Image src={thumbnail.url} alt={title} w="100%" h="100%" objectFit="cover" draggable={false} />
     </Box>
   ) : (
     <Box
@@ -67,15 +67,19 @@ export function WishlistItem({
   if (isCollapsed) {
     return (
       <IconButton
+        type="button"
         aria-label={title}
         variant="ghost"
-        onClick={onClick}
+        onClick={(e) => {
+          e.preventDefault()
+          onClick()
+        }}
         w="100%"
         {...(isActive
           ? { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.45)' }, bg: 'whiteAlpha.100' }
           : {})}
       >
-        {iconBox}
+        <Box pointerEvents="none">{iconBox}</Box>
       </IconButton>
     )
   }

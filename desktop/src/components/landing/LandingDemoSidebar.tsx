@@ -53,37 +53,41 @@ export function LandingDemoSidebar({
           isExpanded={false}
           onNavigate={() => router.push('/auth/login')}
         />
-        <IconButton aria-label="Home" variant="ghost" size="sm" onClick={onDemoHome}>
+        <IconButton aria-label="Home" type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); onDemoHome(); }}>
           <LuHouse />
         </IconButton>
         <IconButton
           aria-label="Create (preview only)"
+          type="button"
           variant="ghost"
           size="sm"
           opacity={0.42}
           pointerEvents="none"
           tabIndex={-1}
+          disabled
           cursor="not-allowed"
         >
           <LuPlus />
         </IconButton>
         <IconButton
           aria-label="Friends (preview only)"
+          type="button"
           variant="ghost"
           size="sm"
           opacity={0.42}
           pointerEvents="none"
           tabIndex={-1}
+          disabled
           cursor="not-allowed"
         >
           <LuUsers />
         </IconButton>
       </VStack>
 
-      <Separator flexShrink={0} my={2} />
+      <Separator flexShrink={0} my={1} />
 
       {/* Stage 2 — friend lists as rounded thumbnails (tap opens sample list); not duplicated in stage 3 */}
-      <VStack flexShrink={0} align="center" gap={2} pb={1}>
+      <VStack flexShrink={0} align="center" gap={1.5} pb={0}>
         {friends.map((w) => {
           const thumb = resolveWishlistThumbnail({
             id: w.id,
@@ -96,6 +100,7 @@ export function LandingDemoSidebar({
           return (
             <IconButton
               key={`fr-${w.id}`}
+              type="button"
               aria-label={w.owner_label ?? w.name}
               variant="ghost"
               size="sm"
@@ -106,7 +111,11 @@ export function LandingDemoSidebar({
               w={`${FRIEND_TILE}px`}
               borderRadius="md"
               overflow="hidden"
-              onClick={() => onSelectWishlist(w.id)}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onSelectWishlist(w.id)
+              }}
               flexShrink={0}
               {...(active
                 ? {
@@ -118,9 +127,10 @@ export function LandingDemoSidebar({
                 : { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.14)' } })}
             >
               {thumb.type === 'image' ? (
-                <Image src={thumb.url} alt="" w="100%" h="100%" objectFit="cover" />
+                <Image pointerEvents="none" src={thumb.url} alt="" w="100%" h="100%" objectFit="cover" draggable={false} />
               ) : (
                 <Box
+                  pointerEvents="none"
                   w="100%"
                   h="100%"
                   bg={w.color || COLORS.cardGray}
@@ -136,7 +146,7 @@ export function LandingDemoSidebar({
         })}
       </VStack>
 
-      <Separator flexShrink={0} my={2} />
+      <Separator flexShrink={0} my={1} />
 
       {/* Stage 3 — your wishlists only (scroll when many) */}
       <VStack align="stretch" gap={1} flex={1} minH={0} overflowY="auto" overflowX="hidden">

@@ -62,15 +62,19 @@ export function FriendWishlistItem({
   if (isCollapsed) {
     return (
       <IconButton
+        type="button"
         aria-label={`${title} - ${ownerName}`}
         variant="ghost"
-        onClick={onClick}
+        onClick={(e) => {
+          e.preventDefault()
+          onClick()
+        }}
         w="100%"
         {...(isActive
           ? { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.45)' }, bg: 'whiteAlpha.100' }
           : {})}
       >
-        {iconBox}
+        <Box pointerEvents="none">{iconBox}</Box>
       </IconButton>
     )
   }

@@ -142,7 +142,7 @@ export function LandingInteractiveDemo() {
           p={{ base: 3, lg: 4 }}
           gap={{ base: 3, lg: 4 }}
           align="stretch"
-          h={{ base: 'min(660px, 80vh)', md: '740px', lg: '760px' }}
+          h={{ base: 'min(660px, 80vh)', md: '680px', lg: '680px' }}
           maxH="80vh"
           minH={{ base: '560px', md: '620px' }}
         >
@@ -153,6 +153,8 @@ export function LandingInteractiveDemo() {
             overflow="hidden"
             borderRadius="lg"
             bg="#141414"
+            position="relative"
+            zIndex={2}
           >
             <LandingDemoSidebar
               mine={LANDING_DEMO_WISHLISTS}
@@ -183,6 +185,7 @@ export function LandingInteractiveDemo() {
                     wishlists={friendsCarousel}
                     onShowAll={noop}
                     hideShowAll
+                    hideArrowButtons
                     onWishlistClick={openWishlist}
                     compact
                   />
@@ -193,6 +196,7 @@ export function LandingInteractiveDemo() {
                     wishlists={myCarousel}
                     onShowAll={noop}
                     hideShowAll
+                    hideArrowButtons
                     onWishlistClick={openWishlist}
                     compact
                   />

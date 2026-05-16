@@ -12,6 +12,7 @@ export function ProfileSection({ displayName, profileImage, isExpanded, onNaviga
   if (isExpanded) {
     return (
       <Button
+        type="button"
         variant="ghost"
         justifyContent="flex-start"
         onClick={onNavigate}
@@ -37,6 +38,7 @@ export function ProfileSection({ displayName, profileImage, isExpanded, onNaviga
   return (
     <IconButton
       aria-label="Profile"
+      type="button"
       variant="ghost"
       onClick={onNavigate}
       w="100%"

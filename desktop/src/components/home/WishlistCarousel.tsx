@@ -24,6 +24,8 @@ interface WishlistCarouselProps {
   compact?: boolean
   /** Omit the "Show all" control (e.g. marketing demo). */
   hideShowAll?: boolean
+  /** Hide prev/next arrows (small static demos). */
+  hideArrowButtons?: boolean
 }
 
 // Extracted scroll button component - no performance issues
@@ -64,6 +66,7 @@ export function WishlistCarousel({
   onWishlistClick,
   compact = false,
   hideShowAll = false,
+  hideArrowButtons = false,
 }: WishlistCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
@@ -93,8 +96,16 @@ export function WishlistCarousel({
         )}
       </HStack>
 
-      <Box position="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-        <ScrollButton direction="left" onClick={() => scroll('left')} isVisible={isHovered} />
+      <Box
+        position="relative"
+        {...(!hideArrowButtons
+          ? {
+              onMouseEnter: () => setIsHovered(true),
+              onMouseLeave: () => setIsHovered(false),
+            }
+          : {})}
+      >
+        {!hideArrowButtons && <ScrollButton direction="left" onClick={() => scroll('left')} isVisible={isHovered} />}
 
         <HStack
           ref={scrollRef}
@@ -127,12 +138,16 @@ export function WishlistCarousel({
                 cursor="pointer"
                 transition="all 0.2s"
                 _hover={{ bg: '#2a2a2a' }}
-                onClick={() => onWishlistClick?.(wishlist.id)}
+                onClick={(e) => {
+                  e.preventDefault()
+                  onWishlistClick?.(wishlist.id)
+                }}
                 display="flex"
                 flexDirection="column"
                 gap={compact ? 1 : 2}
               >
                 <Box
+                  pointerEvents="none"
                   w="100%"
                   aspectRatio={1}
                   overflow="hidden"
@@ -143,12 +158,12 @@ export function WishlistCarousel({
                   bg={wishlist.color || COLORS.cardGray}
                 >
                   {thumbnail.type === 'image' ? (
-                    <Image src={thumbnail.url} alt={wishlist.name} w="100%" h="100%" objectFit="cover" />
+                    <Image src={thumbnail.url} alt={wishlist.name} w="100%" h="100%" objectFit="cover" draggable={false} />
                   ) : (
                     <Box as={thumbnail.icon} boxSize={iconSz} color="white" />
                   )}
                 </Box>
-                <Box>
+                <Box pointerEvents="none">
                   <Text color="white" fontWeight="semibold" fontSize={nameFs} lineClamp={1}>
                     {wishlist.name}
                   </Text>
@@ -158,11 +173,9 @@ export function WishlistCarousel({
           })}
         </HStack>
 
-        <ScrollButton 
-          direction="right" 
-          onClick={() => scroll('right')} 
-          isVisible={isHovered} 
-        />
+        {!hideArrowButtons && (
+          <ScrollButton direction="right" onClick={() => scroll('right')} isVisible={isHovered} />
+        )}
       </Box>
     </Box>
   )
