@@ -4,6 +4,7 @@ import { Box, Container, HStack, Text, VStack, Image } from '@chakra-ui/react'
 import { FaSafari } from 'react-icons/fa'
 import { HoverArrowButton } from '@/components/landing/HoverArrowButton'
 import { FeaturesSection } from '@/components/landing/FeaturesSection'
+import { LandingInteractiveDemo } from '@/components/landing/LandingInteractiveDemo'
 
 const APP_ENTRY = '/auth/login'
 
@@ -34,26 +35,17 @@ export function LandingContent() {
           Go To Wishlist App
         </HoverArrowButton>
 
-        <HStack justify="center" gap={0} w="full" flex={1}>
-          <Image
-            h={{ base: '1xl', md: '3xl' }}
-            src="/landing/screenshots/2-portrait.png"
-            alt="Wishlist app screenshot"
-            display={{ base: 'none', md: 'block' }}
-          />
-          <Image
-            h={{ base: '2xl', md: '4xl' }}
-            src="/landing/screenshots/1-portrait.png"
-            alt="Wishlist app screenshot"
-          />
-          <Image
-            h={{ base: '1xl', md: '3xl' }}
-            src="/landing/screenshots/3-portrait.png"
-            alt="Wishlist app screenshot"
-            display={{ base: 'none', md: 'block' }}
-          />
-        </HStack>
-        <Box h="5vh" />
+        <Box display={{ base: 'block', md: 'none' }}  w="full">
+          <HStack justify="center" gap={0} w="full" flex={1}>
+            <Image
+              h={{ base: '2xl', md: '4xl' }}
+              src="/landing/screenshots/1-portrait.png"
+              alt="Wishlist app screenshot"
+            />
+          </HStack>
+        </Box>
+
+        <LandingInteractiveDemo />
       </Container>
 
       <Container id="features" w="container.sm">

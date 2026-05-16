@@ -24,27 +24,52 @@ interface SharedWishlistViewProps {
     thumbnail_type?: 'icon' | 'image'
     thumbnail_icon?: string | null
     thumbnail_image?: string | null
+    demo_thumbnail_url?: string | null
     item_count?: number
     updated_at?: string
     created_at?: string
     due_date?: string | null
   }
+  demoMode?: boolean
+  onDemoBack?: () => void
+  compactHeader?: boolean
 }
 
-export function SharedWishlistView({ wishlist }: SharedWishlistViewProps) {
+export function SharedWishlistView({
+  wishlist,
+  demoMode = false,
+  onDemoBack,
+  compactHeader = false,
+}: SharedWishlistViewProps) {
   const router = useRouter()
+  const handleBack = () => (onDemoBack ? onDemoBack() : router.back())
   const { user, isLoggedIn } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFriend, setIsFriend] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [loading, setLoading] = useState(true)
-  
-  const profileImage = wishlist.owner_id ? `${API_URL}users/${wishlist.owner_id}/profile-image` : null
+
+  const profileImage =
+    demoMode || !wishlist.owner_id ? null : `${API_URL}users/${wishlist.owner_id}/profile-image`
+
+  const thumbBox = compactHeader
+    ? ({ base: '4rem', md: '5.5rem', lg: '6rem', '2xl': '7rem' } as Record<string, string>)
+    : { base: '9rem', md: '13rem', lg: '15rem', '2xl': '17rem' }
+  const thumbIcon = compactHeader
+    ? ({ base: '2.25rem', md: '2.75rem', lg: '3rem', '2xl': '3.25rem' } as Record<string, string>)
+    : { base: '5rem', md: '6rem', lg: '8rem', '2xl': '10rem' }
+  const titleSize = compactHeader
+    ? { base: 'lg' as const, md: 'xl' as const, lg: '2xl' as const }
+    : { base: 'xl' as const, md: '3xl' as const, lg: '4xl' as const }
 
   useEffect(() => {
+    if (demoMode) {
+      setLoading(false)
+      return
+    }
     checkRelationship()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wishlist.id, wishlist.owner_id, user?.id, isLoggedIn])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wishlist.id, wishlist.owner_id, user?.id, isLoggedIn, demoMode])
 
   const formatDueDate = (dateString?: string | null) => {
     if (!dateString) return null
@@ -160,68 +185,74 @@ export function SharedWishlistView({ wishlist }: SharedWishlistViewProps) {
       })
 
   return (
-    <Box bg={wishlist.color || COLORS.cardGray} px={{base:4, md:6}} py={{base:4, md:6}}>
+    <Box
+      bg={wishlist.color || COLORS.cardGray}
+      px={compactHeader ? 3 : { base: 4, md: 6 }}
+      py={compactHeader ? 3 : { base: 4, md: 6 }}
+    >
       {/* Header with back button and menu */}
-      <HStack justify="space-between" mb={4}>
+      <HStack justify="space-between" mb={compactHeader ? 2 : 4}>
         <IconButton
           aria-label="Go back"
           variant="ghost"
-          onClick={() => router.back()}
+          onClick={handleBack}
           color="white"
-          size="lg"
+          size={compactHeader ? 'md' : 'lg'}
         >
           <LuArrowLeft />
         </IconButton>
 
-        <IconButton
-          aria-label="Menu"
-          variant="ghost"
-          onClick={() => setIsMenuOpen(true)}
-          color="white"
-          size="lg"
-          disabled={loading}
-        >
-          <LuEllipsisVertical />
-        </IconButton>
+        {!demoMode && (
+          <IconButton
+            aria-label="Menu"
+            variant="ghost"
+            onClick={() => setIsMenuOpen(true)}
+            color="white"
+            size={compactHeader ? 'md' : 'lg'}
+            disabled={loading}
+          >
+            <LuEllipsisVertical />
+          </IconButton>
+        )}
       </HStack>
 
-      <HStack align="flex-end" gap={6}>
+      <HStack align="flex-end" gap={compactHeader ? 4 : 6}>
         {/* Wishlist Icon */}
         <WishlistThumbnail
           wishlist={wishlist}
-          boxSize={{ base: "9rem", md: "13rem", lg: "15rem", '2xl': "17rem" }}
-          iconSize={{ base: "5rem", md: "6rem", lg: "8rem", '2xl': "10rem" }}
+          boxSize={thumbBox}
+          iconSize={thumbIcon}
           sx={{ boxShadow: '0 4px 60px rgba(0,0,0,0.5)' }}
           showBackground={false}
         />
 
         {/* Wishlist Info */}
-        <VStack align="start" gap={2} pb={4}>
-          <Heading 
-            size={{ base: "xl", md: "3xl", lg: "4xl" }} 
-            color="white"
-            lineHeight="1.2"
-            wordBreak="break-word"
-          >
+        <VStack align="start" gap={compactHeader ? 1 : 2} pb={compactHeader ? 2 : 4}>
+          <Heading size={titleSize} color="white" lineHeight="1.2" wordBreak="break-word">
             {wishlist.title}
           </Heading>
-          
+
           {wishlist.description && (
-            <Text color={COLORS.text.secondary} fontSize="sm" mt={2} lineClamp={1}>
+            <Text color={COLORS.text.secondary} fontSize={compactHeader ? 'xs' : 'sm'} mt={compactHeader ? 0 : 2} lineClamp={1}>
               {wishlist.description}
             </Text>
           )}
 
-          <HStack gap={2} color={COLORS.text.secondary} fontSize="sm" mt={2}>
-            <Avatar.Root 
+          <HStack gap={2} color={COLORS.text.secondary} fontSize={compactHeader ? 'xs' : 'sm'} mt={compactHeader ? 0 : 2}>
+            <Avatar.Root
               size="xs"
               cursor="pointer"
-              onClick={() => router.push(`/profile/${wishlist.owner_id}`)}
+              onClick={() => (demoMode ? router.push('/auth/login') : router.push(`/profile/${wishlist.owner_id}`))}
             >
               <Avatar.Fallback name={wishlist.owner_name} />
               <Avatar.Image src={profileImage || undefined} />
             </Avatar.Root>
-            <Text fontWeight="semibold" color="white" cursor="pointer" onClick={() => router.push(`/profile/${wishlist.owner_id}`)}>
+            <Text
+              fontWeight="semibold"
+              color="white"
+              cursor="pointer"
+              onClick={() => (demoMode ? router.push('/auth/login') : router.push(`/profile/${wishlist.owner_id}`))}
+            >
               {wishlist.owner_name}
             </Text>
             <Text display={{ base: 'none', md: 'block' }}>•</Text>
@@ -238,11 +269,7 @@ export function SharedWishlistView({ wishlist }: SharedWishlistViewProps) {
         </VStack>
       </HStack>
 
-      <WishlistMenu
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        options={menuOptions}
-      />
+      {!demoMode && <WishlistMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} options={menuOptions} />}
     </Box>
   )
 }

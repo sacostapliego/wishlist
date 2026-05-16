@@ -10,12 +10,34 @@ interface WishlistItemProps {
   thumbnail_type?: 'icon' | 'image'
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
+  demo_thumbnail_url?: string | null
   isCollapsed: boolean
   onClick: () => void
+  /** Highlights the row when this list is the active wishlist (e.g. marketing demo). */
+  isActive?: boolean
 }
 
-export function WishlistItem({ title, color, image, thumbnail_type, thumbnail_icon, thumbnail_image, isCollapsed, onClick, id }: WishlistItemProps) {
-  const thumbnail = resolveWishlistThumbnail({ id, thumbnail_type, thumbnail_icon, thumbnail_image, image })
+export function WishlistItem({
+  title,
+  color,
+  image,
+  thumbnail_type,
+  thumbnail_icon,
+  thumbnail_image,
+  isCollapsed,
+  onClick,
+  id,
+  demo_thumbnail_url,
+  isActive = false,
+}: WishlistItemProps) {
+  const thumbnail = resolveWishlistThumbnail({
+    id,
+    thumbnail_type,
+    thumbnail_icon,
+    thumbnail_image,
+    image,
+    demo_thumbnail_url,
+  })
 
   const iconBox = thumbnail.type === 'image' ? (
     <Box
@@ -49,6 +71,9 @@ export function WishlistItem({ title, color, image, thumbnail_type, thumbnail_ic
         variant="ghost"
         onClick={onClick}
         w="100%"
+        {...(isActive
+          ? { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.45)' }, bg: 'whiteAlpha.100' }
+          : {})}
       >
         {iconBox}
       </IconButton>

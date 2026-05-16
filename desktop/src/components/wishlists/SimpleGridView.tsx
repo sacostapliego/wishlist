@@ -25,6 +25,10 @@ interface WishlistItemViewProps {
   isSelectionMode?: boolean
   selectedItems?: string[]
   onToggleSelect?: (itemId: string) => void
+  /** When provided, overrides API image URLs (e.g. landing demo thumbnails). */
+  resolveItemImageUrl?: (item: WishlistItem) => string | undefined | null
+  /** Tighter layout for framed previews / marketing demos. */
+  compact?: boolean
 }
 
 const getPriorityValue = (priority?: string | number): number => {
@@ -55,7 +59,9 @@ export function SimpleGridView({
   onItemClick,
   isSelectionMode = false,
   selectedItems = [],
-  onToggleSelect
+  onToggleSelect,
+  resolveItemImageUrl,
+  compact = false,
 }: WishlistItemViewProps) {
   const sortedItems = useMemo(() => {
     const itemsCopy = [...items]
@@ -72,7 +78,18 @@ export function SimpleGridView({
     }
   }, [items, sortBy])
 
-  const backgroundLightColor = getLightColor(wishlistColor || COLORS.cardGray);
+  const backgroundLightColor = getLightColor(wishlistColor || COLORS.cardGray)
+
+  const resolveImageSrc = (item: WishlistItem) => {
+    const resolved = resolveItemImageUrl?.(item)
+    if (resolved != null && resolved !== '') {
+      return resolved
+    }
+    if (item.id && item.image) {
+      return `${API_URL}wishlist/${item.id}/image`
+    }
+    return ''
+  }
 
   const handleItemClick = (item: WishlistItem) => {
       if (isSelectionMode && onToggleSelect) {
@@ -83,10 +100,17 @@ export function SimpleGridView({
     }
 
 
+  const gridColumns = compact
+    ? { base: 2, md: 2, lg: 2, xl: 2 }
+    : { base: 2, md: 3, lg: 4, xl: 5 }
+  const gap = compact ? 2 : 4
+  const pad = compact ? { px: 2, py: 2 } : { px: 8, py: 4 }
+
   return (
-    <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} gap={4} px={8} py={4}>
+    <SimpleGrid columns={gridColumns} gap={gap} {...pad}>
       {sortedItems.map((item) => {
-        const hasImage = item.id && item.image
+        const imgSrc = resolveImageSrc(item)
+        const showImageLayout = Boolean(imgSrc)
         const baseWishlistColor = wishlistColor || COLORS.cardGray
         
         const itemBackgroundColor = sortBy === 'priority-high' 
@@ -112,7 +136,7 @@ export function SimpleGridView({
                   : COLORS.cardGray
             }
           >
-            {hasImage ? (
+            {showImageLayout ? (
               <>
                 <Box
                   w="100%"
@@ -123,43 +147,36 @@ export function SimpleGridView({
                   justifyContent="center"
                   overflow="hidden"
                 >
-                  <Image
-                    p={4}
-                    src={`${API_URL}wishlist/${item.id}/image`}
-                    alt={item.name}
-                    maxW="100%"
-                    maxH="100%"
-                    objectFit="contain"
-                  />
+                  <Image p={compact ? 2 : 4} src={imgSrc} alt={item.name} maxW="100%" maxH="100%" objectFit="contain" />
                 </Box>
-                <VStack align="start" p={3} gap={1}>
-                  <Text color="white" fontWeight="semibold" fontSize="sm" lineClamp={2}>
+                <VStack align="start" p={compact ? 2 : 3} gap={1}>
+                  <Text color="white" fontWeight="semibold" fontSize={compact ? 'xs' : 'sm'} lineClamp={2}>
                     {item.name}
                   </Text>
                   <HStack justify="space-between" w="100%">
                     {item.price !== undefined && item.price !== null && (
-                      <Text color={COLORS.text.secondary} fontSize="sm" fontWeight="bold">
+                      <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : 'sm'} fontWeight="bold">
                         ${item.price.toFixed(2)}
                       </Text>
                     )}
-                    <Text color={COLORS.text.secondary} fontSize="0.75rem">
+                    <Text color={COLORS.text.secondary} fontSize={compact ? '0.65rem' : '0.75rem'}>
                       {formatDate(item.created_at)}
                     </Text>
                   </HStack>
                 </VStack>
               </>
             ) : (
-              <VStack align="start" p={4} gap={2} minH="150px" justify="space-between">
-                <Text color="white" fontWeight="semibold" fontSize="md" lineClamp={3}>
+              <VStack align="start" p={compact ? 3 : 4} gap={2} minH={compact ? '96px' : '150px'} justify="space-between">
+                <Text color="white" fontWeight="semibold" fontSize={compact ? 'sm' : 'md'} lineClamp={3}>
                   {item.name}
                 </Text>
                 <VStack align="start" gap={1} w="100%">
                   {item.price !== undefined && item.price !== null && (
-                    <Text color={COLORS.text.secondary} fontSize="sm" fontWeight="bold">
+                    <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : 'sm'} fontWeight="bold">
                       ${item.price.toFixed(2)}
                     </Text>
                   )}
-                  <Text color={COLORS.text.secondary} fontSize="0.75rem">
+                  <Text color={COLORS.text.secondary} fontSize={compact ? '0.65rem' : '0.75rem'}>
                     {formatDate(item.created_at)}
                   </Text>
                 </VStack>

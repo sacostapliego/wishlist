@@ -6,9 +6,10 @@ interface WishlistFiltersProps {
   sortBy: SortOption
   onSortChange: (sortOption: SortOption) => void
   wishlistColor?: string
+  compact?: boolean
 }
 
-export function WishlistFilters({ sortBy, onSortChange, wishlistColor }: WishlistFiltersProps) {
+export function WishlistFilters({ sortBy, onSortChange, wishlistColor, compact = false }: WishlistFiltersProps) {
   const activeColor = wishlistColor || COLORS.primary
 
   const filterButtons = [
@@ -26,12 +27,17 @@ export function WishlistFilters({ sortBy, onSortChange, wishlistColor }: Wishlis
     }
   }
 
+  const pad = compact ? { px: { base: 1, md: 2 }, py: { base: 2, md: 2 } } : { px: { base: 1, md: 8 }, py: { base: 2, md: 4 } }
+  const btnSize = compact
+    ? ({ base: 'xs' as const, md: 'xs' as const, lg: 'sm' as const })
+    : ({ base: 'sm' as const, md: 'md' as const, lg: 'lg' as const })
+
   return (
-    <HStack justifyContent={{base: 'flex-end', md: 'flex-start'}} gap={2} px={{base: 1, md: 8}} py={{base: 2, md: 4}}>
+    <HStack justifyContent={{ base: 'flex-end', md: 'flex-start' }} gap={compact ? 1 : 2} {...pad}>
       {filterButtons.map((filter) => (
         <Button
           key={filter.value}
-          size={{ base: "sm", md: "md", lg: "lg" }}
+          size={btnSize}
           bg={sortBy === filter.value ? activeColor : 'transparent'}
           color={sortBy === filter.value ? 'white' : COLORS.text.secondary}
           _hover={{

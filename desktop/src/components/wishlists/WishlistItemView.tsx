@@ -26,6 +26,8 @@ interface WishlistItemViewProps {
   isSelectionMode?: boolean
   selectedItems?: string[]
   onToggleSelect?: (itemId: string) => void
+  resolveItemImageUrl?: (item: WishlistItem) => string | undefined | null
+  compact?: boolean
 }
 
 const getPriorityValue = (priority?: string | number): number => {
@@ -48,14 +50,16 @@ const formatDate = (dateString?: string) => {
   return date.toLocaleDateString()
 }
 
-export function WishlistItemView({ 
-  items, 
-  wishlistColor, 
-  sortBy, 
+export function WishlistItemView({
+  items,
+  wishlistColor,
+  sortBy,
   onItemClick,
   isSelectionMode = false,
   selectedItems = [],
-  onToggleSelect
+  onToggleSelect,
+  resolveItemImageUrl,
+  compact = false,
 }: WishlistItemViewProps) {
   const sortedItems = useMemo(() => {
     const itemsCopy = [...items]
@@ -74,6 +78,15 @@ export function WishlistItemView({
 
   const backgroundLightColor = getLightColor(wishlistColor || COLORS.cardGray)
 
+  const resolveImageSrc = (item: WishlistItem) => {
+    const resolved = resolveItemImageUrl?.(item)
+    if (resolved != null && resolved !== '') return resolved
+    if (item.id && item.image) return `${API_URL}wishlist/${item.id}/image`
+    return ''
+  }
+
+  const imgBox = compact ? { base: '3.25rem', md: '3.75rem' } : { base: '5rem', md: '9rem' }
+
   const handleItemClick = (item: WishlistItem) => {
     if (isSelectionMode && onToggleSelect) {
       onToggleSelect(item.id)
@@ -83,9 +96,10 @@ export function WishlistItemView({
   }
 
   return (
-    <VStack align="stretch" gap={{ base: '1rem', md: '1rem' }} px={{ base: '1rem', md: '2rem' }} py={{ base: '0', md: '1rem' }}>
+    <VStack align="stretch" gap={compact ? '0.5rem' : { base: '1rem', md: '1rem' }} px={compact ? { base: '0.75rem', md: '1rem' } : { base: '1rem', md: '2rem' }} py={compact ? 2 : { base: '0', md: '1rem' }}>
       {sortedItems.map((item) => {
-        const hasImage = item.id && item.image
+        const imgSrc = resolveImageSrc(item)
+        const hasImage = Boolean(imgSrc)
         const baseWishlistColor = wishlistColor || COLORS.cardGray
         
         const itemBackgroundColor = sortBy === 'priority-high' 
@@ -99,8 +113,8 @@ export function WishlistItemView({
         return (
           <HStack
             key={item.id}
-            p="1rem"
-            gap={{ base: "1rem", md:"2rem"}}
+            p={compact ? '0.5rem 0.65rem' : '1rem'}
+            gap={compact ? '0.75rem' : { base: '1rem', md: '2rem' }}
             cursor="pointer"
             transition="all 0.2s"
             borderRadius="0.375rem"
@@ -138,8 +152,8 @@ export function WishlistItemView({
             {/* Image - Only render if hasImage */}
             {hasImage && (
               <Box
-                w={{ base: '5rem', md: '9rem' }}
-                h={{ base: '5rem', md: '9rem' }}
+                w={imgBox}
+                h={imgBox}
                 borderRadius="0.375rem"
                 bg={backgroundLightColor}
                 flexShrink={0}
@@ -148,14 +162,7 @@ export function WishlistItemView({
                 justifyContent="center"
                 overflow="hidden"
               >
-                <Image
-                  p={{base: 1, md: 2}}
-                  src={`${API_URL}wishlist/${item.id}/image`}
-                  alt={item.name}
-                  maxW="100%"
-                  maxH="100%"
-                  objectFit="contain"
-                />
+                <Image p={compact ? 1 : { base: 1, md: 2 }} src={imgSrc} alt={item.name} maxW="100%" maxH="100%" objectFit="contain" />
               </Box>
             )}
 
@@ -167,38 +174,23 @@ export function WishlistItemView({
             >
               {/* Item Name */}
               {hasImage && (<Box flex={1} minW={0}>
-                <Text 
-                  color="white" 
-                  fontWeight="medium" 
-                  fontSize="1rem"
-                  lineClamp={2}
-                >
+                <Text color="white" fontWeight="medium" fontSize={compact ? 'sm' : '1rem'} lineClamp={2}>
                   {item.name}
                 </Text>
               </Box>)}
 
               {!hasImage && (
-                <Box 
-                  h={{ base: '5rem', md: '9rem' }}
-                  flex={1} 
-                  minW={0}
-                  display={'flex'}
-                  alignItems="center"
-                >
-                  <Text 
-                    color="white"
-                    fontWeight="medium" 
-                    fontSize="1rem"
-                    lineClamp={2}
-                  >
+                <Box h={imgBox} flex={1} minW={0} display="flex" alignItems="center">
+                  <Text color="white" fontWeight="medium" fontSize={compact ? 'sm' : '1rem'} lineClamp={2}>
                     {item.name}
                   </Text>
-              </Box>)}
+                </Box>
+              )}
 
               {/* Price */}
               <Box w={{ base: '4rem', md: '6.25rem' }} textAlign={{base:"left", md:"right"}}>
                 {item.price !== undefined && item.price !== null ? (
-                  <Text color={COLORS.text.secondary} fontSize="0.875rem" fontWeight="semibold">
+                  <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : '0.875rem'} fontWeight="semibold">
                     ${item.price.toFixed(2)}
                   </Text>
                 ) : (
@@ -208,8 +200,8 @@ export function WishlistItemView({
             </Stack>
 
             {/* Date - Hidden on mobile */}
-            <Box w="7.5rem" textAlign="right" display={{ base: 'none', md: 'block' }}>
-              <Text color={COLORS.text.secondary} fontSize="0.75rem">
+            <Box w={compact ? '5rem' : '7.5rem'} textAlign="right" display={{ base: compact ? 'none' : 'none', md: 'block' }}>
+              <Text color={COLORS.text.secondary} fontSize={compact ? '10px' : '0.75rem'}>
                 {formatDate(displayDate)}
               </Text>
             </Box>

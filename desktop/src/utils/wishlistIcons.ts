@@ -34,7 +34,12 @@ export function resolveWishlistThumbnail(wishlist: {
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
   image?: string
+  /** Absolute URL for thumbnails in static demos — wins over API URLs */
+  demo_thumbnail_url?: string | null
 }): { type: 'icon'; icon: IconType } | { type: 'image'; url: string } {
+  if (wishlist.demo_thumbnail_url) {
+    return { type: 'image', url: wishlist.demo_thumbnail_url }
+  }
   if (wishlist.thumbnail_type === 'image' && wishlist.thumbnail_image && wishlist.id) {
     return { type: 'image', url: `${API_URL}wishlists/${wishlist.id}/thumbnail` }
   }

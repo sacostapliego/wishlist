@@ -12,6 +12,7 @@ interface Wishlist {
   thumbnail_type?: 'icon' | 'image'
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
+  demo_thumbnail_url?: string | null
 }
 
 interface WishlistCarouselProps {
@@ -19,6 +20,10 @@ interface WishlistCarouselProps {
   wishlists: Wishlist[]
   onShowAll?: () => void
   onWishlistClick?: (wishlistId: string) => void
+  /** Tighter layout for framed previews / marketing demos. */
+  compact?: boolean
+  /** Omit the "Show all" control (e.g. marketing demo). */
+  hideShowAll?: boolean
 }
 
 // Extracted scroll button component - no performance issues
@@ -52,13 +57,20 @@ function ScrollButton({ direction, onClick, isVisible }: ScrollButtonProps) {
   )
 }
 
-export function WishlistCarousel({ title, wishlists, onShowAll, onWishlistClick }: WishlistCarouselProps) {
+export function WishlistCarousel({
+  title,
+  wishlists,
+  onShowAll,
+  onWishlistClick,
+  compact = false,
+  hideShowAll = false,
+}: WishlistCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 300
+      const scrollAmount = compact ? 220 : 300
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -66,73 +78,78 @@ export function WishlistCarousel({ title, wishlists, onShowAll, onWishlistClick 
     }
   }
 
+  const edgePx = compact ? { base: 2, md: 3 } : { base: 4, md: 8 }
+
   return (
-    <Box mb={{base: 1, md:1}}>
-      <HStack justifyContent="space-between" px={{ base: 4, md: 8 }} >
-        <Heading size="lg" color="white">{title}</Heading>
-        <Button color={COLORS.text.muted} bg={COLORS.background} fontWeight={"bolder"} fontSize="sm" onClick={onShowAll}>
-          Show all
-        </Button>
+    <Box mb={{ base: 1, md: 1 }}>
+      <HStack justifyContent="space-between" px={edgePx}>
+        <Heading size={compact ? 'md' : 'lg'} color="white">
+          {title}
+        </Heading>
+        {!hideShowAll && (
+          <Button color={COLORS.text.muted} bg={COLORS.background} fontWeight={'bolder'} fontSize="sm" onClick={onShowAll}>
+            Show all
+          </Button>
+        )}
       </HStack>
-      
-      <Box 
-        position="relative"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <ScrollButton 
-          direction="left" 
-          onClick={() => scroll('left')} 
-          isVisible={isHovered} 
-        />
+
+      <Box position="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+        <ScrollButton direction="left" onClick={() => scroll('left')} isVisible={isHovered} />
 
         <HStack
           ref={scrollRef}
           overflowX="auto"
-          gap={{base: 1, md:4}}
+          gap={compact ? { base: 1, md: 2 } : { base: 1, md: 4 }}
           css={{
             '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none'
+            scrollbarWidth: 'none',
           }}
           pb={2}
-          pl={{base: 3, md: 8}}
+          pl={compact ? { base: 2, md: 3 } : { base: 3, md: 8 }}
         >
           {wishlists.map((wishlist) => {
             const thumbnail = resolveWishlistThumbnail(wishlist)
-            
+            const cardW = compact
+              ? { base: '7.5rem', md: '9rem', lg: '10rem' }
+              : { base: '10rem', md: '12rem', lg: '13rem' }
+            const iconSz = compact ? '2.85rem' : '5rem'
+            const nameFs = compact
+              ? { base: '0.72rem', md: 'xs', lg: 'sm' }
+              : { base: 'sm', md: 'md', lg: 'lg' }
+
             return (
               <Box
                 key={wishlist.id}
-                w={{base:"10rem", md:"12rem", lg:"13rem"}}
+                w={cardW}
                 flexShrink={0}
                 borderRadius="md"
-                p={4}
+                p={compact ? 2 : 4}
                 cursor="pointer"
                 transition="all 0.2s"
                 _hover={{ bg: '#2a2a2a' }}
                 onClick={() => onWishlistClick?.(wishlist.id)}
                 display="flex"
                 flexDirection="column"
-                gap={2}
+                gap={compact ? 1 : 2}
               >
-                <Box 
+                <Box
                   w="100%"
                   aspectRatio={1}
-                  overflow="hidden" 
-                  borderRadius="md" 
-                  display="flex" 
-                  alignItems="center" 
+                  overflow="hidden"
+                  borderRadius="md"
+                  display="flex"
+                  alignItems="center"
                   justifyContent="center"
                   bg={wishlist.color || COLORS.cardGray}
                 >
                   {thumbnail.type === 'image' ? (
                     <Image src={thumbnail.url} alt={wishlist.name} w="100%" h="100%" objectFit="cover" />
                   ) : (
-                    <Box as={thumbnail.icon} boxSize="5rem" color="white" />
+                    <Box as={thumbnail.icon} boxSize={iconSz} color="white" />
                   )}
                 </Box>
                 <Box>
-                  <Text color="white" fontWeight="semibold" fontSize={{base:"sm", md:"md", lg:"lg"}} lineClamp={1}>
+                  <Text color="white" fontWeight="semibold" fontSize={nameFs} lineClamp={1}>
                     {wishlist.name}
                   </Text>
                 </Box>

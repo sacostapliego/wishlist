@@ -11,23 +11,27 @@ interface FriendWishlistItemProps {
   thumbnail_type?: 'icon' | 'image'
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
+  demo_thumbnail_url?: string | null
   isCollapsed: boolean
   onClick: () => void
+  isActive?: boolean
 }
 
-export function FriendWishlistItem({ 
-  title, 
-  ownerName, 
-  color, 
-  image, 
+export function FriendWishlistItem({
+  title,
+  ownerName,
+  color,
+  image,
   thumbnail_type,
   thumbnail_icon,
   thumbnail_image,
-  isCollapsed, 
+  isCollapsed,
   onClick,
-  id
+  id,
+  demo_thumbnail_url,
+  isActive = false,
 }: FriendWishlistItemProps) {
-  const thumbnail = resolveWishlistThumbnail({ id, thumbnail_type, thumbnail_icon, thumbnail_image, image })
+  const thumbnail = resolveWishlistThumbnail({ id, thumbnail_type, thumbnail_icon, thumbnail_image, image, demo_thumbnail_url })
   
   const iconBox = thumbnail.type === 'image' ? (
     <Box
@@ -62,6 +66,9 @@ export function FriendWishlistItem({
         variant="ghost"
         onClick={onClick}
         w="100%"
+        {...(isActive
+          ? { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.45)' }, bg: 'whiteAlpha.100' }
+          : {})}
       >
         {iconBox}
       </IconButton>

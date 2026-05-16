@@ -91,64 +91,64 @@ export default function Header({ brand = 'BluJays Wishlist', transparentUntil = 
             align="center"
             justify="space-between"
           >
-        {/* Left: Brand */}
-        <HStack spacing={3}>
-          <HoverSwapLogo
-            to="/"
-            imgSrc={icon}
-            imgAlt="BluJays Wishlist logo"
-            text={brand}
-            boxSize="42px"
-            borderRadius="8px"
-            borderColor="white"
-            borderWidth="2px"
-            p={1}
-          />
-        </HStack>
-
-
-        {/* Right: Desktop nav */}
-        <HStack spacing={1} display={{ base: 'none', md: 'flex' }}>
-          {navLinks.map((l) => {
-            const Icon = l.icon;
-            return (
-              <Button
-                key={l.label}
-                as={RouterLink}
-                to={l.to}
-                variant="ghost"
-                size="lg"
-                fontWeight="semibold"
-                borderRadius={'8px'}
-                _hover={{ '& .nav-icon': { transform: 'rotate(-15deg)' } }}
-              >
-                <HStack spacing={2}>
-                  <Box
-                    as={Icon}
-                    className="nav-icon"
-                    fontSize="lg"
-                    transition="transform 200ms ease"
-                    willChange="transform"
-                  />
-                  <Text>{l.label}</Text>
-                </HStack>
-              </Button>
-            );
-          })}
-          <HStack spacing={2} pl={2}>
-            <HoverArrowButton
-              href={wishlistUrl}
-              bg="#1e1e1e"
-              color="white"
-              px={6}
-              borderRadius="16px"
-              leftIcon={FaSafari}
-              py={8}
-            >
-              Go To Wishlist App
-            </HoverArrowButton>
+          {/* Left: Brand */}
+          <HStack spacing={3}>
+            <HoverSwapLogo
+              to="/"
+              imgSrc={icon}
+              imgAlt="BluJays Wishlist logo"
+              text={brand}
+              boxSize="42px"
+              borderRadius="8px"
+              borderColor="white"
+              borderWidth="2px"
+              p={1}
+            />
           </HStack>
-        </HStack>
+
+
+          {/* Right: Desktop nav */}
+          <HStack spacing={1} display={{ base: 'none', md: 'flex' }}>
+            {navLinks.map((l) => {
+              const Icon = l.icon;
+              return (
+                <Button
+                  key={l.label}
+                  as={RouterLink}
+                  to={l.to}
+                  variant="ghost"
+                  size="lg"
+                  fontWeight="semibold"
+                  borderRadius={'8px'}
+                  _hover={{ '& .nav-icon': { transform: 'rotate(-15deg)' } }}
+                >
+                  <HStack spacing={2}>
+                    <Box
+                      as={Icon}
+                      className="nav-icon"
+                      fontSize="lg"
+                      transition="transform 200ms ease"
+                      willChange="transform"
+                    />
+                    <Text>{l.label}</Text>
+                  </HStack>
+                </Button>
+              );
+            })}
+            <HStack spacing={2} pl={2}>
+              <HoverArrowButton
+                href={wishlistUrl}
+                bg="#1e1e1e"
+                color="white"
+                px={6}
+                borderRadius="16px"
+                leftIcon={FaSafari}
+                py={8}
+              >
+                Go To Wishlist App
+              </HoverArrowButton>
+            </HStack>
+          </HStack>
 
         {/* Chakra Drawer */}
         <Drawer.Root placement="right" open={isOpen} onOpenChange={(e) => (e.open ? onOpen() : onClose())}>

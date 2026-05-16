@@ -9,6 +9,7 @@ interface WishlistThumbnailProps {
     thumbnail_image?: string | null
     image?: string
     color?: string
+    demo_thumbnail_url?: string | null
   }
   /** Size of the icon when rendering icon mode */
   iconSize?: string | Record<string, string>

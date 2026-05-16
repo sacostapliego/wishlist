@@ -1,15 +1,14 @@
 'use client'
 
-import { Box, VStack, Heading, Text, Image, IconButton, HStack, Button, Stack } from '@chakra-ui/react'
+import { Box, Heading, Text, IconButton, HStack } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { LuArrowLeft, LuEllipsisVertical, LuCopy, LuExternalLink } from 'react-icons/lu'
 import { COLORS } from '../styles/common'
 import { API_URL } from '../services/api'
 import { toaster } from '../components/ui/toaster'
-import getLightColor from '../components/common/getLightColor'
+import { ItemDetailContent } from '../components/items/ItemDetailContent'
 import { useItemDetail } from '../hooks/useItemDetail'
 import { useItemClaiming } from '../hooks/useItemClaiming'
-import { ItemClaimingSection } from '../components/items/ItemClaimingSection'
 import { ItemMenu, getItemMenuOptions } from '../components/items/ItemMenu'
 import { EditItemModal } from '../components/items/EditItemModal'
 import { useEffect, useState } from 'react'
@@ -60,32 +59,6 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
     handleUnclaimItem,
     cancelGuestModal,
   } = useItemClaiming(item, refetchData)
-
-  const handleCopyUrl = async () => {
-    if (item?.url) {
-      try {
-        await navigator.clipboard.writeText(item.url)
-        toaster.create({
-          title: 'Copied',
-          description: 'URL copied to clipboard!',
-          type: 'success',
-        })
-      } catch (error) {
-        console.error('Failed to copy URL:', error)
-        toaster.create({
-          title: 'Error',
-          description: 'Failed to copy URL',
-          type: 'error',
-        })
-      }
-    }
-  }
-
-  const handleOpenUrl = () => {
-    if (item?.url) {
-      window.open(item.url, '_blank', 'noopener,noreferrer')
-    }
-  }
 
   const handleEditItem = () => {
     setIsEditModalOpen(true)
@@ -170,208 +143,38 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
     )
   }
 
-  const backgroundColor = getLightColor(wishlistColor || COLORS.cardGray)
   const imageUrl = item.image ? `${API_URL}wishlist/${item.id}/image` : null
 
   return (
-    <Box h={{base: "calc(100vh + 80px)", md:"calc(100vh - 32px)"}} w="100%" overflowY="auto" bg={COLORS.background} position="relative">
-      {/* Header */}
-      <Box bg={COLORS.background} px={8} py={4} position="sticky" top={0} zIndex={10}>
-        <HStack justify="space-between">
-          <IconButton
-            aria-label="Go back"
-            variant="ghost"
-            onClick={() => router.back()}
-            color="white"
-            size="lg"
-          >
-            <LuArrowLeft />
-          </IconButton>
-
-          {!isOwner && wishlistInfo && (
-            <VStack gap={0} flex="1" mx={4}>
-              <Text color={COLORS.text.secondary} fontSize="sm">
-                {wishlistInfo.ownerName}
-              </Text>
-              <Text color="white" fontSize="md" fontWeight="semibold">
-                {wishlistInfo.name}
-              </Text>
-            </VStack>
-          )}
-
-          {isOwner && (
-            <Box flex="1" />
-          )}
-
-          {isOwner ? (
-            <IconButton
-              aria-label="Menu"
-              variant="ghost"
-              onClick={() => setIsMenuOpen(true)}
-              color="white"
-              size="lg"
-            >
-              <LuEllipsisVertical />
-            </IconButton>
-          ) : (
-            <Box w="40px" />
-          )}
-        </HStack>
-      </Box>
-
-      {/* Content */}
-      <VStack align="stretch" px={8} pb={{ base: 32, md: 32 }} gap={6}>
-        {/* Image */}
-        {imageUrl && (
-          <Box
-            w={{base: "20rem", md: "22rem", lg: "30rem"}}
-            mx="auto"
-            aspectRatio={1}
-            bg={backgroundColor}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            borderRadius="lg"
-            overflow="hidden"
-          >
-            <Image
-              src={imageUrl}
-              alt={item.name}
-              w="100%"
-              h="100%"
-              objectFit="contain"
-              p={4}
-            />
-          </Box>
-        )}
-
-        {/* Item Details */}
-        <VStack align="stretch" gap={4} mx="auto" w="100%">
-          <Stack direction={{base:'column', md: 'column'}} justify="space-between" align="start" gap={4}>
-            <Heading 
-              size="2xl" 
-              color="white" 
-              flex="1"
-              lineClamp={isNameExpanded ? undefined : 2}
-              cursor="pointer"
-              onClick={() => setIsNameExpanded(!isNameExpanded)}
-              _hover={{ opacity: 0.8 }}
-            >
-              {item.name}
-            </Heading>
-            {item.price !== undefined && item.price !== null && (
-              <Text color="white" fontSize="2xl" fontWeight="bold" flexShrink={0}>
-                ${item.price.toFixed(2)}
-              </Text>
-            )}
-          </Stack>
-
-          {/* URL */}
-          {item.url && (
-            <Box
-              bg={COLORS.cardGray}
-              borderRadius="lg"
-              p={4}
-              maxW={"50rem"}
-            >
-              <HStack gap={3}>
-                <Button
-                  variant="ghost"
-                  onClick={handleOpenUrl}
-                  flex="1"
-                  justifyContent="flex-start"
-                  color={COLORS.text.primary}
-                  _hover={{ bg: COLORS.cardDarkLight }}
-                  px={3}
-                >
-                  <HStack gap={2} w="100%">
-                    <LuExternalLink />
-                    <Text fontSize="sm" lineBreak="anywhere" overflow={'hidden'}>
-                      {item.url}
-                    </Text>
-                  </HStack>
-                </Button>
-                <IconButton
-                  aria-label="Copy URL"
-                  variant="ghost"
-                  onClick={handleCopyUrl}
-                  color={COLORS.text.primary}
-                  _hover={{ bg: COLORS.cardDarkLight }}
-                >
-                  <LuCopy />
-                </IconButton>
-              </HStack>
-            </Box>
-          )}
-
-          {/* Description */}
-          {item.description && (
-            <Text color={COLORS.text.secondary} fontSize="md">
-              {item.description}
-            </Text>
-          )}
-        </VStack>
-      </VStack>
-
-      {/* Sticky Claim Button - Only for non-owners */}
-      {!isOwner && isLoggedIn && (
-        <Box
-          position="fixed"
-          bottom={{ base: "calc(64px + 1rem)", md: "1rem" }}
-          left={{ base: 0, md: "calc(var(--sidebar-width) + 51px)" }}
-          right={{ base: 0, md: "16px" }}
-          px={4}
-          zIndex={9}
-          transition="all 0.2s"
-        >
-          <Box p={3} maxW="30rem" mx="auto">
-            <ItemClaimingSection
-              item={item}
-              wishlistColor={wishlistColor}
-              isItemClaimed={isItemClaimed}
-              canUserUnclaim={canUserUnclaim}
-              isClaimLoading={isClaimLoading}
-              showGuestNameModal={showGuestNameModal}
-              guestName={guestName}
-              setGuestName={setGuestName}
-              onClaimItem={handleClaimItem}
-              onUnclaimItem={handleUnclaimItem}
-              onGuestClaim={handleGuestClaim}
-              onCancelGuestModal={cancelGuestModal}
-            />
-          </Box>
-        </Box>
-      )}
-
-      {!isOwner && !isLoggedIn && (
-        <Box
-          position="fixed"
-          bottom="1rem"
-          left={0}
-          right={0}
-          px={4}
-          zIndex={9}
-        >
-          <Box p={3} maxW="30rem" mx="auto">
-            <Button
-              w="100%"
-              bg="white"
-              color="black"
-              size="lg"
-              onClick={() => router.push('/auth/register')}
-              _hover={{ bg: 'gray.200' }}
-            >
-              Create an account to claim this item
-            </Button>
-          </Box>
-        </Box>
-      )}
-
-      {/* Item Menu */}
-      <ItemMenu
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        options={menuOptions}
+    <Box h={{ base: 'calc(100vh + 80px)', md: 'calc(100vh - 32px)' }} w="100%" position="relative">
+      <ItemDetailContent
+        item={item}
+        wishlistColor={wishlistColor}
+        imageSrc={imageUrl}
+        wishlistInfo={wishlistInfo}
+        isOwner={isOwner ?? false}
+        isLoggedIn={isLoggedIn}
+        onBack={() => router.back()}
+        readOnly={false}
+        compact={false}
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+        menuOptions={menuOptions}
+        isNameExpanded={isNameExpanded}
+        setIsNameExpanded={setIsNameExpanded}
+        claimProps={{
+          showGuestNameModal,
+          guestName,
+          setGuestName,
+          isClaimLoading,
+          isItemClaimed,
+          canUserUnclaim,
+          onClaimItem: handleClaimItem,
+          onUnclaimItem: handleUnclaimItem,
+          onGuestClaim: handleGuestClaim,
+          onCancelGuestModal: cancelGuestModal,
+        }}
+        onRegisterCta={() => router.push('/auth/register')}
       />
 
       {/* Edit Item Modal */}
