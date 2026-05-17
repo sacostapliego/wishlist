@@ -46,13 +46,13 @@ export const LANDING_DEMO_WISHLISTS: LandingDemoWishlist[] = [
     id: 'demo-wl-owner-birthday',
     name: 'Birthday',
     color: 'rgb(70, 130, 180)',
-    demo_thumbnail_url: '/landing/demo-wishlist/cat.JPG',
+    demo_thumbnail_url: '/landing/demo-wishlist/cat.png',
   },
   {
     id: 'demo-wl-owner-christmas',
     name: 'Christmas',
     color: 'rgb(196, 30, 58)',
-    demo_thumbnail_url: '/landing/demo-wishlist/luma.JPG',
+    demo_thumbnail_url: '/landing/demo-wishlist/luma.png',
   },
 ]
 
@@ -61,28 +61,28 @@ export const LANDING_DEMO_FRIENDS: LandingDemoWishlist[] = [
     id: 'demo-wl-friend-birthday',
     name: 'Birthday',
     color: 'rgb(196, 30, 58)',
-    demo_thumbnail_url: '/landing/demo-wishlist/album.JPG',
+    demo_thumbnail_url: '/landing/demo-wishlist/album.png',
     owner_label: 'Alex',
   },
   {
     id: 'demo-wl-friend-baby-shower',
     name: 'Baby Shower Gifts',
     color: 'rgb(70, 130, 180)',
-    demo_thumbnail_url: '/landing/demo-wishlist/babyshower.JPG',
+    demo_thumbnail_url: '/landing/demo-wishlist/babyshower.png',
     owner_label: 'Noah',
   },
   {
     id: 'demo-wl-friend-housewarming',
     name: 'Gifts for my new room',
     color: 'rgb(23, 148, 79)',
-    demo_thumbnail_url: '/landing/demo-wishlist/room.JPG',
+    demo_thumbnail_url: '/landing/demo-wishlist/room.png',
     owner_label: 'Giovanni',
   },
   {
     id: 'demo-wl-friend-valentines',
     name: 'Valentines Day',
     color: 'rgb(232, 158, 184)',
-    demo_thumbnail_url: '/landing/demo-wishlist/heart.JPG',
+    demo_thumbnail_url: '/landing/demo-wishlist/heart.png',
     owner_label: 'Eva',
   },
 ]
