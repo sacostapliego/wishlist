@@ -12,6 +12,7 @@ import { SharedWishlistView } from '@/components/wishlists/SharedWishlistView'
 import { ItemDetailContent } from '@/components/items/ItemDetailContent'
 import type { MenuOption } from '@/components/items/ItemMenu'
 import { LandingDemoSidebar } from '@/components/landing/LandingDemoSidebar'
+import { BsFillCursorFill } from "react-icons/bs";
 import { COLORS } from '@/styles/common'
 import {
   LANDING_DEMO_CLAIMED,
@@ -134,6 +135,12 @@ export function LandingInteractiveDemo() {
 
   return (
     <Box display={{ base: 'none', md: 'block' }} w="full" maxW="7xl" mx="auto" py={6}>
+      <Box mb={3}>
+        <HStack justify="center" gap={1} fontSize="xs" color="whiteAlpha.600">
+          <BsFillCursorFill />
+          <Text>Check out our interactive demo</Text>
+        </HStack>
+      </Box>
       <Box
         borderRadius="xl"
         borderWidth="3px"
@@ -313,14 +320,6 @@ export function LandingInteractiveDemo() {
         </Flex>
       </Box>
 
-      <Box mt={3}>
-        <HStack justify="center" gap={1} fontSize="xs" color="whiteAlpha.600">
-          <Text>Profile uses the guest avatar ·</Text>
-          <Button variant="plain" size="xs" color="whiteAlpha.900" onClick={() => router.push('/auth/login')} p={0} h="auto" minW={0} textDecor="underline">
-            sign in or create an account
-          </Button>
-        </HStack>
-      </Box>
     </Box>
   )
 }
