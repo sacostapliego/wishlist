@@ -135,7 +135,7 @@ export function LandingInteractiveDemo() {
 
   return (
     <Box display={{ base: 'none', md: 'block' }} w="full" maxW="7xl" mx="auto" py={6}>
-      <Box mb={3}>
+      <Box mb={5}>
         <HStack justify="center" gap={1} fontSize="xs" color="whiteAlpha.600">
           <BsFillCursorFill />
           <Text>Check out our interactive demo</Text>
