@@ -100,7 +100,6 @@ export function LandingDemoSidebar({
             thumbnail_image={null}
             demo_thumbnail_url={w.demo_thumbnail_url}
             isCollapsed
-            isActive={activeWishlistId === w.id}
             onClick={() => onSelectWishlist(w.id)}
           />
         ))}
@@ -118,7 +117,6 @@ export function LandingDemoSidebar({
             thumbnail_image: null,
             demo_thumbnail_url: w.demo_thumbnail_url,
           })
-          const active = activeWishlistId === w.id
           return (
             <IconButton
               key={`fr-${w.id}`}
