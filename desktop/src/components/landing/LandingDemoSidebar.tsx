@@ -1,9 +1,8 @@
 'use client'
 
 import { Box, IconButton, Image, Separator, VStack } from '@chakra-ui/react'
-import { LuHouse, LuPlus, LuUsers } from 'react-icons/lu'
+import { LuHouse, LuPlus, LuUserRound, LuUsers } from 'react-icons/lu'
 import { useRouter } from 'next/navigation'
-import { ProfileSection } from '@/components/layout/sidebar/ProfileSection'
 import { WishlistItem } from '@/components/layout/sidebar/WishlistItem'
 import type { LandingDemoWishlist } from '@/data/landingDemoData'
 import { resolveWishlistThumbnail } from '@/utils/wishlistIcons'
@@ -47,12 +46,9 @@ export function LandingDemoSidebar({
     >
       {/* Stage 1 — profile + primary nav (Create / Friends are visual only) */}
       <VStack flexShrink={0} align="stretch" gap={1}>
-        <ProfileSection
-          displayName="Guest"
-          profileImage={null}
-          isExpanded={false}
-          onNavigate={() => router.push('/auth/login')}
-        />
+        <IconButton aria-label="Guest profile" type="button" variant="ghost" size="sm" onClick={() => router.push('/auth/login')}>
+          <LuUserRound />
+        </IconButton>
         <Separator flexShrink={0} my={1.5} />
         <IconButton aria-label="Home" type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); onDemoHome(); }}>
           <LuHouse />

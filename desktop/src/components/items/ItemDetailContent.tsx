@@ -28,6 +28,8 @@ interface ItemDetailContentProps {
   isLoggedIn: boolean
   onBack: () => void
   readOnly?: boolean
+  /** Allows read-only screens (demo) to keep URL link interactive */
+  allowReadOnlyUrlOpen?: boolean
   /** Framed marketing / demo — tighter layout, no mutations */
   compact?: boolean
   /** Item menu (owner only, not readOnly) */
@@ -61,6 +63,7 @@ export function ItemDetailContent({
   isLoggedIn,
   onBack,
   readOnly = false,
+  allowReadOnlyUrlOpen = false,
   compact = false,
   isMenuOpen,
   setIsMenuOpen,
@@ -209,9 +212,30 @@ export function ItemDetailContent({
           )}
 
           {item.url && readOnly && (
-            <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : 'sm'} lineBreak="anywhere">
-              {item.url}
-            </Text>
+            allowReadOnlyUrlOpen ? (
+              <Box bg={COLORS.cardGray} borderRadius="lg" p={compact ? 3 : 4} maxW={'50rem'}>
+                <Button
+                  variant="ghost"
+                  onClick={handleOpenUrl}
+                  justifyContent="flex-start"
+                  w="full"
+                  color={COLORS.text.primary}
+                  _hover={{ bg: COLORS.cardDarkLight }}
+                  px={3}
+                >
+                  <HStack gap={2} w="100%">
+                    <LuExternalLink />
+                    <Text fontSize={compact ? 'xs' : 'sm'} lineBreak="anywhere" overflow="hidden">
+                      {item.url}
+                    </Text>
+                  </HStack>
+                </Button>
+              </Box>
+            ) : (
+              <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : 'sm'} lineBreak="anywhere">
+                {item.url}
+              </Text>
+            )
           )}
 
           {item.description && (

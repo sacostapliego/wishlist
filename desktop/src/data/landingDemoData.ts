@@ -20,7 +20,7 @@ export interface LandingDemoItem {
   id: string
   wishlist_id: string
   name: string
-  description: string
+  description?: string
   price?: number
   priority: number
   created_at: string
@@ -117,7 +117,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-owner-birthday-1',
       wishlist_id: 'demo-wl-owner-birthday',
       name: 'never enough album viynl',
-      description: TODO_TEXT,
       priority: 2,
       price: 30.00,
       created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
@@ -128,7 +127,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-owner-birthday-2',
       wishlist_id: 'demo-wl-owner-birthday',
       name: 'Born in Roma Uomo Eau de Parfum Intense',
-      description: TODO_TEXT,
       priority: 2,
       price: 160.00,
       created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
@@ -141,7 +139,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-owner-christmas-1',
       wishlist_id: 'demo-wl-owner-christmas',
       name: 'XM6',
-      description: TODO_TEXT,
       priority: 2,
       price: 459.00,
       created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
@@ -164,7 +161,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-friend-birthday-2',
       wishlist_id: 'demo-wl-friend-birthday',
       name: 'Nike Zoom Vomero 5',
-      description: TODO_TEXT,
       priority: 0,
       price: 170,
       created_at: TODO_TEXT,
@@ -177,7 +173,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-friend-baby-shower-1',
       wishlist_id: 'demo-wl-friend-baby-shower',
       name: 'Baby Bear Set',
-      description: TODO_TEXT,
       priority: 0,
       price: 55.00,
       created_at: TODO_TEXT,
@@ -201,7 +196,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-friend-housewarming-2',
       wishlist_id: 'demo-wl-friend-housewarming',
       name: 'LINDBYN',
-      description: TODO_TEXT,
       priority: 0,
       price: 89.99,
       created_at: TODO_TEXT,
@@ -225,7 +219,6 @@ export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
       id: 'demo-item-friend-valentines-2',
       wishlist_id: 'demo-wl-friend-valentines',
       name: 'Kate spade purse',
-      description: TODO_TEXT,
       priority: 0,
       price: 189.99,
       created_at: TODO_TEXT,

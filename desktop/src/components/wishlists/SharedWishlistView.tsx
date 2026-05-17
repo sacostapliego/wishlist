@@ -239,14 +239,16 @@ export function SharedWishlistView({
           )}
 
           <HStack gap={2} color={COLORS.text.secondary} fontSize={compactHeader ? 'xs' : 'sm'} mt={compactHeader ? 0 : 2}>
-            <Avatar.Root
-              size="xs"
-              cursor="pointer"
-              onClick={() => (demoMode ? router.push('/auth/login') : router.push(`/profile/${wishlist.owner_id}`))}
-            >
-              <Avatar.Fallback name={wishlist.owner_name} />
-              <Avatar.Image src={profileImage || undefined} />
-            </Avatar.Root>
+            {!demoMode && (
+              <Avatar.Root
+                size="xs"
+                cursor="pointer"
+                onClick={() => router.push(`/profile/${wishlist.owner_id}`)}
+              >
+                <Avatar.Fallback name={wishlist.owner_name} />
+                <Avatar.Image src={profileImage || undefined} />
+              </Avatar.Root>
+            )}
             <Text
               fontWeight="semibold"
               color="white"

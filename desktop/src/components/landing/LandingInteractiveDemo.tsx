@@ -299,6 +299,7 @@ export function LandingInteractiveDemo() {
                     : setScreen({ view: 'wishlist', wishlistId: demoItemDetail.wishlist_id })
                 }
                 readOnly
+                allowReadOnlyUrlOpen
                 compact
                 isMenuOpen={false}
                 setIsMenuOpen={setUnusedMenuOpen}
