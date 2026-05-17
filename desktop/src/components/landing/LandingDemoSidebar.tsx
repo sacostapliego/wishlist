@@ -22,7 +22,7 @@ interface LandingDemoSidebarProps {
 
 /**
  * Marketing demo sidebar: three vertical stages like the real app —
- * (1) profile + Home / Create / Friends, (2) friend thumbnails (rounded tiles), (3) your wishlists only.
+ * (1) profile + Home / Create / Friends, (2) your wishlists only, (3) friend thumbnails.
  */
 export function LandingDemoSidebar({
   mine,
@@ -87,7 +87,28 @@ export function LandingDemoSidebar({
 
       <Separator flexShrink={0} my={1} />
 
-      {/* Stage 2 — friend lists as rounded thumbnails (tap opens sample list); not duplicated in stage 3 */}
+      {/* Stage 2 — your wishlists only (scroll when many) */}
+      <VStack align="stretch" gap={2.5} pb={2.5} pt={2.5} flexShrink={0} minH={0} overflowY="auto" overflowX="hidden">
+        {mine.map((w) => (
+          <WishlistItem
+            key={w.id}
+            id={w.id}
+            title={w.name}
+            color={w.color}
+            thumbnail_type="icon"
+            thumbnail_icon={w.thumbnail_icon ?? null}
+            thumbnail_image={null}
+            demo_thumbnail_url={w.demo_thumbnail_url}
+            isCollapsed
+            isActive={activeWishlistId === w.id}
+            onClick={() => onSelectWishlist(w.id)}
+          />
+        ))}
+      </VStack>
+
+      <Separator flexShrink={0} my={1} />
+
+      {/* Stage 3 — friend lists as rounded thumbnails (tap opens sample list) */}
       <VStack flexShrink={0} align="center" gap={2.5} pb={2.5} pt={2.5}>
         {friends.map((w) => {
           const thumb = resolveWishlistThumbnail({
@@ -137,27 +158,6 @@ export function LandingDemoSidebar({
             </IconButton>
           )
         })}
-      </VStack>
-
-      <Separator flexShrink={0} my={1} />
-
-      {/* Stage 3 — your wishlists only (scroll when many) */}
-      <VStack align="stretch" gap={2.5} pb={2.5} pt={2.5} flex={1} minH={0} overflowY="auto" overflowX="hidden">
-        {mine.map((w) => (
-          <WishlistItem
-            key={w.id}
-            id={w.id}
-            title={w.name}
-            color={w.color}
-            thumbnail_type="icon"
-            thumbnail_icon={w.thumbnail_icon ?? null}
-            thumbnail_image={null}
-            demo_thumbnail_url={w.demo_thumbnail_url}
-            isCollapsed
-            isActive={activeWishlistId === w.id}
-            onClick={() => onSelectWishlist(w.id)}
-          />
-        ))}
       </VStack>
     </Box>
   )
