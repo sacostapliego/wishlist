@@ -15,6 +15,7 @@ import { LandingDemoSidebar } from '@/components/landing/LandingDemoSidebar'
 import { COLORS } from '@/styles/common'
 import {
   LANDING_DEMO_CLAIMED,
+  LANDING_DEMO_CLAIMED_ITEMS,
   LANDING_DEMO_FRIENDS,
   LANDING_DEMO_ITEMS,
   LANDING_DEMO_WISHLISTS,
@@ -42,7 +43,7 @@ export function LandingInteractiveDemo() {
   type Screen =
     | { view: 'home' }
     | { view: 'wishlist'; wishlistId: string }
-    | { view: 'item'; wishlistId: string; itemId: string }
+    | { view: 'item'; wishlistId: string; itemId: string; fromHome?: boolean }
 
   const [screen, setScreen] = useState<Screen>({ view: 'home' })
   const [sortBy, setSortBy] = useState<SortOption>('none')
@@ -55,6 +56,9 @@ export function LandingInteractiveDemo() {
     const m = new Map<string, LandingDemoItem>()
     for (const arr of Object.values(LANDING_DEMO_ITEMS)) {
       for (const it of arr) m.set(it.id, it)
+    }
+    for (const it of LANDING_DEMO_CLAIMED_ITEMS) {
+      m.set(it.id, it)
     }
     return m
   }, [])
@@ -90,8 +94,8 @@ export function LandingInteractiveDemo() {
     setScreen({ view: 'home' })
   }
 
-  const openItem = (wishlistId: string, itemId: string) => {
-    setScreen({ view: 'item', wishlistId, itemId })
+  const openItem = (wishlistId: string, itemId: string, fromHome = false) => {
+    setScreen(fromHome ? { view: 'item', wishlistId, itemId, fromHome: true } : { view: 'item', wishlistId, itemId })
   }
 
   const currentWishlistId = screen.view === 'home' ? undefined : screen.wishlistId
@@ -168,12 +172,12 @@ export function LandingInteractiveDemo() {
           <Box flex={1} minW={0} minH={0} overflow="hidden" bg={COLORS.background} borderRadius="lg">
           {screen.view === 'home' && (
             <Flex direction="column" h="full" overflow="hidden">
-              <Box flex="0 0 auto" overflow="hidden">
+              <Box flex="0 0 auto" overflow="hidden" pt={{ base: 3, md: 4 }} pb={{ base: 3, md: 5 }} mb={{ base: 1, md: 2 }}>
                 <ClaimedItemsSection
                   items={claimedSectionItems}
                   onShowAll={noop}
                   hideShowAll
-                  onItemClick={(item) => openItem(item.wishlist_id!, item.id)}
+                  onItemClick={(item) => openItem(item.wishlist_id!, item.id, true)}
                   getItemImageUrl={(item) => claimedImageById.get(item.id)}
                   compact
                 />
@@ -289,7 +293,11 @@ export function LandingInteractiveDemo() {
                 }
                 isOwner={heroWishlistMine}
                 isLoggedIn={false}
-                onBack={() => setScreen({ view: 'wishlist', wishlistId: demoItemDetail.wishlist_id })}
+                onBack={() =>
+                  screen.view === 'item' && screen.fromHome
+                    ? goHome()
+                    : setScreen({ view: 'wishlist', wishlistId: demoItemDetail.wishlist_id })
+                }
                 readOnly
                 compact
                 isMenuOpen={false}

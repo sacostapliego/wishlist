@@ -29,6 +29,7 @@ export function LandingContent() {
           px={6}
           py={8}
           borderRadius="16px"
+          fontSize={{ base: 'md', '2xl': 'xl' }}
           leftIcon={FaSafari}
           mb={16}
         >
@@ -61,6 +62,7 @@ export function LandingContent() {
           py={8}
           borderRadius="16px"
           leftIcon={FaSafari}
+          fontSize={{ base: 'md', '2xl': 'xl' }}
           mb={16}
         >
           Go To Wishlist App

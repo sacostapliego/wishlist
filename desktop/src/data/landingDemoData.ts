@@ -80,6 +80,13 @@ export const LANDING_DEMO_WISHLISTS: LandingDemoWishlist[] = [
     demo_thumbnail_url: COVER.everyday,
     description: 'Small splurges and practical picks.',
   },
+  {
+    id: 'demo-wl-everyday',
+    name: 'Everyday wants',
+    color: 'rgb(194, 65, 12)',
+    demo_thumbnail_url: COVER.everyday,
+    description: 'Small splurges and practical picks.',
+  },
 ]
 
 export const LANDING_DEMO_FRIENDS: LandingDemoWishlist[] = [
@@ -121,6 +128,19 @@ export const LANDING_DEMO_CLAIMED: LandingDemoClaimed[] = [
     wishlist_id: 'demo-wl-friend-2',
   },
 ]
+
+/** Full item rows for claimed cards so the landing demo can open item detail by claimed id. */
+export const LANDING_DEMO_CLAIMED_ITEMS: LandingDemoItem[] = LANDING_DEMO_CLAIMED.map((c) => ({
+  id: c.id,
+  wishlist_id: c.wishlist_id,
+  name: c.name,
+  description: `You marked this as claimed for ${c.owner_name}'s wishlist. Sample entry for the marketing demo only.`,
+  price: c.price,
+  priority: 0,
+  created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
+  image_url: c.image_url,
+  url: null,
+}))
 
 export const LANDING_DEMO_ITEMS: Record<string, LandingDemoItem[]> = {
   'demo-wl-birthday': [

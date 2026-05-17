@@ -53,6 +53,7 @@ export function LandingDemoSidebar({
           isExpanded={false}
           onNavigate={() => router.push('/auth/login')}
         />
+        <Separator flexShrink={0} my={1.5} />
         <IconButton aria-label="Home" type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); onDemoHome(); }}>
           <LuHouse />
         </IconButton>
@@ -87,7 +88,7 @@ export function LandingDemoSidebar({
       <Separator flexShrink={0} my={1} />
 
       {/* Stage 2 — friend lists as rounded thumbnails (tap opens sample list); not duplicated in stage 3 */}
-      <VStack flexShrink={0} align="center" gap={1.5} pb={0}>
+      <VStack flexShrink={0} align="center" gap={2.5} pb={2.5} pt={2.5}>
         {friends.map((w) => {
           const thumb = resolveWishlistThumbnail({
             id: w.id,
@@ -117,14 +118,6 @@ export function LandingDemoSidebar({
                 onSelectWishlist(w.id)
               }}
               flexShrink={0}
-              {...(active
-                ? {
-                    css: {
-                      boxShadow: '0 0 0 2px rgba(255,255,255,0.45)',
-                      background: 'rgba(255,255,255,0.08)',
-                    },
-                  }
-                : { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.14)' } })}
             >
               {thumb.type === 'image' ? (
                 <Image pointerEvents="none" src={thumb.url} alt="" w="100%" h="100%" objectFit="cover" draggable={false} />
@@ -149,7 +142,7 @@ export function LandingDemoSidebar({
       <Separator flexShrink={0} my={1} />
 
       {/* Stage 3 — your wishlists only (scroll when many) */}
-      <VStack align="stretch" gap={1} flex={1} minH={0} overflowY="auto" overflowX="hidden">
+      <VStack align="stretch" gap={2.5} pb={2.5} pt={2.5} flex={1} minH={0} overflowY="auto" overflowX="hidden">
         {mine.map((w) => (
           <WishlistItem
             key={w.id}

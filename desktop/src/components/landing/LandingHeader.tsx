@@ -100,7 +100,7 @@ export function LandingHeader({
         w="100%"
         maxW="7xl"
         px={{ base: 4, md: 6 }}
-        h={{ base: '96px', '2xl': '150px' }}
+        h={{ base: '96px', '2xl': '140px' }}
         align="center"
         justify="space-between"
       >
