@@ -5,6 +5,7 @@ import { LuChevronRight } from 'react-icons/lu'
 import { COLORS } from '../../styles/common'
 import { resolveWishlistThumbnail } from '../../utils/wishlistIcons'
 import { formatCountdown, formatDueDate, formatItemCount } from '../../utils/wishlistUtils'
+import getLightColor from '../common/getLightColor'
 import type { UpNextGroup } from '../../utils/wishlistUtils'
 
 /** Shape Up Next needs from a friend's wishlist, plus the viewer's own claim count. */
@@ -27,30 +28,26 @@ const MAX_ROWS = 4
 
 const DEFAULT_ACCENT = COLORS.primary
 
-/** #rgb / #rrggbb -> [r, g, b], or null if it isn't a hex color. */
-function parseHex(color: string): [number, number, number] | null {
+/** Hex -> "rgb(r, g, b)", so hex fallbacks work with the rgb()-only getLightColor. */
+function toRgbString(color: string): string {
   const hex = color.trim().replace('#', '')
   const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
-  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null
-  return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)) as [number, number, number]
-}
-
-/** Blend `amount` of `target` into `color`; both must be hex. */
-function mix(color: string, target: string, amount: number): string {
-  const a = parseHex(color)
-  const b = parseHex(target)
-  if (!a || !b) return color
-  const [r, g, bl] = a.map((c, i) => Math.round(c + (b[i] - c) * amount))
-  return `rgb(${r},${g},${bl})`
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return color
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16))
+  return `rgb(${r}, ${g}, ${b})`
 }
 
 /**
- * The hero wash: the list's own color on the left, fading to a clearly lighter
- * tint of that same color on the right — never out to the page background.
+ * The hero wash: the list's own color at the far left fading straight across to a
+ * lighter version of it at the far right, each tone owning half the card.
+ * getLightColor's default 17% lift is far too subtle to read across a wide card,
+ * so the hero asks for a much stronger one.
  */
+const HERO_LIGHTEN = 0.5
+
 function heroGradient(accent: string): string {
-  const light = mix(accent, '#ffffff', 0.45)
-  return `linear-gradient(100deg, ${accent} 0%, ${light} 100%)`
+  const base = toRgbString(accent)
+  return `linear-gradient(to right, ${base} 0%, ${getLightColor(base, HERO_LIGHTEN)} 100%)`
 }
 
 interface UpNextHeroProps {
@@ -170,15 +167,15 @@ export function UpNextHero({ group, ownListTitles = [], onOpenList }: UpNextHero
           </VStack>
 
           <Button
-            bg={COLORS.cardDark}
-            color="white"
+            bg={COLORS.white}
+            color="black"
             borderRadius="full"
             px={7}
             h="40px"
             fontWeight="bold"
             fontSize="sm"
             flexShrink={0}
-            _hover={{ filter: 'brightness(1.6)' }}
+            _hover={{ filter: 'brightness(0.9)' }}
             onClick={() => onOpenList(list.id)}
           >
             View list
