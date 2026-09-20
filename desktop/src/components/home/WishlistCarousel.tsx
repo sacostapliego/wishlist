@@ -3,6 +3,8 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import { useRef, useState } from 'react'
 import { COLORS } from '../../styles/common'
 import { resolveWishlistThumbnail } from '../../utils/wishlistIcons'
+import { DueBadge } from '../common/DueBadge'
+import { formatItemCount } from '../../utils/wishlistUtils'
 
 interface Wishlist {
   id: string
@@ -13,6 +15,10 @@ interface Wishlist {
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
   demo_thumbnail_url?: string | null
+  /** Owner's name — required to tell three lists called "Birthday" apart. */
+  ownerName?: string
+  itemCount?: number
+  due_date?: string | null
 }
 
 interface WishlistCarouselProps {
@@ -126,7 +132,7 @@ export function WishlistCarousel({
             const iconSz = compact ? '2.85rem' : '5rem'
             const nameFs = compact
               ? { base: '0.72rem', md: 'xs', lg: 'sm' }
-              : { base: 'sm', md: 'md', lg: 'lg' }
+              : { base: 'xs', md: 'sm', lg: 'md' }
 
             return (
               <Box
@@ -155,7 +161,7 @@ export function WishlistCarousel({
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  bg={wishlist.color || COLORS.cardGray}
+                  bg={thumbnail.type === 'image' ? 'transparent' : wishlist.color || COLORS.cardGray}
                 >
                   {thumbnail.type === 'image' ? (
                     <Image src={thumbnail.url} alt={wishlist.name} w="100%" h="100%" objectFit="cover" draggable={false} />
@@ -167,6 +173,16 @@ export function WishlistCarousel({
                   <Text color="white" fontWeight="semibold" fontSize={nameFs} lineClamp={1}>
                     {wishlist.name}
                   </Text>
+                  <HStack gap={2} mt={0.5} minH="18px">
+                    {(wishlist.ownerName || wishlist.itemCount !== undefined) && (
+                      <Text fontSize="xs" color={COLORS.text.muted} lineClamp={1}>
+                        {[wishlist.ownerName, wishlist.itemCount !== undefined ? formatItemCount(wishlist.itemCount) : null]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                    )}
+                    <DueBadge due_date={wishlist.due_date} />
+                  </HStack>
                 </Box>
               </Box>
             )

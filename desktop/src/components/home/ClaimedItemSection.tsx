@@ -1,6 +1,7 @@
 import { Box, Heading, HStack, Button, SimpleGrid, Image, Text, VStack, useBreakpointValue } from '@chakra-ui/react'
 import { COLORS } from '../../styles/common'
 import { API_URL } from '../../services/api'
+import { DueBadge } from '../common/DueBadge'
 
 interface ClaimedItem {
   id: string
@@ -10,6 +11,8 @@ interface ClaimedItem {
   owner_name: string
   color?: string
   wishlist_id?: string
+  /** Due date of the list this item belongs to — drives the countdown chip. */
+  wishlist_due_date?: string | null
 }
 
 interface ClaimedItemsSectionProps {
@@ -115,15 +118,18 @@ export function ClaimedItemsSection({
               <Text color={COLORS.text.secondary} fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }} lineClamp={1}>
                 For: {item.owner_name}
               </Text>
-              {item.price && (
-                <Text
-                  color={COLORS.text.primary}
-                  fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }}
-                  fontWeight="semibold"
-                >
-                  ${item.price.toFixed(2)}
-                </Text>
-              )}
+              <HStack gap={2} mt="auto" minW={0}>
+                {item.price && (
+                  <Text
+                    color={COLORS.text.primary}
+                    fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }}
+                    fontWeight="semibold"
+                  >
+                    ${item.price.toFixed(2)}
+                  </Text>
+                )}
+                {!compact && <DueBadge due_date={item.wishlist_due_date} />}
+              </HStack>
             </VStack>
           </HStack>
         ))}
