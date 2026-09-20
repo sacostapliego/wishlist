@@ -42,7 +42,8 @@ interface Wishlist {
 interface ClaimedItem {
   id: string
   name: string
-  price?: number
+  description?: string | null
+  price?: number | null
   image?: string
   owner_name: string
   color?: string
@@ -124,6 +125,7 @@ function HomePage() {
         .map((item: ClaimedItemResponse) => ({
           id: item.id,
           name: item.name,
+          description: item.description,
           price: item.price,
           image: item.image,
           owner_name: item.owner_name,

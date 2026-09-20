@@ -555,6 +555,7 @@ def get_my_claimed_items(
         response_items.append({
             "id": str(item.id),
             "name": item.name,
+            "description": item.description,
             "price": item.price,
             "image": item.image,
             "owner_id": str(item.user_id),

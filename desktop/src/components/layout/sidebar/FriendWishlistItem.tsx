@@ -92,7 +92,7 @@ export function FriendWishlistItem({
         {iconBox}
         <VStack align="start" gap={0} flex={1} minW={0}>
           <Text fontSize="sm">{title}</Text>
-          <Text fontSize="xs" color={COLORS.text.muted}>
+          <Text fontSize="xs" color={COLORS.text.subtle}>
             {ownerName}
           </Text>
         </VStack>

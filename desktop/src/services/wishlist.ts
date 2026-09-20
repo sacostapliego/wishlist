@@ -12,7 +12,8 @@ import type {
 export interface ClaimedItemResponse {
   id: string;
   name: string;
-  price?: number;
+  description?: string | null;
+  price?: number | null;
   image?: string;
   owner_id: string;
   owner_name: string;

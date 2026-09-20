@@ -1,24 +1,14 @@
 'use client'
 
-import { Box, HStack, VStack, Heading, Text, IconButton, SimpleGrid, Image } from '@chakra-ui/react'
-import { LuArrowLeft, LuGift } from 'react-icons/lu'
+import { Box, HStack, VStack, Heading, Text, IconButton, SimpleGrid } from '@chakra-ui/react'
+import { LuArrowLeft } from 'react-icons/lu'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { wishlistAPI, type ClaimedItemResponse } from '../services/wishlist'
 import { isWishlistActive } from '../utils/wishlistUtils'
 import { COLORS } from '../styles/common'
 import { API_URL } from '../services/api'
-
-interface ClaimedItem {
-  id: string
-  name: string
-  price?: number
-  image?: string
-  owner_name: string
-  color?: string
-  wishlist_id?: string
-  wishlist_due_date?: string | null
-}
+import { ClaimedItemCard, type ClaimedItem } from '../components/items/ClaimedItemCard'
 
 interface ClaimedItemGridProps {
   items: ClaimedItem[]
@@ -30,56 +20,14 @@ function ClaimedItemGrid({ items, onNavigate, getImageUrl }: ClaimedItemGridProp
   if (items.length === 0) return null
 
   return (
-    <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} gap={{ base: 0, md: 6 }}>
+    <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} gap={{ base: 3, md: 4 }}>
       {items.map((item) => (
-        <Box
+        <ClaimedItemCard
           key={item.id}
-          cursor="pointer"
-          transition="all 0.2s"
-          _hover={{ bg: '#2a2a2a' }}
-          onClick={() => onNavigate(item.wishlist_id!, item.id)}
-          borderRadius="lg"
-          p={4}
-        >
-          <VStack gap={3} align="stretch">
-            <Box
-              w="100%"
-              aspectRatio={1}
-              overflow="hidden"
-              borderRadius="lg"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              bg={item.color || COLORS.cardGray}
-            >
-              {item.image ? (
-                <Image
-                  src={getImageUrl(item)}
-                  alt={item.name}
-                  objectFit="contain"
-                  w="100%"
-                  h="100%"
-                  p={1}
-                />
-              ) : (
-                <LuGift color="white" fontSize="4xl" />
-              )}
-            </Box>
-            <VStack gap={0} align="start">
-              <Text color="white" fontWeight="semibold" fontSize={{ base: "0.8rem", md: "md" }} lineClamp={{ base: 1, md: 2 }}>
-                {item.name}
-              </Text>
-              {item.price && (
-                <Text color={COLORS.text.secondary} fontSize={{ base: "0.7rem", md: "sm" }}>
-                  ${item.price.toFixed(2)}
-                </Text>
-              )}
-              <Text color={COLORS.text.secondary} fontSize={{ base: "0.7rem", md: "sm" }} lineClamp={{ base: 1, md: 2 }}>
-                For: {item.owner_name}
-              </Text>
-            </VStack>
-          </VStack>
-        </Box>
+          item={item}
+          imageUrl={getImageUrl(item)}
+          onOpen={(clicked) => onNavigate(clicked.wishlist_id!, clicked.id)}
+        />
       ))}
     </SimpleGrid>
   )
@@ -103,6 +51,7 @@ function AllClaimedItemsPage() {
       const transformed = data.map((item: ClaimedItemResponse) => ({
         id: item.id,
         name: item.name,
+        description: item.description,
         price: item.price,
         image: item.image,
         owner_name: item.owner_name,

@@ -1,9 +1,10 @@
-import { Box, Heading, HStack, Button, Text, IconButton, Image } from '@chakra-ui/react'
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
-import { useRef, useState } from 'react'
+'use client'
+
+import { Box, Heading, HStack, Button, Text, Image } from '@chakra-ui/react'
 import { COLORS } from '../../styles/common'
 import { resolveWishlistThumbnail } from '../../utils/wishlistIcons'
 import { DueBadge } from '../common/DueBadge'
+import { SnapCarouselRow } from '../common/SnapCarouselRow'
 import { formatItemCount } from '../../utils/wishlistUtils'
 
 interface Wishlist {
@@ -34,37 +35,6 @@ interface WishlistCarouselProps {
   hideArrowButtons?: boolean
 }
 
-// Extracted scroll button component - no performance issues
-interface ScrollButtonProps {
-  direction: 'left' | 'right'
-  onClick: () => void
-  isVisible: boolean
-}
-
-function ScrollButton({ direction, onClick, isVisible }: ScrollButtonProps) {
-  return (
-    <IconButton
-      position="absolute"
-      {...(direction === 'left' ? { left: 2 } : { right: 2 })}
-      top="50%"
-      transform="translateY(-50%)"
-      zIndex={2}
-      onClick={onClick}
-      bg="rgba(0,0,0,0.7)"
-      _hover={{ bg: 'rgba(0,0,0,0.9)' }}
-      color="white"
-      borderRadius="full"
-      size="md"
-      opacity={isVisible ? 1 : 0}
-      transition="opacity 0.2s"
-      pointerEvents={isVisible ? 'auto' : 'none'}
-      aria-label={`Scroll ${direction}`}
-    >
-      {direction === 'left' ? <FaChevronLeft /> : <FaChevronRight />}
-    </IconButton>
-  )
-}
-
 export function WishlistCarousel({
   title,
   wishlists,
@@ -74,24 +44,12 @@ export function WishlistCarousel({
   hideShowAll = false,
   hideArrowButtons = false,
 }: WishlistCarouselProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [isHovered, setIsHovered] = useState(false)
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = compact ? 220 : 300
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  const edgePx = compact ? { base: 2, md: 3 } : { base: 4, md: 8 }
+  const headingPx = compact ? { base: 2, md: 3 } : { base: 4, md: 8 }
+  const inset = compact ? { base: '0.5rem', md: '0.75rem' } : { base: '0.75rem', md: '2rem' }
 
   return (
     <Box mb={{ base: 1, md: 1 }}>
-      <HStack justifyContent="space-between" px={edgePx}>
+      <HStack justifyContent="space-between" px={headingPx}>
         <Heading size={compact ? 'md' : 'lg'} color="white">
           {title}
         </Heading>
@@ -102,97 +60,77 @@ export function WishlistCarousel({
         )}
       </HStack>
 
-      <Box
-        position="relative"
-        {...(!hideArrowButtons
-          ? {
-              onMouseEnter: () => setIsHovered(true),
-              onMouseLeave: () => setIsHovered(false),
-            }
-          : {})}
+      <SnapCarouselRow
+        inset={inset}
+        gap={compact ? { base: 1, md: 2 } : { base: 1, md: 4 }}
+        hideArrows={hideArrowButtons}
+        arrowSize={compact ? 'sm' : 'md'}
+        contentKey={wishlists.length}
       >
-        {!hideArrowButtons && <ScrollButton direction="left" onClick={() => scroll('left')} isVisible={isHovered} />}
+        {wishlists.map((wishlist) => {
+          const thumbnail = resolveWishlistThumbnail(wishlist)
+          const cardW = compact
+            ? { base: '7.5rem', md: '9rem', lg: '10rem' }
+            : { base: '10rem', md: '12rem', lg: '13rem' }
+          const iconSz = compact ? '2.85rem' : '5rem'
+          const nameFs = compact
+            ? { base: '0.72rem', md: 'xs', lg: 'sm' }
+            : { base: 'xs', md: 'sm', lg: 'md' }
 
-        <HStack
-          ref={scrollRef}
-          overflowX="auto"
-          gap={compact ? { base: 1, md: 2 } : { base: 1, md: 4 }}
-          css={{
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
-          }}
-          pb={2}
-          pl={compact ? { base: 2, md: 3 } : { base: 3, md: 8 }}
-        >
-          {wishlists.map((wishlist) => {
-            const thumbnail = resolveWishlistThumbnail(wishlist)
-            const cardW = compact
-              ? { base: '7.5rem', md: '9rem', lg: '10rem' }
-              : { base: '10rem', md: '12rem', lg: '13rem' }
-            const iconSz = compact ? '2.85rem' : '5rem'
-            const nameFs = compact
-              ? { base: '0.72rem', md: 'xs', lg: 'sm' }
-              : { base: 'xs', md: 'sm', lg: 'md' }
-
-            return (
+          return (
+            <Box
+              key={wishlist.id}
+              w={cardW}
+              flexShrink={0}
+              borderRadius="md"
+              p={compact ? 2 : 4}
+              cursor="pointer"
+              transition="all 0.2s"
+              _hover={{ bg: '#2a2a2a' }}
+              onClick={(e) => {
+                e.preventDefault()
+                onWishlistClick?.(wishlist.id)
+              }}
+              display="flex"
+              flexDirection="column"
+              gap={compact ? 1 : 2}
+            >
               <Box
-                key={wishlist.id}
-                w={cardW}
-                flexShrink={0}
+                pointerEvents="none"
+                w="100%"
+                aspectRatio={1}
+                overflow="hidden"
                 borderRadius="md"
-                p={compact ? 2 : 4}
-                cursor="pointer"
-                transition="all 0.2s"
-                _hover={{ bg: '#2a2a2a' }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  onWishlistClick?.(wishlist.id)
-                }}
                 display="flex"
-                flexDirection="column"
-                gap={compact ? 1 : 2}
+                alignItems="center"
+                justifyContent="center"
+                bg={thumbnail.type === 'image' ? 'transparent' : wishlist.color || COLORS.cardGray}
               >
-                <Box
-                  pointerEvents="none"
-                  w="100%"
-                  aspectRatio={1}
-                  overflow="hidden"
-                  borderRadius="md"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  bg={thumbnail.type === 'image' ? 'transparent' : wishlist.color || COLORS.cardGray}
-                >
-                  {thumbnail.type === 'image' ? (
-                    <Image src={thumbnail.url} alt={wishlist.name} w="100%" h="100%" objectFit="cover" draggable={false} />
-                  ) : (
-                    <Box as={thumbnail.icon} boxSize={iconSz} color="white" />
-                  )}
-                </Box>
-                <Box pointerEvents="none">
-                  <Text color="white" fontWeight="semibold" fontSize={nameFs} lineClamp={1}>
-                    {wishlist.name}
-                  </Text>
-                  <HStack gap={2} mt={0.5} minH="18px">
-                    {(wishlist.ownerName || wishlist.itemCount !== undefined) && (
-                      <Text fontSize="xs" color={COLORS.text.muted} lineClamp={1}>
-                        {[wishlist.ownerName, wishlist.itemCount !== undefined ? formatItemCount(wishlist.itemCount) : null]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </Text>
-                    )}
-                    <DueBadge due_date={wishlist.due_date} />
-                  </HStack>
-                </Box>
+                {thumbnail.type === 'image' ? (
+                  <Image src={thumbnail.url} alt={wishlist.name} w="100%" h="100%" objectFit="cover" draggable={false} />
+                ) : (
+                  <Box as={thumbnail.icon} boxSize={iconSz} color="white" />
+                )}
               </Box>
-            )
-          })}
-        </HStack>
-
-        {!hideArrowButtons && (
-          <ScrollButton direction="right" onClick={() => scroll('right')} isVisible={isHovered} />
-        )}
-      </Box>
+              <Box pointerEvents="none">
+                <Text color="white" fontWeight="semibold" fontSize={nameFs} lineClamp={1}>
+                  {wishlist.name}
+                </Text>
+                <HStack gap={2} mt={0.5} minH="18px">
+                  {(wishlist.ownerName || wishlist.itemCount !== undefined) && (
+                    <Text fontSize="xs" color={COLORS.text.subtle} lineClamp={1}>
+                      {[wishlist.ownerName, wishlist.itemCount !== undefined ? formatItemCount(wishlist.itemCount) : null]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
+                  )}
+                  <DueBadge due_date={wishlist.due_date} />
+                </HStack>
+              </Box>
+            </Box>
+          )
+        })}
+      </SnapCarouselRow>
     </Box>
   )
 }

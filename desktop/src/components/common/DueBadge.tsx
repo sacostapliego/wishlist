@@ -8,9 +8,20 @@ interface DueBadgeProps {
 }
 
 /**
- * Countdown chip for a wishlist due date.
- * Renders nothing when the list is undated or the date has passed — an
- * explicit "no date" chip is noise on a card.
+ * Whether DueBadge will actually render for this date — callers that draw a
+ * separator next to it need to know before laying the row out.
+ */
+export function hasDueCountdown(due_date?: string | null): boolean {
+  return Boolean(formatCountdown(due_date) && getDueUrgency(due_date))
+}
+
+/**
+ * Countdown for a wishlist due date.
+ * Urgency is carried by the text colour alone — an enclosing pill turned every
+ * card footer into a row of competing ovals.
+ *
+ * Renders nothing when the list is undated or the date has passed; an explicit
+ * "no date" label is noise on a card.
  */
 export function DueBadge({ due_date, size = 'sm' }: DueBadgeProps) {
   const label = formatCountdown(due_date)
@@ -28,11 +39,7 @@ export function DueBadge({ due_date, size = 'sm' }: DueBadgeProps) {
       fontWeight="semibold"
       lineHeight="1.4"
       whiteSpace="nowrap"
-      color={isSoon ? '#F2758A' : COLORS.text.muted}
-      bg={isSoon ? 'rgba(196,30,58,0.16)' : 'rgba(255,255,255,0.06)'}
-      px={size === 'sm' ? 2 : 2.5}
-      py={size === 'sm' ? '2px' : 1}
-      borderRadius="full"
+      color={isSoon ? '#F2758A' : COLORS.text.subtle}
     >
       {label}
     </Text>

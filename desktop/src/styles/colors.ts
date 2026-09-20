@@ -7,6 +7,7 @@ export const WISHLIST_COLORS = {
     ligtCoral: 'rgb(240, 128, 128)',          // light coral
     pink: 'rgb(232, 158, 184)',               // pink
     yellowOrange: 'rgb(255, 170, 51)',          // yellow orange
+    navy: 'rgb(10, 52, 99)',                    // navy
 };
 
 export default function ColorStyles() {

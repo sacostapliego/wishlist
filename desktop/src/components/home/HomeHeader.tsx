@@ -145,7 +145,7 @@ function NotificationMenu({
                   <Text fontSize="sm" fontWeight="semibold" lineClamp={1}>
                     {notification.title}
                   </Text>
-                  <Text fontSize="xs" color={COLORS.text.muted} lineClamp={1}>
+                  <Text fontSize="xs" color={COLORS.text.subtle} lineClamp={1}>
                     {notification.subtitle}
                   </Text>
                 </VStack>

@@ -1,19 +1,17 @@
-import { Box, Heading, HStack, Button, SimpleGrid, Image, Text, VStack, useBreakpointValue } from '@chakra-ui/react'
+'use client'
+
+import { Box, Heading, HStack, Button, useBreakpointValue } from '@chakra-ui/react'
 import { COLORS } from '../../styles/common'
 import { API_URL } from '../../services/api'
-import { DueBadge } from '../common/DueBadge'
+import { SnapCarouselRow } from '../common/SnapCarouselRow'
+import { ClaimedItemCard, type ClaimedItem } from '../items/ClaimedItemCard'
 
-interface ClaimedItem {
-  id: string
-  name: string
-  price?: number
-  image?: string
-  owner_name: string
-  color?: string
-  wishlist_id?: string
-  /** Due date of the list this item belongs to — drives the countdown chip. */
-  wishlist_due_date?: string | null
-}
+/**
+ * The marketing demo renders these cards inside a fixed-height laptop frame with
+ * two carousels stacked under it, so its thumbnail is a letterbox rather than
+ * the square used on the real home page — a square one pushes the frame over.
+ */
+const COMPACT_THUMB_RATIO = 1.35
 
 interface ClaimedItemsSectionProps {
   items: ClaimedItem[]
@@ -25,6 +23,8 @@ interface ClaimedItemsSectionProps {
   compact?: boolean
   /** Omit the "Show all" control (e.g. marketing demo). */
   hideShowAll?: boolean
+  /** Hide prev/next arrows (small static demos). */
+  hideArrowButtons?: boolean
 }
 
 export function ClaimedItemsSection({
@@ -34,6 +34,7 @@ export function ClaimedItemsSection({
   getItemImageUrl,
   compact = false,
   hideShowAll = false,
+  hideArrowButtons = false,
 }: ClaimedItemsSectionProps) {
   const resolveImageUrl = (item: ClaimedItem) => {
     const custom = getItemImageUrl?.(item)
@@ -46,16 +47,17 @@ export function ClaimedItemsSection({
     return ''
   }
 
-  // Determine max items based on screen size
+  // The row scrolls, but home still only previews — the rest live on /items/claimed
   const maxItemsBp = useBreakpointValue({ base: 6, md: 8, xl: 8 }) || 8
   const maxItems = compact ? Math.min(maxItemsBp, 4) : maxItemsBp
   const displayedItems = items.slice(0, maxItems)
 
-  const edge = compact ? { base: 2 as const, md: 3 as const } : { base: 4 as const, md: 8 as const }
+  const headingPx = compact ? { base: 2, md: 3 } : { base: 4, md: 8 }
+  const inset = compact ? { base: '0.5rem', md: '0.75rem' } : { base: '1rem', md: '2rem' }
 
   return (
-    <Box px={edge} mb={compact ? 1 : 2}>
-      <HStack justifyContent="space-between" mb={compact ? 3 : 4}>
+    <Box mb={compact ? 1 : 2}>
+      <HStack justifyContent="space-between" mb={compact ? 3 : 4} px={headingPx}>
         <Heading size={compact ? 'md' : 'lg'} color="white">
           Items Claimed
         </Heading>
@@ -66,74 +68,25 @@ export function ClaimedItemsSection({
         )}
       </HStack>
 
-      <SimpleGrid columns={{ base: 2, md: compact ? 2 : 3, lg: compact ? 2 : 3, xl: compact ? 2 : 4 }} gap={compact ? 2 : 4}>
+      <SnapCarouselRow
+        inset={inset}
+        gap={compact ? { base: 2, md: 2 } : { base: 3, md: 4 }}
+        hideArrows={hideArrowButtons}
+        arrowSize={compact ? 'sm' : 'md'}
+        contentKey={displayedItems.length}
+      >
         {displayedItems.map((item) => (
-          <HStack
+          <ClaimedItemCard
             key={item.id}
-            bg="#1a1a1a"
-            borderRadius="lg"
-            cursor="pointer"
-            onClick={() => onItemClick && onItemClick(item)}
-            transition="all 0.2s"
-            _hover={{ bg: '#2a2a2a' }}
-            gap={0}
-            overflow="hidden"
-            w={{ base: '100%' }}
-            h={compact ? { base: '4.25rem', md: '4.75rem' } : { base: '5rem', md: '6rem' }}
-          >
-            <Box
-              w={compact ? { base: '3.75rem', md: '4.75rem' } : { base: '4rem', md: '6rem' }}
-              h={compact ? { base: '4.25rem', md: '4.75rem' } : { base: '5rem', md: '6rem' }}
-              flexShrink={0}
-              bg={item.color || 'gray.700'}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Image
-                src={resolveImageUrl(item)}
-                alt={item.name}
-                maxW="100%"
-                maxH="100%"
-                objectFit="contain"
-                p={0.5}
-              />
-            </Box>
-            <VStack align="start" gap={0} flex={1} p={compact ? 2 : 3} overflow="hidden">
-              <Text
-                color="white"
-                fontWeight="bold"
-                fontSize={
-                  compact
-                    ? { base: '0.65rem', md: 'xs' }
-                    : {
-                        base: '0.7rem',
-                        md: 'md',
-                      }
-                }
-                lineClamp={2}
-              >
-                {item.name}
-              </Text>
-              <Text color={COLORS.text.secondary} fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }} lineClamp={1}>
-                For: {item.owner_name}
-              </Text>
-              <HStack gap={2} mt="auto" minW={0}>
-                {item.price && (
-                  <Text
-                    color={COLORS.text.primary}
-                    fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }}
-                    fontWeight="semibold"
-                  >
-                    ${item.price.toFixed(2)}
-                  </Text>
-                )}
-                {!compact && <DueBadge due_date={item.wishlist_due_date} />}
-              </HStack>
-            </VStack>
-          </HStack>
+            item={item}
+            imageUrl={resolveImageUrl(item)}
+            onOpen={(clicked) => onItemClick?.(clicked)}
+            compact={compact}
+            thumbRatio={compact ? COMPACT_THUMB_RATIO : 1}
+            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '11.5rem', md: '13rem', lg: '14rem' }}
+          />
         ))}
-      </SimpleGrid>
+      </SnapCarouselRow>
     </Box>
   )
 }
