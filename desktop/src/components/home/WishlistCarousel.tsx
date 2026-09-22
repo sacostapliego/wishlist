@@ -3,7 +3,8 @@
 import { Box, Heading, HStack, Button, Text, Image } from '@chakra-ui/react'
 import { COLORS } from '../../styles/common'
 import { resolveWishlistThumbnail } from '../../utils/wishlistIcons'
-import { DueBadge } from '../common/DueBadge'
+import { DueBadge, hasDueCountdown } from '../common/DueBadge'
+import { FooterRule } from '../common/FooterRule'
 import { SnapCarouselRow } from '../common/SnapCarouselRow'
 import { formatItemCount } from '../../utils/wishlistUtils'
 
@@ -76,6 +77,14 @@ export function WishlistCarousel({
           const nameFs = compact
             ? { base: '0.72rem', md: 'xs', lg: 'sm' }
             : { base: 'xs', md: 'sm', lg: 'md' }
+          // Owner and item count read as one phrase; the countdown is a separate
+          // fact, so it gets a rule rather than another middot.
+          const facts = [
+            wishlist.ownerName,
+            wishlist.itemCount !== undefined ? formatItemCount(wishlist.itemCount) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')
 
           return (
             <Box
@@ -117,13 +126,12 @@ export function WishlistCarousel({
                   {wishlist.name}
                 </Text>
                 <HStack gap={2} mt={0.5} minH="18px">
-                  {(wishlist.ownerName || wishlist.itemCount !== undefined) && (
+                  {facts && (
                     <Text fontSize="xs" color={COLORS.text.subtle} lineClamp={1}>
-                      {[wishlist.ownerName, wishlist.itemCount !== undefined ? formatItemCount(wishlist.itemCount) : null]
-                        .filter(Boolean)
-                        .join(' · ')}
+                      {facts}
                     </Text>
                   )}
+                  {facts && hasDueCountdown(wishlist.due_date) && <FooterRule />}
                   <DueBadge due_date={wishlist.due_date} />
                 </HStack>
               </Box>

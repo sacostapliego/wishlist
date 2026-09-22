@@ -1,10 +1,11 @@
 'use client'
 
-import { Box, Heading, HStack, Button, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Heading, HStack, Button, Text, VStack } from '@chakra-ui/react'
+import { FaChevronRight } from 'react-icons/fa'
 import { COLORS } from '../../styles/common'
 import { API_URL } from '../../services/api'
 import { SnapCarouselRow } from '../common/SnapCarouselRow'
-import { ClaimedItemCard, type ClaimedItem } from '../items/ClaimedItemCard'
+import { ClaimedItemCard, type ClaimedItem, type ClaimedItemCardProps } from '../items/ClaimedItemCard'
 
 /**
  * The marketing demo renders these cards inside a fixed-height laptop frame with
@@ -27,6 +28,62 @@ interface ClaimedItemsSectionProps {
   hideArrowButtons?: boolean
 }
 
+/**
+ * Closes the row with the count home is holding back, sized exactly like a
+ * card so the row still reads as one rhythm.
+ */
+function ShowAllTile({
+  count,
+  compact,
+  thumbRatio,
+  width,
+  onClick,
+}: {
+  count: number
+  compact: boolean
+  thumbRatio: number
+  width: ClaimedItemCardProps['width']
+  onClick: () => void
+}) {
+  return (
+    <VStack
+      as="button"
+      w={width}
+      flexShrink={0}
+      align="stretch"
+      gap={compact ? 1 : 2}
+      p={compact ? 2 : 0}
+      cursor="pointer"
+      onClick={onClick}
+      aria-label={`Show all claimed items, ${count} more`}
+    >
+      <Box
+        w="100%"
+        aspectRatio={thumbRatio}
+        borderRadius="md"
+        bg="rgba(255,255,255,0.05)"
+        border="1px dashed"
+        borderColor="rgba(255,255,255,0.18)"
+        transition="background 0.2s"
+        _hover={{ bg: 'rgba(255,255,255,0.1)' }}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        gap={2}
+      >
+        <Box as={FaChevronRight} boxSize={compact ? '1rem' : '1.5rem'} color={COLORS.text.muted} />
+        <Text fontSize={compact ? 'xs' : 'sm'} fontWeight="bold" color="white">
+          +{count} more
+        </Text>
+      </Box>
+      <Text fontSize="xs" color={COLORS.text.subtle} textAlign="center" lineClamp={1}>
+        Show all
+      </Text>
+    </VStack>
+  )
+}
+
 export function ClaimedItemsSection({
   items,
   onShowAll,
@@ -47,10 +104,14 @@ export function ClaimedItemsSection({
     return ''
   }
 
-  // The row scrolls, but home still only previews — the rest live on /items/claimed
-  const maxItemsBp = useBreakpointValue({ base: 6, md: 8, xl: 8 }) || 8
-  const maxItems = compact ? Math.min(maxItemsBp, 4) : maxItemsBp
+  /**
+   * Home previews, it doesn't list — the rest live on /items/claimed. The cap
+   * is a flat 5 so the row ends on a deliberate "+N more" tile rather than
+   * trailing off mid-scroll at whatever width the viewport happens to be.
+   */
+  const maxItems = compact ? 4 : 5
   const displayedItems = items.slice(0, maxItems)
+  const overflowCount = items.length - displayedItems.length
 
   const headingPx = compact ? { base: 2, md: 3 } : { base: 4, md: 8 }
   const inset = compact ? { base: '0.5rem', md: '0.75rem' } : { base: '1rem', md: '2rem' }
@@ -86,6 +147,16 @@ export function ClaimedItemsSection({
             width={compact ? { base: '9rem', md: '10.5rem' } : { base: '11.5rem', md: '13rem', lg: '14rem' }}
           />
         ))}
+
+        {overflowCount > 0 && (
+          <ShowAllTile
+            count={overflowCount}
+            compact={compact}
+            thumbRatio={compact ? COMPACT_THUMB_RATIO : 1}
+            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '11.5rem', md: '13rem', lg: '14rem' }}
+            onClick={() => onShowAll?.()}
+          />
+        )}
       </SnapCarouselRow>
     </Box>
   )

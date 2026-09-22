@@ -6,6 +6,7 @@ import { LuGift } from 'react-icons/lu'
 import type { BoxProps } from '@chakra-ui/react'
 import { COLORS } from '../../styles/common'
 import { DueBadge, hasDueCountdown } from '../common/DueBadge'
+import { FooterRule } from '../common/FooterRule'
 import getLightColor from '../common/getLightColor'
 
 export interface ClaimedItem {
@@ -23,7 +24,7 @@ export interface ClaimedItem {
   wishlist_due_date?: string | null
 }
 
-interface ClaimedItemCardProps {
+export interface ClaimedItemCardProps {
   item: ClaimedItem
   onOpen: (item: ClaimedItem) => void
   /** Resolved thumbnail src; empty string renders the gift placeholder. */
@@ -33,11 +34,6 @@ interface ClaimedItemCardProps {
   /** Thumbnail aspect ratio — the demo frame needs a letterbox, not a square. */
   thumbRatio?: number
   width?: BoxProps['width']
-}
-
-/** Hairline between the two footer facts — the quiet version of a " | ". */
-function FooterRule() {
-  return <Box w="1px" h="0.7rem" flexShrink={0} bg="rgba(255,255,255,0.18)" />
 }
 
 /**

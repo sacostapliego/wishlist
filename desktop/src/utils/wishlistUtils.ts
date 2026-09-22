@@ -64,6 +64,17 @@ export function isWishlistActive(due_date?: string | null): boolean {
 }
 
 /**
+ * True when the list is still worth showing on home: either it has no date yet
+ * (a list being built toward some future occasion) or that date hasn't passed.
+ * Only a list whose date is behind us is "previous", and those are left to the
+ * full lists page.
+ */
+export function isWishlistCurrent(due_date?: string | null): boolean {
+  const days = daysUntil(due_date)
+  return days === null || days >= 0
+}
+
+/**
  * True when the date is today or later AND no further out than `horizonDays`.
  * Undated and past dates are both false.
  */

@@ -1,9 +1,10 @@
 'use client'
 
-import { Box, VStack, HStack, Heading, Button, Text } from '@chakra-ui/react'
+import { Box, VStack, HStack, Flex, Heading, Button, Text } from '@chakra-ui/react'
 import { ClaimedItemsSection } from '../components/home/ClaimedItemSection'
 import { WishlistCarousel } from '../components/home/WishlistCarousel'
 import { UpNextHero, type UpNextList } from '../components/home/UpNextHero'
+import { UpcomingAgenda, type Occasion } from '../components/home/UpcomingAgenda'
 import { HomeHeader, type HomeNotification } from '../components/home/HomeHeader'
 import { HomeSkeleton } from '../components/home/HomeSkeleton'
 import { useEffect, useMemo, useState } from 'react'
@@ -20,12 +21,16 @@ import {
   daysUntil,
   getUpNextGroup,
   isWishlistActive,
+  isWishlistCurrent,
   isWithinDays,
 } from '../utils/wishlistUtils'
 import type { Wishlist as WishlistType } from '../types/types'
 
 /** Days out at which a friend's list starts showing up in the bell. */
 const NOTIFY_WITHIN_DAYS = 7
+
+/** Rows in the Upcoming rail — enough to orient, short enough to sit beside the claimed row. */
+const AGENDA_MAX_OCCASIONS = 5
 
 interface Wishlist {
   id: string
@@ -162,6 +167,35 @@ function HomePage() {
 
   const laterClaimedCount = claimedItems.length - visibleClaimedItems.length
 
+  /**
+   * Home shows the lists still ahead of you: upcoming or not yet dated.
+   * Lists whose date has passed stay on /wishlists/mine.
+   */
+  const currentWishlists = useMemo(
+    () => myWishlists.filter((wishlist) => isWishlistCurrent(wishlist.due_date)),
+    [myWishlists]
+  )
+
+  /** Friends' lists get the same "still ahead of you" filter as your own. */
+  const currentFriendsWishlists = useMemo(
+    () =>
+      friendsWishlists
+        .filter((wishlist) => isWishlistCurrent(wishlist.due_date))
+        .map((wishlist) => ({
+          id: wishlist.id,
+          name: wishlist.title,
+          image: wishlist.image,
+          color: wishlist.color,
+          thumbnail_type: wishlist.thumbnail_type,
+          thumbnail_icon: wishlist.thumbnail_icon,
+          thumbnail_image: wishlist.thumbnail_image,
+          due_date: wishlist.due_date,
+          itemCount: wishlist.item_count,
+          ownerName: wishlist.owner_name || wishlist.owner_username,
+        })),
+    [friendsWishlists]
+  )
+
   /** How many items the viewer has claimed, per wishlist. */
   const claimsByWishlist = useMemo(() => {
     const counts = new Map<string, number>()
@@ -171,6 +205,41 @@ function HomePage() {
     }
     return counts
   }, [claimedItems])
+
+  /**
+   * Every dated occasion ahead, yours and your friends', nearest first.
+   *
+   * The nearest one is also in the hero on purpose: the hero is the call to
+   * action, the rail is orientation, and a rail that silently started at the
+   * second date would read as though the first had been missed.
+   */
+  const upcomingOccasions = useMemo<Occasion[]>(() => {
+    const own: Occasion[] = myWishlists
+      .filter((wishlist) => isWishlistActive(wishlist.due_date))
+      .map((wishlist) => ({
+        id: wishlist.id,
+        title: wishlist.name,
+        due_date: wishlist.due_date as string,
+        ownerName: null,
+        itemCount: wishlist.itemCount ?? 0,
+        claimedByYou: 0,
+      }))
+
+    const friends: Occasion[] = friendsWishlists
+      .filter((wishlist) => isWishlistActive(wishlist.due_date))
+      .map((wishlist) => ({
+        id: wishlist.id,
+        title: wishlist.title,
+        due_date: wishlist.due_date as string,
+        ownerName: wishlist.owner_name || wishlist.owner_username,
+        itemCount: wishlist.item_count ?? 0,
+        claimedByYou: claimsByWishlist.get(wishlist.id) ?? 0,
+      }))
+
+    return [...own, ...friends]
+      .sort((a, b) => (daysUntil(a.due_date) ?? 0) - (daysUntil(b.due_date) ?? 0))
+      .slice(0, AGENDA_MAX_OCCASIONS)
+  }, [myWishlists, friendsWishlists, claimsByWishlist])
 
   /**
    * The nearest upcoming date among FRIENDS' lists.
@@ -264,30 +333,54 @@ function HomePage() {
           />
         )}
 
-        {/* Items Claimed — the one thing on this page that exists nowhere else */}
-        {visibleClaimedItems.length > 0 ? (
-          <ClaimedItemsSection
-            items={visibleClaimedItems}
-            onShowAll={() => router.push('/items/claimed')}
-            onItemClick={(item) => router.push(`/wishlist/${item.wishlist_id}/${item.id}`)}
-          />
-        ) : (
-          <EmptySectionHeader
-            title="Items Claimed"
-            onShowAll={() => router.push('/items/claimed')}
-            message={
-              laterClaimedCount > 0
-                ? `Nothing due soon — ${laterClaimedCount} claimed for later dates.`
-                : undefined
-            }
-          />
-        )}
+        {/*
+          Items Claimed, with the Upcoming rail beside it.
+
+          The rail is a fixed column rather than a filler for whatever space the
+          claimed row leaves over — that space only exists at some widths and
+          some item counts. It is gated to xl because below that it would cost
+          the claimed row half its cards.
+        */}
+        <Flex align="stretch" gap={{ xl: 4 }}>
+          <Box flex="1" minW={0}>
+            {visibleClaimedItems.length > 0 ? (
+              <ClaimedItemsSection
+                items={visibleClaimedItems}
+                onShowAll={() => router.push('/items/claimed')}
+                onItemClick={(item) => router.push(`/wishlist/${item.wishlist_id}/${item.id}`)}
+              />
+            ) : (
+              <EmptySectionHeader
+                title="Items Claimed"
+                onShowAll={() => router.push('/items/claimed')}
+                message={
+                  laterClaimedCount > 0
+                    ? `Nothing due soon — ${laterClaimedCount} claimed for later dates.`
+                    : undefined
+                }
+              />
+            )}
+          </Box>
+
+          <Box
+            display={{ base: 'none', xl: 'block' }}
+            w="20rem"
+            flexShrink={0}
+            pr={8}
+            pb={2}
+          >
+            <UpcomingAgenda
+              occasions={upcomingOccasions}
+              onOpenList={(id) => router.push(`/wishlist/${id}`)}
+            />
+          </Box>
+        </Flex>
 
         {/* Your Lists — the sidebar is the real nav path, this is the overview */}
-        {myWishlists.length > 0 ? (
+        {currentWishlists.length > 0 ? (
           <WishlistCarousel
             title="Your Lists"
-            wishlists={myWishlists}
+            wishlists={currentWishlists}
             onShowAll={() => router.push('/wishlists/mine')}
             onWishlistClick={(id) => router.push(`/wishlist/${id}`)}
           />
@@ -295,6 +388,21 @@ function HomePage() {
           <EmptySectionHeader
             title="Your Lists"
             onShowAll={() => router.push('/wishlists/mine')}
+            message={
+              myWishlists.length > 0
+                ? `No upcoming lists — ${myWishlists.length === 1 ? 'your list has' : `all ${myWishlists.length} of your lists have`} a date that's passed.`
+                : undefined
+            }
+          />
+        )}
+
+        {/* Friends' Lists — a separate row because claiming is not managing */}
+        {currentFriendsWishlists.length > 0 && (
+          <WishlistCarousel
+            title="Friends' Lists"
+            wishlists={currentFriendsWishlists}
+            onShowAll={() => router.push('/wishlists/friends')}
+            onWishlistClick={(id) => router.push(`/wishlist/${id}`)}
           />
         )}
 
