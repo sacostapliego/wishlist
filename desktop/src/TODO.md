@@ -7,10 +7,11 @@
     - Is there a way to create a collobration wishlist, where multiple users can edit a wishlist such as adding, removing, and editing items in a wishlist? 
 ----
 ### Desktop:
-- Think about changing the layout to take advantage of the larger screen, current rough idea:
-    - 1st section: UP next widget
-    - 2nd section: Items claimed | calendar 
-    - 3rd section: My wishlists | ???
+- [x] Wide-screen layout (2xl and up); single column below that
+    - 1st section: Up Next hero, full width
+    - 2nd section: Items claimed | Upcoming calendar
+    - 3rd section: My wishlists | Finish Setting Up (own lists with no items or no date;
+      the rail is dropped and the carousel spans full width when there is nothing to fix)
 ### Mobile:
 - Make sure all the pages fit for mobile screens
 - Work on item page, add clamps and sizing issues
