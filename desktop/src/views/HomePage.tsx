@@ -7,6 +7,7 @@ import { UpNextHero, type UpNextList } from '../components/home/UpNextHero'
 import { UpcomingCalendar, type Occasion } from '../components/home/UpcomingCalendar'
 import { HomeHeader, type HomeNotification } from '../components/home/HomeHeader'
 import { HomeSkeleton } from '../components/home/HomeSkeleton'
+import { ListSetupPanel, type UnfinishedList } from '../components/home/ListSetupPanel'
 import { useEffect, useMemo, useState } from 'react'
 import { wishlistAPI, type ClaimedItemResponse } from '../services/wishlist'
 import { friendsAPI, type FriendWishlistResponse, type FriendRequestInfo } from '../services/friends'
@@ -198,6 +199,39 @@ function HomePage() {
     [friendsWishlists]
   )
 
+  /**
+   * Your own lists that aren't ready: nothing on them, or no date.
+   *
+   * Past lists are already excluded by `currentWishlists` — a birthday that has
+   * been and gone is not something to go back and date.
+   *
+   * Ordered by what it costs you to leave it: an empty list with a date on it
+   * is a friend opening it that week and finding nothing to claim, so those
+   * come first, soonest first. An undated list is quieter — it simply never
+   * appears in Up Next, the calendar or the bell, all of which key on the date.
+   */
+  const unfinishedLists = useMemo<UnfinishedList[]>(() => {
+    const rank = (wishlist: UnfinishedList) => {
+      if ((wishlist.itemCount ?? 0) === 0) return wishlist.due_date ? 0 : 1
+      return 2
+    }
+
+    return currentWishlists
+      .filter((wishlist) => (wishlist.itemCount ?? 0) === 0 || !wishlist.due_date)
+      .map((wishlist) => ({
+        id: wishlist.id,
+        name: wishlist.name,
+        color: wishlist.color,
+        due_date: wishlist.due_date,
+        itemCount: wishlist.itemCount ?? 0,
+      }))
+      .sort((a, b) => {
+        const byRank = rank(a) - rank(b)
+        if (byRank !== 0) return byRank
+        return (daysUntil(a.due_date) ?? Infinity) - (daysUntil(b.due_date) ?? Infinity)
+      })
+  }, [currentWishlists])
+
   /** How many items the viewer has claimed, per wishlist. */
   const claimsByWishlist = useMemo(() => {
     const counts = new Map<string, number>()
@@ -384,25 +418,47 @@ function HomePage() {
           </Box>
         </Flex>
 
-        {/* Your Lists — the sidebar is the real nav path, this is the overview */}
-        {currentWishlists.length > 0 ? (
-          <WishlistCarousel
-            title="Your Lists"
-            wishlists={currentWishlists}
-            onShowAll={() => router.push('/wishlists/mine')}
-            onWishlistClick={(id) => router.push(`/wishlist/${id}`)}
-          />
-        ) : (
-          <EmptySectionHeader
-            title="Your Lists"
-            onShowAll={() => router.push('/wishlists/mine')}
-            message={
-              myWishlists.length > 0
-                ? `No upcoming lists — ${myWishlists.length === 1 ? 'your list has' : `all ${myWishlists.length} of your lists have`} a date that's passed.`
-                : undefined
-            }
-          />
-        )}
+        {/*
+          Your Lists, with the setup rail beside it.
+
+          Same column widths as the row above, so the two rails share an edge
+          and the page reads as two columns rather than two unrelated splits.
+          The rail is dropped rather than shrunk when there is nothing to fix —
+          a panel reading "nothing to finish" is worse than the carousel simply
+          taking the width back.
+        */}
+        <Flex align="stretch" gap={{ '2xl': 4 }}>
+          <Box flex="1" minW={0}>
+            {/* Your Lists — the sidebar is the real nav path, this is the overview */}
+            {currentWishlists.length > 0 ? (
+              <WishlistCarousel
+                title="Your Lists"
+                wishlists={currentWishlists}
+                onShowAll={() => router.push('/wishlists/mine')}
+                onWishlistClick={(id) => router.push(`/wishlist/${id}`)}
+              />
+            ) : (
+              <EmptySectionHeader
+                title="Your Lists"
+                onShowAll={() => router.push('/wishlists/mine')}
+                message={
+                  myWishlists.length > 0
+                    ? `No upcoming lists — ${myWishlists.length === 1 ? 'your list has' : `all ${myWishlists.length} of your lists have`} a date that's passed.`
+                    : undefined
+                }
+              />
+            )}
+          </Box>
+
+          {unfinishedLists.length > 0 && (
+            <Box display={{ base: 'none', '2xl': 'block' }} w="34rem" flexShrink={0} pr={8} pb={2}>
+              <ListSetupPanel
+                lists={unfinishedLists}
+                onOpenList={(id) => router.push(`/wishlist/${id}`)}
+              />
+            </Box>
+          )}
+        </Flex>
 
         {/* Friends' Lists — a separate row because claiming is not managing */}
         {activeFriendsWishlists.length > 0 && (
