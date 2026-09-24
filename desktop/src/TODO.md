@@ -12,8 +12,8 @@
     - 2nd section: Items claimed | Upcoming calendar
     - 3rd section: My wishlists | Finish Setting Up (own lists with no items or no date;
       the rail is dropped and the carousel spans full width when there is nothing to fix)
-### Mobile:
-- Make sure all the pages fit for mobile screens
-- Work on item page, add clamps and sizing issues
-- Add friends page to the mobile header
-- Fix scrolling issues
+### Mobile (the narrow-viewport layout inside desktop/, not the mobile/ Expo app):
+- [x] Page gutters made responsive; 32px side padding left 311px of content on a 375px phone
+- [x] Item page: clamped the claimed-by name and the scraped url
+- [x] Friends added to the mobile header (ProfileHeader)
+- [x] Scrolling: views were fixed-height scroll containers nested inside the layout's own

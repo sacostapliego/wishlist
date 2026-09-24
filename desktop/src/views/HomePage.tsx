@@ -351,7 +351,12 @@ function HomePage() {
 
   return (
     <Box
-      h={{ base: 'calc(100vh + 80px)', md: 'calc(100vh - 32px)' }}
+      /*
+        minH, not h: on mobile the old fixed 100vh+80px left a screenful of
+        dead space below the last section, on top of the bottom margin
+        ResponsiveLayout already adds to clear the nav.
+      */
+      minH={{ base: 'auto', md: 'calc(100vh - 32px)' }}
       w="100%"
       overflowX="visible"
       bg={COLORS.background}
