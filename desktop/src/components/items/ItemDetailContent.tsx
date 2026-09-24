@@ -191,9 +191,13 @@ export function ItemDetailContent({
                   _hover={{ bg: COLORS.cardDarkLight }}
                   px={3}
                 >
-                  <HStack gap={2} w="100%">
-                    <LuExternalLink />
-                    <Text fontSize="sm" lineBreak="anywhere" overflow={'hidden'}>
+                  <HStack gap={2} w="100%" minW={0}>
+                    <Box flexShrink={0} display="flex">
+                      <LuExternalLink />
+                    </Box>
+                    {/* Scraped urls run to hundreds of characters; unclamped
+                        they turned this row into a six-line block on a phone. */}
+                    <Text fontSize="sm" lineBreak="anywhere" overflow="hidden" lineClamp={2} textAlign="left">
                       {item.url}
                     </Text>
                   </HStack>
@@ -223,9 +227,11 @@ export function ItemDetailContent({
                   _hover={{ bg: COLORS.cardDarkLight }}
                   px={3}
                 >
-                  <HStack gap={2} w="100%">
-                    <LuExternalLink />
-                    <Text fontSize={compact ? 'xs' : 'sm'} lineBreak="anywhere" overflow="hidden">
+                  <HStack gap={2} w="100%" minW={0}>
+                    <Box flexShrink={0} display="flex">
+                      <LuExternalLink />
+                    </Box>
+                    <Text fontSize={compact ? 'xs' : 'sm'} lineBreak="anywhere" overflow="hidden" lineClamp={2} textAlign="left">
                       {item.url}
                     </Text>
                   </HStack>

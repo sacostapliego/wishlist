@@ -121,7 +121,7 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
   if (error || !item) {
     return (
       <Box h="calc(100vh - 32px)" w="100%" display="flex" flexDirection="column" bg={COLORS.background}>
-        <Box bg={COLORS.background} px={8} py={4}>
+        <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4}>
           <HStack justify="space-between">
             <IconButton
               aria-label="Go back"
