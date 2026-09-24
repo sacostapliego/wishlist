@@ -75,7 +75,9 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
       <Box
         flex="1"
         ml={{ base: 0, md: `calc(${sidebarWidth}px + 35px)` }}
-        mb={{ base: '80px', md: 0}}
+        /* viewport-fit=cover puts the page under the status bar / home indicator, so inset both ends */
+        pt={{ base: 'env(safe-area-inset-top, 0px)', md: 0 }}
+        mb={{ base: 'calc(80px + env(safe-area-inset-bottom, 0px))', md: 0 }}
         transition={isResizing ? 'none' : 'margin-left 0.2s'}
         borderRadius={{ base: 0, md: "lg" }}
         bg="#141414"

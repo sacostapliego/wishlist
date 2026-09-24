@@ -81,13 +81,14 @@ function Thumbnail({ list, size }: { list: UpNextList; size: string }) {
   )
 }
 
-function ClaimProgress({ list, width }: { list: UpNextList; width?: string }) {
+/** `maxWidth` caps the bar on wide cards; it always shrinks to the column it sits in. */
+function ClaimProgress({ list, maxWidth }: { list: UpNextList; maxWidth?: string }) {
   const total = Math.max(list.itemCount, 0)
   const claimed = Math.min(list.claimedByYou, total)
   const pct = total > 0 ? Math.round((claimed / total) * 100) : 0
 
   return (
-    <VStack align="stretch" gap={1.5} w={width} maxW={width}>
+    <VStack align="stretch" gap={1.5} w="100%" maxW={maxWidth} minW={0}>
       <Box h="6px" borderRadius="full" bg="rgba(0,0,0,0.18)" overflow="hidden">
         <Box h="100%" w={`${pct}%`} borderRadius="full" bg={COLORS.white} transition="width 0.3s" />
       </Box>
@@ -162,7 +163,7 @@ export function UpNextHero({ group, ownListTitles = [], onOpenList }: UpNextHero
               {list.ownerName}
               {dateLabel ? ` · ${dateLabel}` : ''}
             </Text>
-            <ClaimProgress list={list} width="420px" />
+            <ClaimProgress list={list} maxWidth="420px" />
             <OwnListNote titles={ownListTitles} />
           </VStack>
 

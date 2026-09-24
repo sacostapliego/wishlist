@@ -62,7 +62,7 @@ export function ClaimedItemCard({
       w={width}
       bg={COLORS.cardDarkLight}
       borderRadius="xl"
-      p={compact ? 2 : 3}
+      p={compact ? 2 : { base: 2, md: 3 }}
       cursor="pointer"
       transition="all 0.2s"
       _hover={{ bg: '#2a2a2a' }}
@@ -79,26 +79,26 @@ export function ClaimedItemCard({
         display="flex"
         alignItems="center"
         justifyContent="center"
-        p={compact ? 1.5 : 2}
+        p={compact ? 1.5 : { base: 1.5, md: 2 }}
       >
         {imageUrl ? (
           <Image src={imageUrl} alt={item.name} maxW="100%" maxH="100%" objectFit="contain" draggable={false} />
         ) : (
-          <Box as={LuGift} boxSize={compact ? '1.5rem' : '2.25rem'} color="whiteAlpha.800" />
+          <Box as={LuGift} boxSize={compact ? '1.5rem' : { base: '1.75rem', md: '2.25rem' }} color="whiteAlpha.800" />
         )}
       </Box>
 
       <Text
-        mt={compact ? 2 : 3}
+        mt={compact ? 2 : { base: 2, md: 3 }}
         color="white"
         fontWeight="bold"
-        fontSize={compact ? '0.7rem' : 'sm'}
+        fontSize={compact ? '0.7rem' : { base: 'xs', md: 'sm' }}
         lineHeight="1.3"
         lineClamp={1}
       >
         {item.name}
       </Text>
-      <Text color={COLORS.text.subtle} fontSize={compact ? '0.58rem' : 'xs'} lineHeight="1.4" lineClamp={1}>
+      <Text color={COLORS.text.subtle} fontSize={compact ? '0.58rem' : { base: '0.62rem', md: 'xs' }} lineHeight="1.4" lineClamp={1}>
         For: {item.owner_name}
       </Text>
 
@@ -107,21 +107,21 @@ export function ClaimedItemCard({
         so every card in a row or grid ends its footer on the same line.
       */}
       <Text
-        mt={compact ? 1 : 1.5}
-        h={compact ? '0.85rem' : '1.05rem'}
+        mt={compact ? 1 : { base: 1, md: 1.5 }}
+        h={compact ? '0.85rem' : { base: '0.9rem', md: '1.05rem' }}
         color={COLORS.text.secondary}
-        fontSize={compact ? '0.62rem' : 'xs'}
-        lineHeight={compact ? '0.85rem' : '1.05rem'}
+        fontSize={compact ? '0.62rem' : { base: '0.65rem', md: 'xs' }}
+        lineHeight={compact ? '0.85rem' : { base: '0.9rem', md: '1.05rem' }}
         lineClamp={1}
       >
         {item.description}
       </Text>
 
-      <HStack mt={compact ? 2 : 2.5} gap={compact ? 1.5 : 2} minW={0}>
+      <HStack mt={compact ? 2 : { base: 2, md: 2.5 }} gap={compact ? 1.5 : { base: 1.5, md: 2 }} minW={0}>
         {price !== null && (
           <Text
             flexShrink={0}
-            fontSize={compact ? '10px' : '11px'}
+            fontSize={compact ? '10px' : { base: '10px', md: '11px' }}
             fontWeight="semibold"
             lineHeight="1.4"
             whiteSpace="nowrap"

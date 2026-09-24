@@ -1,6 +1,7 @@
-import { Box, Button, HStack, IconButton, Image, Text, VStack } from '@chakra-ui/react'
+import { Box, Image } from '@chakra-ui/react'
 import { resolveWishlistThumbnail } from '../../../utils/wishlistIcons'
 import { COLORS } from '../../../styles/common'
+import { SidebarRow, SIDEBAR_ICON_SLOT } from './SidebarRow'
 
 interface FriendWishlistItemProps {
   id: string
@@ -31,72 +32,51 @@ export function FriendWishlistItem({
   demo_thumbnail_url,
   isActive = false,
 }: FriendWishlistItemProps) {
-  const thumbnail = resolveWishlistThumbnail({ id, thumbnail_type, thumbnail_icon, thumbnail_image, image, demo_thumbnail_url })
-  
-  const iconBox = thumbnail.type === 'image' ? (
-    <Box
-      w="35px"
-      h="35px"
-      borderRadius="sm"
-      overflow="hidden"
-      flexShrink={0}
-      bg={color || COLORS.cardGray}
-    >
-      <Image src={thumbnail.url} alt={title} w="100%" h="100%" objectFit="cover" />
-    </Box>
-  ) : (
-    <Box
-      w="35px"
-      h="35px"
-      borderRadius="sm"
-      bg={color || COLORS.cardGray}
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      flexShrink={0}
-    >
-      <Box as={thumbnail.icon} boxSize="25px" />
-    </Box>
-  )
+  const thumbnail = resolveWishlistThumbnail({
+    id,
+    thumbnail_type,
+    thumbnail_icon,
+    thumbnail_image,
+    image,
+    demo_thumbnail_url,
+  })
 
-  if (isCollapsed) {
-    return (
-      <IconButton
-        type="button"
-        aria-label={`${title} - ${ownerName}`}
-        variant="ghost"
-        onClick={(e) => {
-          e.preventDefault()
-          onClick()
-        }}
-        w="100%"
-        {...(isActive
-          ? { css: { boxShadow: '0 0 0 2px rgba(255,255,255,0.45)' }, bg: 'whiteAlpha.100' }
-          : {})}
+  const iconBox =
+    thumbnail.type === 'image' ? (
+      <Box
+        w={SIDEBAR_ICON_SLOT}
+        h={SIDEBAR_ICON_SLOT}
+        borderRadius="sm"
+        overflow="hidden"
+        flexShrink={0}
+        bg={color || COLORS.cardGray}
       >
-        <Box pointerEvents="none">{iconBox}</Box>
-      </IconButton>
+        <Image src={thumbnail.url} alt={title} w="100%" h="100%" objectFit="cover" draggable={false} />
+      </Box>
+    ) : (
+      <Box
+        w={SIDEBAR_ICON_SLOT}
+        h={SIDEBAR_ICON_SLOT}
+        borderRadius="sm"
+        bg={color || COLORS.cardGray}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        flexShrink={0}
+      >
+        <Box as={thumbnail.icon} boxSize="25px" />
+      </Box>
     )
-  }
 
   return (
-    <Button
-      variant="ghost"
-      justifyContent="flex-start"
+    <SidebarRow
+      icon={iconBox}
+      label={title}
+      secondary={ownerName}
+      ariaLabel={`${title} — ${ownerName}`}
+      isExpanded={!isCollapsed}
       onClick={onClick}
-      size="sm"
-      px={2}
-      w="100%"
-    >
-      <HStack gap={2}>
-        {iconBox}
-        <VStack align="start" gap={0} flex={1} minW={0}>
-          <Text fontSize="sm">{title}</Text>
-          <Text fontSize="xs" color={COLORS.text.subtle}>
-            {ownerName}
-          </Text>
-        </VStack>
-      </HStack>
-    </Button>
+      isActive={isActive}
+    />
   )
 }

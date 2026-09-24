@@ -96,6 +96,7 @@ export function LandingDemoSidebar({
             thumbnail_image={null}
             demo_thumbnail_url={w.demo_thumbnail_url}
             isCollapsed
+            compact
             onClick={() => onSelectWishlist(w.id)}
           />
         ))}

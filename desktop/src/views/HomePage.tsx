@@ -4,7 +4,7 @@ import { Box, VStack, HStack, Flex, Heading, Button, Text } from '@chakra-ui/rea
 import { ClaimedItemsSection } from '../components/home/ClaimedItemSection'
 import { WishlistCarousel } from '../components/home/WishlistCarousel'
 import { UpNextHero, type UpNextList } from '../components/home/UpNextHero'
-import { UpcomingAgenda, type Occasion } from '../components/home/UpcomingAgenda'
+import { UpcomingCalendar, type Occasion } from '../components/home/UpcomingCalendar'
 import { HomeHeader, type HomeNotification } from '../components/home/HomeHeader'
 import { HomeSkeleton } from '../components/home/HomeSkeleton'
 import { useEffect, useMemo, useState } from 'react'
@@ -28,9 +28,6 @@ import type { Wishlist as WishlistType } from '../types/types'
 
 /** Days out at which a friend's list starts showing up in the bell. */
 const NOTIFY_WITHIN_DAYS = 7
-
-/** Rows in the Upcoming rail — enough to orient, short enough to sit beside the claimed row. */
-const AGENDA_MAX_OCCASIONS = 5
 
 interface Wishlist {
   id: string
@@ -176,11 +173,16 @@ function HomePage() {
     [myWishlists]
   )
 
-  /** Friends' lists get the same "still ahead of you" filter as your own. */
-  const currentFriendsWishlists = useMemo(
+  /**
+   * Friends' lists are filtered harder than your own: dated and still ahead,
+   * only. An undated list of your own is one you're still building toward, so
+   * Your Lists keeps it — an undated list of someone else's gives you no
+   * occasion to buy for, so it stays on /wishlists/friends.
+   */
+  const activeFriendsWishlists = useMemo(
     () =>
       friendsWishlists
-        .filter((wishlist) => isWishlistCurrent(wishlist.due_date))
+        .filter((wishlist) => isWishlistActive(wishlist.due_date))
         .map((wishlist) => ({
           id: wishlist.id,
           name: wishlist.title,
@@ -209,9 +211,13 @@ function HomePage() {
   /**
    * Every dated occasion ahead, yours and your friends', nearest first.
    *
+   * Not truncated: the calendar pages by month, so a date in February has to be
+   * there when you reach February. `isWishlistActive` is what keeps undated and
+   * past lists out — the calendar only ever shows dates still ahead of you.
+   *
    * The nearest one is also in the hero on purpose: the hero is the call to
-   * action, the rail is orientation, and a rail that silently started at the
-   * second date would read as though the first had been missed.
+   * action, the calendar is orientation, and a calendar that silently skipped
+   * the first date would read as though it had been missed.
    */
   const upcomingOccasions = useMemo<Occasion[]>(() => {
     const own: Occasion[] = myWishlists
@@ -223,6 +229,7 @@ function HomePage() {
         ownerName: null,
         itemCount: wishlist.itemCount ?? 0,
         claimedByYou: 0,
+        color: wishlist.color,
       }))
 
     const friends: Occasion[] = friendsWishlists
@@ -234,11 +241,12 @@ function HomePage() {
         ownerName: wishlist.owner_name || wishlist.owner_username,
         itemCount: wishlist.item_count ?? 0,
         claimedByYou: claimsByWishlist.get(wishlist.id) ?? 0,
+        color: wishlist.color,
       }))
 
-    return [...own, ...friends]
-      .sort((a, b) => (daysUntil(a.due_date) ?? 0) - (daysUntil(b.due_date) ?? 0))
-      .slice(0, AGENDA_MAX_OCCASIONS)
+    return [...own, ...friends].sort(
+      (a, b) => (daysUntil(a.due_date) ?? 0) - (daysUntil(b.due_date) ?? 0)
+    )
   }, [myWishlists, friendsWishlists, claimsByWishlist])
 
   /**
@@ -338,10 +346,10 @@ function HomePage() {
 
           The rail is a fixed column rather than a filler for whatever space the
           claimed row leaves over — that space only exists at some widths and
-          some item counts. It is gated to xl because below that it would cost
-          the claimed row half its cards.
+          some item counts. It is gated to 2xl because a 26rem column at xl
+          (1280px) would leave the claimed row about two cards wide.
         */}
-        <Flex align="stretch" gap={{ xl: 4 }}>
+        <Flex align="stretch" gap={{ '2xl': 4 }}>
           <Box flex="1" minW={0}>
             {visibleClaimedItems.length > 0 ? (
               <ClaimedItemsSection
@@ -363,13 +371,13 @@ function HomePage() {
           </Box>
 
           <Box
-            display={{ base: 'none', xl: 'block' }}
-            w="20rem"
+            display={{ base: 'none', '2xl': 'block' }}
+            w="34rem"
             flexShrink={0}
             pr={8}
             pb={2}
           >
-            <UpcomingAgenda
+            <UpcomingCalendar
               occasions={upcomingOccasions}
               onOpenList={(id) => router.push(`/wishlist/${id}`)}
             />
@@ -397,10 +405,10 @@ function HomePage() {
         )}
 
         {/* Friends' Lists — a separate row because claiming is not managing */}
-        {currentFriendsWishlists.length > 0 && (
+        {activeFriendsWishlists.length > 0 && (
           <WishlistCarousel
             title="Friends' Lists"
-            wishlists={currentFriendsWishlists}
+            wishlists={activeFriendsWishlists}
             onShowAll={() => router.push('/wishlists/friends')}
             onWishlistClick={(id) => router.push(`/wishlist/${id}`)}
           />

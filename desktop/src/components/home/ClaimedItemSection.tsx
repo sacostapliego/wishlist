@@ -144,7 +144,7 @@ export function ClaimedItemsSection({
             onOpen={(clicked) => onItemClick?.(clicked)}
             compact={compact}
             thumbRatio={compact ? COMPACT_THUMB_RATIO : 1}
-            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '11.5rem', md: '13rem', lg: '14rem' }}
+            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '9rem', sm: '10.5rem', md: '13rem', lg: '14rem' }}
           />
         ))}
 
@@ -153,7 +153,7 @@ export function ClaimedItemsSection({
             count={overflowCount}
             compact={compact}
             thumbRatio={compact ? COMPACT_THUMB_RATIO : 1}
-            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '11.5rem', md: '13rem', lg: '14rem' }}
+            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '9rem', sm: '10.5rem', md: '13rem', lg: '14rem' }}
             onClick={() => onShowAll?.()}
           />
         )}

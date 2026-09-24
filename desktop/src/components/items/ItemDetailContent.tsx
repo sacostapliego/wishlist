@@ -249,7 +249,7 @@ export function ItemDetailContent({
       {!readOnly && !isOwner && isLoggedIn && claimProps && (
         <Box
           position="fixed"
-          bottom={{ base: 'calc(64px + 1rem)', md: '1rem' }}
+          bottom={{ base: 'calc(64px + 1rem + env(safe-area-inset-bottom, 0px))', md: '1rem' }}
           left={{ base: 0, md: 'calc(var(--sidebar-width) + 51px)' }}
           right={{ base: 0, md: '16px' }}
           px={4}
@@ -276,7 +276,7 @@ export function ItemDetailContent({
       )}
 
       {!readOnly && !isOwner && !isLoggedIn && (
-        <Box position="fixed" bottom="1rem" left={0} right={0} px={4} zIndex={9}>
+        <Box position="fixed" bottom="calc(1rem + env(safe-area-inset-bottom, 0px))" left={0} right={0} px={4} zIndex={9}>
           <Box p={3} maxW="30rem" mx="auto">
             <Button
               w="100%"

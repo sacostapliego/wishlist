@@ -1,21 +1,26 @@
 'use client'
 
-import { Box, VStack, Text, Button, Separator, IconButton, HStack } from '@chakra-ui/react'
+import { Box, VStack, Text, Separator } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { LuHouse, LuPlus, LuUsers, LuHeart, LuGift, LuX } from 'react-icons/lu'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { wishlistAPI } from '../../services/wishlist'
 import { friendsAPI, type FriendWishlistResponse } from '../../services/friends'
 import { useAuth } from '../../context/AuthContext'
 import { API_URL } from '../../services/api'
 import { toaster } from '../ui/toaster'
 import { COLORS } from '../../styles/common'
+import { isWishlistActive, isWishlistCurrent } from '../../utils/wishlistUtils'
 import { ProfileSection } from './sidebar/ProfileSection'
 import { WishlistItem } from './sidebar/WishlistItem'
 import { FriendWishlistItem } from './sidebar/FriendWishlistItem'
+import { SidebarRow, SIDEBAR_ROW_PX } from './sidebar/SidebarRow'
 import { CreateMenu } from './sidebar/CreateMenu'
 import { CreateWishlistModal } from '../wishlists/CreateWishlistModal'
 import { AddItemModal } from '../items/AddItemModal'
+
+/** Matches the row label timing, so headings and labels clear together. */
+const HEADING_TRANSITION = 'opacity 150ms ease, max-height 200ms ease, margin-bottom 200ms ease'
 
 interface Wishlist {
   id: string
@@ -25,6 +30,7 @@ interface Wishlist {
   thumbnail_type?: 'icon' | 'image'
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
+  due_date?: string | null
 }
 
 interface SidebarProps {
@@ -32,6 +38,27 @@ interface SidebarProps {
   isCollapsed: boolean
   isHidden: boolean
   onToggle: () => void
+}
+
+/**
+ * Section heading that collapses to nothing instead of unmounting, so the rows
+ * beneath it slide up rather than jumping when the rail narrows.
+ */
+function SectionHeading({ label, isExpanded }: { label: string; isExpanded: boolean }) {
+  return (
+    <Box
+      overflow="hidden"
+      opacity={isExpanded ? 1 : 0}
+      maxH={isExpanded ? '1.5rem' : '0'}
+      mb={isExpanded ? 2 : 0}
+      transition={HEADING_TRANSITION}
+      aria-hidden={!isExpanded}
+    >
+      <Text fontSize="sm" fontWeight="semibold" px={SIDEBAR_ROW_PX} color={COLORS.text.muted}>
+        {label}
+      </Text>
+    </Box>
+  )
 }
 
 export default function Sidebar({ isExpanded, isCollapsed, isHidden }: SidebarProps) {
@@ -42,7 +69,7 @@ export default function Sidebar({ isExpanded, isCollapsed, isHidden }: SidebarPr
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false)
   const [isCreateWishlistModalOpen, setIsCreateWishlistModalOpen] = useState(false)
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false)
-  const createButtonRef = useRef<HTMLButtonElement>(null)
+  const createButtonRef = useRef<HTMLButtonElement | null>(null)
 
   const loadWishlists = async () => {
     try {
@@ -66,6 +93,22 @@ export default function Sidebar({ isExpanded, isCollapsed, isHidden }: SidebarPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
     loadWishlists()
   }, [])
+
+  /**
+   * Same split as the home page: your own undated lists are ones you're still
+   * building toward, so they stay; a friend's undated list gives you no occasion
+   * to buy for, so it doesn't. Past dates are dropped from both — they remain on
+   * /wishlists/mine and /wishlists/friends.
+   */
+  const visibleWishlists = useMemo(
+    () => myWishlists.filter((wishlist) => isWishlistCurrent(wishlist.due_date)),
+    [myWishlists]
+  )
+
+  const visibleFriendsWishlists = useMemo(
+    () => friendsWishlists.filter((wishlist) => isWishlistActive(wishlist.due_date)),
+    [friendsWishlists]
+  )
 
   const handleCreateWishlistSuccess = () => {
     loadWishlists()
@@ -91,13 +134,15 @@ export default function Sidebar({ isExpanded, isCollapsed, isHidden }: SidebarPr
       bg="#141414"
       h="100%"
       overflowY="auto"
-      p={isCollapsed ? 3 : 4}
-      transition="all 0.2s"
+      // Constant padding: it used to shrink with the rail, which shifted every
+      // icon sideways on top of the width change.
+      p={3}
+      overflowX="hidden"
       display="flex"
       flexDirection="column"
     >
       <Box mb={4}>
-        <ProfileSection 
+        <ProfileSection
           displayName={displayName}
           profileImage={profileImage}
           isExpanded={isExpanded}
@@ -109,77 +154,53 @@ export default function Sidebar({ isExpanded, isCollapsed, isHidden }: SidebarPr
 
       <VStack align="stretch" gap={4} flex="1">
         {/* Top Buttons */}
-        <VStack align="stretch" gap={2}>
-          {isExpanded ? (
-            <>
-              <Button variant="ghost" justifyContent="flex-start" onClick={() => router.push('/')}>
-                <HStack><LuHouse /><Text>Home</Text></HStack>
-              </Button>
-              <Button 
-                ref={createButtonRef}
-                variant="ghost" 
-                justifyContent="flex-start" 
-                onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+        <VStack align="stretch" gap={1}>
+          <SidebarRow
+            icon={<LuHouse size={20} />}
+            label="Home"
+            isExpanded={isExpanded}
+            onClick={() => router.push('/')}
+          />
+          <SidebarRow
+            buttonRef={createButtonRef}
+            icon={
+              <Box
+                transition="transform 300ms ease"
+                transform={isCreateMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)'}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
               >
-                <HStack>
-                  <Box
-                    transition="transform 300ms ease"
-                    transform={isCreateMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)'}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    {isCreateMenuOpen ? <LuX /> : <LuPlus />}
-                  </Box>
-                  <Text>Create</Text>
-                </HStack>
-              </Button>
-              <Button variant="ghost" justifyContent="flex-start" onClick={() => router.push('/friends')}>
-                <HStack><LuUsers /><Text>Friends</Text></HStack>
-              </Button>
-            </>
-          ) : (
-            <>
-              <IconButton aria-label="Home" variant="ghost" onClick={() => router.push('/')}><LuHouse /></IconButton>
-              <IconButton 
-                ref={createButtonRef}
-                aria-label="Create" 
-                variant="ghost" 
-                onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
-              >
-                <Box
-                  transition="transform 300ms ease"
-                  transform={isCreateMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)'}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  {isCreateMenuOpen ? <LuX /> : <LuPlus />}
-                </Box>
-              </IconButton>
-              <IconButton aria-label="Friends" variant="ghost" onClick={() => router.push('/friends')}><LuUsers /></IconButton>
-            </>
-          )}
+                {isCreateMenuOpen ? <LuX size={20} /> : <LuPlus size={20} />}
+              </Box>
+            }
+            label="Create"
+            isExpanded={isExpanded}
+            onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+          />
+          <SidebarRow
+            icon={<LuUsers size={20} />}
+            label="Friends"
+            isExpanded={isExpanded}
+            onClick={() => router.push('/friends')}
+          />
         </VStack>
 
         <Separator />
 
         {/* My Wishlists */}
         <Box>
-          {isExpanded && (
-            <Text fontSize="sm" fontWeight="semibold" mb={2} px={2} color={COLORS.text.muted}>
-              My Wishlists
-            </Text>
-          )}
-          <VStack align="stretch" gap={4}>
-            {myWishlists.length === 0 ? (
-              isExpanded ? (
-                <Text fontSize="xs" color={COLORS.text.muted} px={2}>No wishlists yet</Text>
-              ) : (
-                <IconButton aria-label="My Wishlists" variant="ghost" w="100%"><LuGift /></IconButton>
-              )
+          <SectionHeading label="My Wishlists" isExpanded={isExpanded} />
+          <VStack align="stretch" gap={1}>
+            {visibleWishlists.length === 0 ? (
+              <SidebarRow
+                icon={<LuGift size={20} />}
+                label="No wishlists yet"
+                isExpanded={isExpanded}
+                isMuted
+              />
             ) : (
-              myWishlists.map((wishlist) => (
+              visibleWishlists.map((wishlist) => (
                 <WishlistItem
                   key={wishlist.id}
                   {...wishlist}
@@ -190,25 +211,22 @@ export default function Sidebar({ isExpanded, isCollapsed, isHidden }: SidebarPr
             )}
           </VStack>
         </Box>
-  
+
         <Separator />
 
         {/* Friends' Wishlists */}
         <Box>
-          {isExpanded && (
-            <Text fontSize="sm" fontWeight="semibold" mb={2} px={2} color={COLORS.text.muted}>
-              Friends' Wishlists
-            </Text>
-          )}
-          <VStack align="stretch" gap={4}>
-            {friendsWishlists.length === 0 ? (
-              isExpanded ? (
-                <Text fontSize="xs" color={COLORS.text.muted} px={2}>No friends' wishlists</Text>
-              ) : (
-                <IconButton aria-label="Friends' Wishlists" variant="ghost" w="100%"><LuHeart /></IconButton>
-              )
+          <SectionHeading label="Friends' Wishlists" isExpanded={isExpanded} />
+          <VStack align="stretch" gap={1}>
+            {visibleFriendsWishlists.length === 0 ? (
+              <SidebarRow
+                icon={<LuHeart size={20} />}
+                label="No friends' wishlists"
+                isExpanded={isExpanded}
+                isMuted
+              />
             ) : (
-              friendsWishlists.map((wishlist) => (
+              visibleFriendsWishlists.map((wishlist) => (
                 <FriendWishlistItem
                   key={wishlist.id}
                   id={wishlist.id}
