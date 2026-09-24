@@ -1,6 +1,7 @@
 'use client'
 
-import { Box, HStack, VStack, SimpleGrid } from '@chakra-ui/react'
+import { Box, Flex, HStack, VStack, SimpleGrid } from '@chakra-ui/react'
+import type { ReactNode } from 'react'
 import { COLORS } from '../../styles/common'
 
 /**
@@ -24,6 +25,25 @@ function Sk({ w, h, rounded = 'md' }: { w: string; h: string; rounded?: string }
         },
       }}
     />
+  )
+}
+
+/**
+ * The right-hand rail of a two-column section. Mirrors the live page: a fixed
+ * 34rem column that only exists from 2xl up, so the skeleton doesn't promise a
+ * panel the loaded page won't draw at this width.
+ */
+function RailSkeleton({ children }: { children: ReactNode }) {
+  return (
+    <Box display={{ base: 'none', '2xl': 'block' }} w="34rem" flexShrink={0} pr={8} pb={2}>
+      <Box bg={COLORS.cardDarkLight} borderRadius="lg" p={4} h="100%">
+        <HStack justifyContent="space-between" mb={3} minH="1.75rem">
+          <Sk w="120px" h="18px" />
+          <Sk w="48px" h="12px" />
+        </HStack>
+        {children}
+      </Box>
+    </Box>
   )
 }
 
@@ -64,37 +84,69 @@ export function HomeSkeleton() {
           </Box>
         </Box>
 
-        {/* items claimed */}
-        <Box px={{ base: 4, md: 8 }}>
-          <SectionHeading />
-          <SimpleGrid columns={{ base: 2, md: 3, xl: 4 }} gap={4}>
-            {[0, 1, 2, 3].map((i) => (
-              <HStack key={i} bg={COLORS.cardDark} borderRadius="lg" gap={0} overflow="hidden" h={{ base: '5rem', md: '6rem' }}>
-                <Sk w="96px" h="96px" rounded="none" />
-                <VStack align="stretch" gap={2} flex="1" p={3}>
-                  <Sk w="100%" h="12px" />
-                  <Sk w="60%" h="12px" />
-                  <Box flex="1" />
-                  <Sk w="40%" h="10px" />
-                </VStack>
-              </HStack>
-            ))}
-          </SimpleGrid>
-        </Box>
+        {/* items claimed, with the calendar rail — both only exist at 2xl */}
+        <Flex align="stretch" gap={{ '2xl': 4 }}>
+          <Box flex="1" minW={0} px={{ base: 4, md: 8 }}>
+            <SectionHeading />
+            <SimpleGrid columns={{ base: 2, md: 3, xl: 4 }} gap={4}>
+              {[0, 1, 2, 3].map((i) => (
+                <HStack key={i} bg={COLORS.cardDark} borderRadius="lg" gap={0} overflow="hidden" h={{ base: '5rem', md: '6rem' }}>
+                  <Sk w="96px" h="96px" rounded="none" />
+                  <VStack align="stretch" gap={2} flex="1" p={3}>
+                    <Sk w="100%" h="12px" />
+                    <Sk w="60%" h="12px" />
+                    <Box flex="1" />
+                    <Sk w="40%" h="10px" />
+                  </VStack>
+                </HStack>
+              ))}
+            </SimpleGrid>
+          </Box>
 
-        {/* your lists */}
-        <Box px={{ base: 4, md: 8 }}>
-          <SectionHeading />
-          <HStack gap={4}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <VStack key={i} align="stretch" gap={2.5} display={i > 2 ? { base: 'none', lg: 'flex' } : 'flex'}>
-                <Sk w="192px" h="192px" />
-                <Sk w="140px" h="14px" />
-                <Sk w="90px" h="10px" />
+          <RailSkeleton>
+            <HStack align="stretch" gap={4}>
+              {/* month grid */}
+              <VStack flex="1" minW={0} align="stretch" gap={2}>
+                <Sk w="100%" h="18px" />
+                <SimpleGrid columns={7} gap="2px">
+                  {Array.from({ length: 42 }, (_, i) => (
+                    <Sk key={i} w="100%" h="2.4rem" />
+                  ))}
+                </SimpleGrid>
               </VStack>
-            ))}
-          </HStack>
-        </Box>
+              {/* day detail */}
+              <VStack w="12rem" flexShrink={0} align="stretch" gap={2}>
+                <Sk w="120px" h="10px" />
+                <Sk w="100%" h="34px" />
+                <Sk w="100%" h="34px" />
+              </VStack>
+            </HStack>
+          </RailSkeleton>
+        </Flex>
+
+        {/* your lists, with the setup rail */}
+        <Flex align="stretch" gap={{ '2xl': 4 }}>
+          <Box flex="1" minW={0} px={{ base: 4, md: 8 }}>
+            <SectionHeading />
+            <HStack gap={4}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <VStack key={i} align="stretch" gap={2.5} display={i > 2 ? { base: 'none', lg: 'flex' } : 'flex'}>
+                  <Sk w="192px" h="192px" />
+                  <Sk w="140px" h="14px" />
+                  <Sk w="90px" h="10px" />
+                </VStack>
+              ))}
+            </HStack>
+          </Box>
+
+          <RailSkeleton>
+            <VStack align="stretch" gap={2}>
+              {[0, 1, 2].map((i) => (
+                <Sk key={i} w="100%" h="34px" />
+              ))}
+            </VStack>
+          </RailSkeleton>
+        </Flex>
       </VStack>
     </Box>
   )
