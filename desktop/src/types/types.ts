@@ -36,9 +36,9 @@ export interface WishlistItem {
   priority: number
   is_claimed?: boolean | null
   claimed_by?: string
-  claimed_by_name?: string
   claimed_by_display_name?: string
-  claimed_by_user_id?: string
+  /** Server-computed: true when the requester is the one who claimed it. */
+  claimed_by_viewer?: boolean
   created_at?: string
   updated_at?: string
 }

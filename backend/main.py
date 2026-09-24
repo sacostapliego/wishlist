@@ -12,7 +12,7 @@ TODO
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import items, users, auth, wishlists, relationships
+from routes import items, users, auth, wishlists, relationships, guest_sessions
 
 app = FastAPI(
     title='Wishlist API',
@@ -40,7 +40,8 @@ app.add_middleware(
         'Accept',
         'Origin',
         'X-Requested-With',
-        'X-CSRF-Token'
+        'X-CSRF-Token',
+        'X-Guest-Token'
     ],
 )
 
@@ -50,6 +51,7 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(wishlists.router)
 app.include_router(relationships.router)
+app.include_router(guest_sessions.router)
 
 @app.get('/')
 def read_root():

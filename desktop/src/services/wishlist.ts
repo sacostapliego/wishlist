@@ -1,4 +1,5 @@
 import api from "./api";
+import { guestHeaders } from "./guestSession";
 import type { 
   Wishlist, 
   WishlistItem, 
@@ -26,11 +27,6 @@ export interface ClaimedItemResponse {
 
 export interface ProcessImageResponse {
   image_data_url: string;
-}
-
-export interface ClaimItemData {
-  user_id?: string;
-  guest_name?: string;
 }
 
 export interface ImageUpload {
@@ -238,7 +234,9 @@ export const wishlistAPI = {
   
   getPublicWishlistItems: async (wishlistId: string): Promise<WishlistItem[]> => {
     try {
-      const response = await api.get(`/wishlist/public/${wishlistId}`);
+      const response = await api.get(`/wishlist/public/${wishlistId}`, {
+        headers: guestHeaders(wishlistId),
+      });
       return response.data;
     } catch (error) {
       console.error(`Error fetching items for public wishlist ${wishlistId}:`, error);
@@ -283,13 +281,19 @@ export const wishlistAPI = {
     }
   },
 
-  claimItem: async (itemId: string, claimData: ClaimItemData): Promise<WishlistItem> => {
-    const response = await api.post(`/wishlist/${itemId}/claim`, claimData);
+  // Identity is taken from the auth token or the guest session header - there is
+  // deliberately no way to name who is claiming in the request body.
+  claimItem: async (itemId: string, wishlistId?: string): Promise<{ message: string }> => {
+    const response = await api.post(`/wishlist/${itemId}/claim`, null, {
+      headers: guestHeaders(wishlistId),
+    });
     return response.data;
   },
 
-  unclaimItem: async (itemId: string, unclaimData: ClaimItemData): Promise<WishlistItem> => {
-    const response = await api.delete(`/wishlist/${itemId}/claim`, { data: unclaimData });
+  unclaimItem: async (itemId: string, wishlistId?: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/wishlist/${itemId}/claim`, {
+      headers: guestHeaders(wishlistId),
+    });
     return response.data;
   },
 

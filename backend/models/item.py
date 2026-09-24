@@ -10,6 +10,7 @@ from typing import Optional, Union
 from datetime import datetime
 
 from .base import Base
+from .guest_session import GuestSession  # noqa: F401  (registers the mapper for the relationship below)
 
 # Model for Wish List Item
 class WishListItem(Base):
@@ -31,7 +32,8 @@ class WishListItem(Base):
     
     # claiming functionality
     claimed_by_user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
-    claimed_by_name = Column(String, nullable=True)  # For non-registered users
+    claimed_by_guest_session_id = Column(UUID(as_uuid=True), ForeignKey('guest_sessions.id', ondelete='SET NULL'), nullable=True)
+    claimed_by_name = Column(String, nullable=True)  # legacy: guest claims made before guest sessions
     claimed_at = Column(DateTime(timezone=True), nullable=True)
     
     # timestamps
@@ -42,6 +44,7 @@ class WishListItem(Base):
     user = relationship('User', back_populates='wishlist_items', foreign_keys=[user_id])
     wishlist = relationship('Wishlist', back_populates='items')
     claimed_by_user = relationship('User', foreign_keys=[claimed_by_user_id])
+    claimed_by_guest_session = relationship('GuestSession', foreign_keys=[claimed_by_guest_session_id])
     
 # Pydantic models
 class WishListItemBase(BaseModel):
@@ -74,17 +77,18 @@ class WishListItemResponse(WishListItemBase):
     updated_at: Optional[datetime] = None
     image: Optional[str] = None
     
-    claimed_by_user_id: Optional[uuid.UUID] = None
-    claimed_by_name: Optional[str] = None
     claimed_at: Optional[datetime] = None
     
+    # Who claimed it, resolved to a display name. Never the raw identity fields -
+    # those stay server-side so claim visibility can be controlled per wishlist.
     claimed_by_display_name: Optional[str] = None
+    is_claimed: bool = False
+    
+    # True when the requester (member or guest) is the one who claimed it.
+    # The client uses this to decide whether to offer 'Unclaim'.
+    claimed_by_viewer: bool = False
     
     model_config = ConfigDict(from_attributes=True)
     
 class ScrapeRequest(BaseModel):
     url: HttpUrl
-    
-class ClaimRequest(BaseModel):
-    user_id: Optional[str] = None
-    guest_name: Optional[str] = None
