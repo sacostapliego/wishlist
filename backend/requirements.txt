@@ -30,3 +30,6 @@ sqlalchemy-utils
 
 # Image processing
 pillow
+
+# Testing
+pytest

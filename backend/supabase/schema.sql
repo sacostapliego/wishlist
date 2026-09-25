@@ -50,12 +50,35 @@ CREATE TABLE public.wishlist_items (
   claimed_by_name character varying,
   claimed_at timestamp with time zone,
   claimed_under_mode character varying CHECK (claimed_under_mode IS NULL OR claimed_under_mode IN ('blind', 'open')),
+  is_contribution boolean NOT NULL DEFAULT false,
+  owner_seed_amount double precision CHECK (owner_seed_amount IS NULL OR owner_seed_amount >= 0),
+  CONSTRAINT wishlist_items_contribution_not_claimed_check CHECK (is_contribution = false OR (claimed_by_user_id IS NULL AND claimed_by_guest_session_id IS NULL AND claimed_by_name IS NULL)),
   CONSTRAINT wishlist_items_pkey PRIMARY KEY (id),
   CONSTRAINT wishlist_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT wishlist_items_wishlist_id_fkey FOREIGN KEY (wishlist_id) REFERENCES public.wishlists(id),
   CONSTRAINT wishlist_items_claimed_by_user_id_fkey FOREIGN KEY (claimed_by_user_id) REFERENCES public.users(id),
   CONSTRAINT wishlist_items_claimed_by_guest_session_id_fkey FOREIGN KEY (claimed_by_guest_session_id) REFERENCES public.guest_sessions(id)
 );
+CREATE TABLE public.item_contributions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  item_id uuid NOT NULL,
+  contributor_user_id uuid,
+  guest_session_id uuid,
+  amount double precision NOT NULL CHECK (amount > 0),
+  note character varying(280),
+  contributed_under_mode character varying CHECK (contributed_under_mode IS NULL OR contributed_under_mode IN ('blind', 'open')),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone,
+  CONSTRAINT item_contributions_pkey PRIMARY KEY (id),
+  CONSTRAINT item_contributions_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.wishlist_items(id) ON DELETE CASCADE,
+  CONSTRAINT item_contributions_contributor_user_id_fkey FOREIGN KEY (contributor_user_id) REFERENCES public.users(id) ON DELETE CASCADE,
+  CONSTRAINT item_contributions_guest_session_id_fkey FOREIGN KEY (guest_session_id) REFERENCES public.guest_sessions(id) ON DELETE CASCADE,
+  CONSTRAINT item_contributions_one_identity_check CHECK ((contributor_user_id IS NOT NULL) <> (guest_session_id IS NOT NULL))
+);
+-- one pledge per person per item; raising a pledge is an edit, not a second row
+CREATE UNIQUE INDEX item_contributions_one_per_user_idx ON public.item_contributions (item_id, contributor_user_id) WHERE contributor_user_id IS NOT NULL;
+CREATE UNIQUE INDEX item_contributions_one_per_guest_idx ON public.item_contributions (item_id, guest_session_id) WHERE guest_session_id IS NOT NULL;
+CREATE INDEX item_contributions_item_id_idx ON public.item_contributions (item_id);
 CREATE TABLE public.guest_sessions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   wishlist_id uuid NOT NULL,
