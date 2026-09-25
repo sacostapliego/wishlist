@@ -7,22 +7,32 @@ from models.wishlist import Wishlist
 # A wishlist whose owner must not see who claimed what. The default everywhere,
 # because revealing a claim by accident cannot be undone.
 BLIND = 'blind'
+OPEN = 'open'
 
 def _hides_claims_from(item: WishListItem, viewer_user_id: Optional[uuid.UUID]) -> bool:
     """
-    True when this viewer is the list's owner and the list is blind.
+    True when this viewer is the list's owner and must not see this claim.
 
-    A missing wishlist is treated as blind: an item with no list cannot be
-    claimed through a shared page anyway, and defaulting to hidden means a
-    future code path that forgets to load the relationship leaks nothing.
+    The owner sees a claim only when BOTH are open: the list is open now, and
+    the list was open when the claim was made. The second half is what stops an
+    owner flipping a blind list to open and retroactively seeing claims that
+    people made believing they were hidden - the claimer acted on a promise,
+    and the owner does not get to withdraw it after the fact.
+
+    Two defaults both point at hiding. A missing wishlist is treated as blind,
+    so a code path that forgets to eager-load the relationship leaks nothing. A
+    NULL claimed_under_mode - a claim from before that column existed - is also
+    treated as blind, because every claim made back then was made on a list the
+    app presented as blind.
     """
     if viewer_user_id is None or item.user_id != viewer_user_id:
         return False
 
     wishlist: Optional[Wishlist] = item.wishlist
-    mode = wishlist.visibility_mode if wishlist else BLIND
+    list_mode = wishlist.visibility_mode if wishlist else BLIND
+    claim_mode = item.claimed_under_mode or BLIND
 
-    return mode == BLIND
+    return not (list_mode == OPEN and claim_mode == OPEN)
 
 def serialize_item(
     item: WishListItem,

@@ -56,30 +56,45 @@ every visit: a dialog people see repeatedly gets dismissed unread, which is
 worse than not showing it. Seen ids live in `localStorage`; if storage is
 unavailable the notice shows again, which is the safe direction to fail.
 
+## Switching modes, and why a claim remembers
+
+Flipping a blind list to open must not reveal claims people already made. They
+claimed believing the owner could not see; the owner does not get to withdraw
+that promise after the fact.
+
+So each claim pins the list's mode at the moment it was made, in
+`wishlist_items.claimed_under_mode`. **The owner sees a claim only when both are
+open** — the list is open now, and it was open when the claim happened.
+
+| List now | Claim made under | Owner sees it |
+| --- | --- | --- |
+| blind | anything | no |
+| open | open | yes |
+| open | blind | no |
+| open | NULL (pre-migration) | no |
+
+Unclaiming clears the field along with the rest of the claim.
+
+The column is deliberately **not** backfilled. Leaving old rows NULL is what
+keeps existing claims hidden; backfilling from `wishlists.visibility_mode`
+would reveal exactly the claims this exists to protect.
+
+Blocking the switch outright was considered and rejected — an owner who changes
+their mind before anyone has claimed would be locked out for no reason.
+
 ## Decided against
 
-**Blocking the blind → open switch when claims already exist.** Considered,
-because flipping a blind list to open retroactively reveals claims that people
-made under the opposite promise. Rejected as too restrictive for the common
-case — an owner who changes their mind early, before anyone has claimed, would
-be permanently locked out for no reason.
-
-**This is a real consequence and it is not yet mitigated.** The owner can flip
-the switch and see claims made while the list was blind. The visitors who made
-those claims are not notified. If that turns out to matter, the fix is to
-record the mode at claim time and only reveal claims made while the list was
-open — not to block the switch.
-
-**Making price/claim state visible "just as a count".** Any aggregate leaks;
-see the rule above.
+**Making claim state visible "just as a count".** Any aggregate leaks; see the
+rule above.
 
 ## Where the code lives
 
 | Concern | File |
 | --- | --- |
 | Column + validation | `backend/models/wishlist.py`, `backend/routes/wishlists.py` |
+| Mode pinned at claim time | `backend/models/item.py`, `backend/routes/items.py` |
 | The rule, enforced | `backend/services/item_serializer.py` |
-| Migration | `backend/supabase/migrations_v3_002_visibility_mode.sql` |
+| Migrations | `backend/supabase/migrations_v3_002_visibility_mode.sql`, `..._003_claimed_under_mode.sql` |
 | Owner's control | `desktop/src/components/wishlists/WishlistForm.tsx` |
 | Visitor notice | `desktop/src/components/wishlists/OpenListNotice.tsx` |
 

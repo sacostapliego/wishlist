@@ -475,6 +475,9 @@ def claim_item(
         item.claimed_by_name = None
 
     item.claimed_at = func.now()
+    # Pinned now, not read later: if the owner opens the list afterwards, this
+    # claim stays hidden from them. See design/wishlist/visibility-modes.md.
+    item.claimed_under_mode = wishlist.visibility_mode
 
     db.commit()
     db.refresh(item)
@@ -510,6 +513,7 @@ def unclaim_item(
     item.claimed_by_guest_session_id = None
     item.claimed_by_name = None
     item.claimed_at = None
+    item.claimed_under_mode = None
 
     db.commit()
     db.refresh(item)
