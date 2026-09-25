@@ -49,6 +49,7 @@ CREATE TABLE public.wishlist_items (
   claimed_by_guest_session_id uuid,
   claimed_by_name character varying,
   claimed_at timestamp with time zone,
+  claimed_under_mode character varying CHECK (claimed_under_mode IS NULL OR claimed_under_mode IN ('blind', 'open')),
   CONSTRAINT wishlist_items_pkey PRIMARY KEY (id),
   CONSTRAINT wishlist_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT wishlist_items_wishlist_id_fkey FOREIGN KEY (wishlist_id) REFERENCES public.wishlists(id),

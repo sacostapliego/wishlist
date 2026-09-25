@@ -250,7 +250,7 @@ export const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
           </Text>
           <Text fontSize="xs" color={COLORS.text.muted} mt={0.5}>
             {visibilityMode === 'open'
-              ? "You'll see every claim on this list — no surprises. Visitors are told before they claim."
+              ? "You'll see claims made from now on — no surprises. Visitors are told before they claim, and anything already claimed stays hidden."
               : "Claims stay hidden from you. Visitors can see what's already taken."}
           </Text>
         </Box>

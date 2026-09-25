@@ -35,6 +35,12 @@ class WishListItem(Base):
     claimed_by_guest_session_id = Column(UUID(as_uuid=True), ForeignKey('guest_sessions.id', ondelete='SET NULL'), nullable=True)
     claimed_by_name = Column(String, nullable=True)  # legacy: guest claims made before guest sessions
     claimed_at = Column(DateTime(timezone=True), nullable=True)
+    # The wishlist's visibility_mode at the moment of the claim. A claim made
+    # while the list was blind stays hidden from the owner even if they later
+    # switch the list to open - they cannot retroactively break the promise the
+    # claimer acted on. NULL means a claim from before this column existed,
+    # which is treated as blind.
+    claimed_under_mode = Column(String(10), nullable=True)
     
     # timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
