@@ -1,4 +1,8 @@
 // Wishlist Types
+
+/** Whether the list's owner is allowed to see who claimed what. */
+export type WishlistVisibility = 'blind' | 'open'
+
 export interface Wishlist {
   id: string
   title: string
@@ -17,6 +21,11 @@ export interface Wishlist {
   use_item_colors?: boolean
   default_view?: 'grid' | 'list'
   due_date?: string | null
+  /**
+   * 'blind' - the owner never sees who claimed what on their own list.
+   * 'open'  - the owner sees claims, and visitors are told before they claim.
+   */
+  visibility_mode?: WishlistVisibility
   // Additional optional properties from different API endpoints
   owner_name?: string
   owner_username?: string
@@ -56,6 +65,7 @@ export interface CreateWishlistData {
   use_item_colors?: boolean
   default_view?: 'grid' | 'list'
   due_date?: string | null
+  visibility_mode?: WishlistVisibility
 }
 
 export interface UpdateWishlistData {
@@ -73,6 +83,7 @@ export interface UpdateWishlistData {
   default_view?: 'grid' | 'list'
   due_date?: string | null
   remove_due_date?: boolean
+  visibility_mode?: WishlistVisibility
 }
 
 // User Types

@@ -48,6 +48,7 @@ export function EditWishlistModal({ isOpen, onClose, wishlistId, onSuccess }: Ed
         use_item_colors: wishlistData.use_item_colors ?? false,
         default_view: wishlistData.default_view || 'list',
         due_date: wishlistData.due_date || null,
+        visibility_mode: wishlistData.visibility_mode || 'blind',
       })
     } catch (error) {
       console.error('Error fetching wishlist details:', error)
@@ -77,6 +78,7 @@ export function EditWishlistModal({ isOpen, onClose, wishlistId, onSuccess }: Ed
         use_item_colors: wishlistData.use_item_colors,
         default_view: wishlistData.default_view,
         due_date: wishlistData.due_date,
+        visibility_mode: wishlistData.visibility_mode,
       })
       
       toaster.create({

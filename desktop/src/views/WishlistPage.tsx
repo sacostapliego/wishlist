@@ -13,7 +13,7 @@ import { WishlistItemView, type SortOption } from '../components/wishlists/Wishl
 import { useWishlistDetail } from '../hooks/useWislistDetail'
 import { WishlistFilters } from '../components/wishlists/WishlistFilters'
 import { userAPI } from '../services/user'
-import type { ApiError } from '../types/types'
+import type { ApiError, WishlistVisibility } from '../types/types'
 import { SimpleGridView } from '../components/wishlists/SimpleGridView'
 
 interface Wishlist {
@@ -33,6 +33,7 @@ interface Wishlist {
   use_item_colors?: boolean
   default_view?: 'grid' | 'list'
   due_date?: string | null
+  visibility_mode?: WishlistVisibility
 }
 
 interface MyWishlistResponse {

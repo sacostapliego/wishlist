@@ -13,6 +13,7 @@ import {
 import { BsGrid, BsList } from "react-icons/bs";
 import { useState, useImperativeHandle, forwardRef } from 'react'
 import { COLORS } from '../../styles/common'
+import type { WishlistVisibility } from '../../types/types'
 import { WISHLIST_COLORS } from '../../styles/colors'
 import { ThumbnailPicker } from './ThumbnailPicker'
 
@@ -29,6 +30,7 @@ interface WishlistFormData {
   use_item_colors?: boolean
   default_view?: 'grid' | 'list'  
   due_date?: string | null
+  visibility_mode?: WishlistVisibility
 }
 
 interface WishlistFormProps {
@@ -61,6 +63,11 @@ export const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
   const [selectedImage, setSelectedImage] = useState(initialValues.image || 'gift-outline')
   const [useItemColors, setUseItemColors] = useState(initialValues.use_item_colors ?? true)
   const [defaultView, setDefaultView] = useState<'grid' | 'list'>(initialValues.default_view || 'list')
+  // Blind unless the owner deliberately opts out. A list must never open itself
+  // by defaulting; the surprise is the whole point of the app.
+  const [visibilityMode, setVisibilityMode] = useState<WishlistVisibility>(
+    initialValues.visibility_mode || 'blind'
+  )
   const [dueDate, setDueDate] = useState<string>(initialValues.due_date || '')
   
   // Thumbnail state
@@ -111,6 +118,7 @@ export const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
       thumbnail_image: thumbnailType === 'image' ? thumbnailImageFile : null,
       use_item_colors: useItemColors,
       default_view: defaultView,
+      visibility_mode: visibilityMode,
       due_date: dueDate || null,
       ...(shouldRemoveThumbnailImage ? { remove_thumbnail_image: true } : {})
     })
@@ -222,6 +230,37 @@ export const WishlistForm = forwardRef<WishlistFormRef, WishlistFormProps>(({
           Make Public
         </Text>
         <Switch.Root checked={isPublic} onCheckedChange={(e) => setIsPublic(e.checked)} colorPalette="red">
+          <Switch.HiddenInput />
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+        </Switch.Root>
+      </HStack>
+
+      {/*
+        Phrased as the surprise being spoiled rather than as a privacy setting,
+        because that is what the owner actually trades away. Visitors are told
+        which mode a list is in before they claim, so this is never a silent
+        change of the deal for them.
+      */}
+      <HStack justify="space-between" align="start" gap={4}>
+        <Box flex="1" minW={0}>
+          <Text fontSize="sm" fontWeight="medium" color={COLORS.text.secondary}>
+            Let me see who claimed what
+          </Text>
+          <Text fontSize="xs" color={COLORS.text.muted} mt={0.5}>
+            {visibilityMode === 'open'
+              ? "You'll see every claim on this list — no surprises. Visitors are told before they claim."
+              : "Claims stay hidden from you. Visitors can see what's already taken."}
+          </Text>
+        </Box>
+        <Switch.Root
+          checked={visibilityMode === 'open'}
+          onCheckedChange={(e) => setVisibilityMode(e.checked ? 'open' : 'blind')}
+          colorPalette="red"
+          flexShrink={0}
+          mt={1}
+        >
           <Switch.HiddenInput />
           <Switch.Control>
             <Switch.Thumb />
