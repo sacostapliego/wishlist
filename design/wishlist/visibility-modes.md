@@ -94,14 +94,22 @@ rule above.
 | Column + validation | `backend/models/wishlist.py`, `backend/routes/wishlists.py` |
 | Mode pinned at claim time | `backend/models/item.py`, `backend/routes/items.py` |
 | The rule, enforced | `backend/services/item_serializer.py` |
-| Migrations | `backend/supabase/migrations_v3_002_visibility_mode.sql`, `..._003_claimed_under_mode.sql` |
+| Tests for the rule | `backend/tests/test_item_serializer.py` |
+| Migrations | `backend/supabase/migrations_v3_002_visibility_mode.sql`, `..._003_claimed_under_mode.sql`, `..._004_contributions.sql` |
 | Owner's control | `desktop/src/components/wishlists/WishlistForm.tsx` |
 | Visitor notice | `desktop/src/components/wishlists/OpenListNotice.tsx` |
 
 ## For contributions
 
-The same rule extends: a blind owner sees nothing about contributions — not the
-total, not the bar, not the contributor count. An owner's own seed amount is a
-separate column on the item, **not** a row in the contributions table,
-specifically so the blind rule needs no exception carved out for it. See
+The rule extends unchanged, and is now implemented: a blind owner sees nothing
+about contributions - not the total, not the bar, not the contributor count. A
+pledge pins its mode in `item_contributions.contributed_under_mode` for the same
+reason a claim does, and the owner's own seed amount is a column on the item
+rather than a row in the contributions table, specifically so the blind rule
+needs no exception carved out for it.
+
+Filtering there happens per pledge rather than per item, so an owner's total can
+be lower than a visitor's - the honest figure for what the owner may know.
+
+See [[contributions.md]] for the whole design, and
 [[../guest/guest-sessions.md]] for how guest contributors are identified.

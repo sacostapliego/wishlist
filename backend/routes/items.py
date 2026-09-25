@@ -5,7 +5,7 @@ import base64
 from fastapi import APIRouter, Depends, HTTPException, Form, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from typing import List, Optional
 from PIL import Image
 
@@ -13,6 +13,7 @@ from PIL import Image
 from models.wishlist import Wishlist
 from models.base import get_db
 from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse, ScrapeRequest
+from models.item_contribution import ItemContribution
 from middleware.auth import get_current_user, get_current_user_optional
 from services.guest_session import get_guest_token, resolve_guest_session
 from services.item_serializer import serialize_item, serialize_items
@@ -70,6 +71,28 @@ def _remove_white_background(image_data: bytes) -> bytes:
     return buffer.getvalue()
 
 ''' Create a new item '''
+""" Guards shared by item create and update """
+def _validate_contribution_fields(
+    is_contribution: bool,
+    owner_seed_amount: Optional[float]
+) -> None:
+    """
+    The owner's seed amount only means something on a contribution item, and a
+    negative one means nothing anywhere. Rejected rather than quietly dropped, so
+    a client sending the wrong shape hears about it.
+    """
+    if owner_seed_amount is not None:
+        if owner_seed_amount < 0:
+            raise HTTPException(
+                status_code=400,
+                detail='A contribution amount cannot be negative'
+            )
+        if not is_contribution:
+            raise HTTPException(
+                status_code=400,
+                detail='Only a contribution item can have a contribution amount'
+            )
+
 @router.post('/', response_model=WishListItemResponse)
 async def create_wishlist_item(
     # item
@@ -81,11 +104,17 @@ async def create_wishlist_item(
     priority: int = Form(0),
     wishlist_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    # contribution mode. `price` doubles as the goal, so an item with no price
+    # shows a running total instead of a progress bar.
+    is_contribution: bool = Form(False),
+    owner_seed_amount: Optional[float] = Form(None),
     # current_user/database session
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     try:
+        _validate_contribution_fields(is_contribution, owner_seed_amount)
+
         # process wishlist id
         wishlist_id = uuid.UUID(wishlist_id) if wishlist_id else None
         
@@ -103,7 +132,9 @@ async def create_wishlist_item(
             "is_purchased": is_purchased,
             "priority": priority,
             "wishlist_id": wishlist_id,
-            "image": image_url
+            "image": image_url,
+            "is_contribution": is_contribution,
+            "owner_seed_amount": owner_seed_amount
         }
         
         db_item = WishListItem(
@@ -115,6 +146,11 @@ async def create_wishlist_item(
         db.refresh(db_item)
     
         return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
+    except HTTPException:
+        # a deliberate 4xx from validation above - do not rewrite it as a 500
+        if 'image_url' in locals() and image_url:
+            delete_file_from_s3(image_url)
+        raise
     except Exception as e:
         if 'image_url' in locals() and image_url:
             delete_file_from_s3(image_url)
@@ -132,7 +168,10 @@ def read_wishlist_items(
         joinedload(WishListItem.claimed_by_user),
         joinedload(WishListItem.claimed_by_guest_session),
         # the serializer needs the list's visibility_mode to enforce blind mode
-        joinedload(WishListItem.wishlist)
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.user_id == current_user["user_id"]
     ).offset(skip).limit(limit).all()
@@ -160,7 +199,10 @@ def get_items_by_wishlist(
         joinedload(WishListItem.claimed_by_user),
         joinedload(WishListItem.claimed_by_guest_session),
         # the serializer needs the list's visibility_mode to enforce blind mode
-        joinedload(WishListItem.wishlist)
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.wishlist_id == wishlist_id
     ).all()
@@ -178,7 +220,10 @@ def read_wishlist_item(
         joinedload(WishListItem.claimed_by_user),
         joinedload(WishListItem.claimed_by_guest_session),
         # the serializer needs the list's visibility_mode to enforce blind mode
-        joinedload(WishListItem.wishlist)
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.id == item_id, 
         WishListItem.user_id == current_user["user_id"]
@@ -201,6 +246,8 @@ async def update_wishlist_item(
     priority: Optional[int] = Form(None),
     wishlist_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    is_contribution: Optional[bool] = Form(None),
+    owner_seed_amount: Optional[float] = Form(None),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -245,7 +292,46 @@ async def update_wishlist_item(
         db_item.priority = priority
     if wishlist_uuid is not None:
         db_item.wishlist_id = wishlist_uuid
-    
+
+    # Contribution mode, after the simple fields because switching it has
+    # conditions the others do not.
+    effective_is_contribution = (
+        is_contribution if is_contribution is not None else bool(db_item.is_contribution)
+    )
+    _validate_contribution_fields(effective_is_contribution, owner_seed_amount)
+
+    if is_contribution is not None and bool(db_item.is_contribution) != is_contribution:
+        if is_contribution:
+            # Turning it on would make the item both claimed and funded.
+            if (
+                db_item.claimed_by_user_id
+                or db_item.claimed_by_guest_session_id
+                or db_item.claimed_by_name
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail='Release the claim on this item before it can take contributions'
+                )
+        else:
+            # Turning it off would strand pledges people have already made.
+            # Deleting them silently is the wrong default: someone said they
+            # would put money in, and the owner should have to see that before it
+            # is thrown away.
+            pledge_count = db.query(ItemContribution).filter(
+                ItemContribution.item_id == db_item.id
+            ).count()
+
+            if pledge_count:
+                raise HTTPException(
+                    status_code=400,
+                    detail='People have already contributed to this item, so it cannot stop taking contributions'
+                )
+
+        db_item.is_contribution = is_contribution
+
+    if owner_seed_amount is not None:
+        db_item.owner_seed_amount = owner_seed_amount
+
     db.commit()
     db.refresh(db_item)
     return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
@@ -290,7 +376,10 @@ def read_user_wishlist(
         joinedload(WishListItem.claimed_by_user),
         joinedload(WishListItem.claimed_by_guest_session),
         # the serializer needs the list's visibility_mode to enforce blind mode
-        joinedload(WishListItem.wishlist)
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.user_id == user_id
     ).offset(skip).limit(limit).all()
@@ -420,7 +509,10 @@ def read_public_wishlist_items(
         joinedload(WishListItem.claimed_by_user),
         joinedload(WishListItem.claimed_by_guest_session),
         # the serializer needs the list's visibility_mode to enforce blind mode
-        joinedload(WishListItem.wishlist)
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.wishlist_id == wishlist_id
     ).all()
@@ -455,6 +547,15 @@ def claim_item(
     ).first()
     if not wishlist:
         raise HTTPException(status_code=404, detail="Item is not on a shared wishlist")
+
+    # Claiming and contributing are mutually exclusive, or an item ends up both
+    # 60% funded and claimed by one person. The contribution routes refuse the
+    # mirror case, and a database constraint refuses the combination outright.
+    if item.is_contribution:
+        raise HTTPException(
+            status_code=400,
+            detail="This item takes contributions rather than being claimed"
+        )
 
     if item.claimed_by_user_id or item.claimed_by_guest_session_id or item.claimed_by_name:
         raise HTTPException(status_code=400, detail="Item is already claimed")

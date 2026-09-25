@@ -2,10 +2,36 @@
 
 import { Box, Button, Dialog, HStack, Text, VStack } from '@chakra-ui/react'
 import { LuEye } from 'react-icons/lu'
-import { useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import { COLORS } from '../../styles/common'
 
 const SEEN_KEY = 'open-list-notice-seen'
+
+/**
+ * Lists dismissed this session, whether or not storage accepted them.
+ *
+ * In private mode every localStorage call throws, and without this the notice
+ * could not be dismissed at all: the dialog's open state is derived from what
+ * has been seen, so if nothing can be recorded, nothing ever closes. Held in
+ * memory it is forgotten on reload, which is the same "shows again next visit"
+ * behaviour a failed write already gives.
+ */
+const seenThisSession = new Set<string>()
+
+// Subscribers to the seen set. localStorage has no change event of its own for
+// the tab that wrote it, so dismissing notifies them directly.
+const listeners = new Set<() => void>()
+
+function subscribe(onStoreChange: () => void) {
+  listeners.add(onStoreChange)
+  // Another tab dismissing the same notice counts too.
+  window.addEventListener('storage', onStoreChange)
+
+  return () => {
+    listeners.delete(onStoreChange)
+    window.removeEventListener('storage', onStoreChange)
+  }
+}
 
 /**
  * Tells a visitor, before they claim anything, that this list's owner can see
@@ -28,7 +54,13 @@ function readSeen(): string[] {
   }
 }
 
+function hasSeen(wishlistId: string): boolean {
+  return seenThisSession.has(wishlistId) || readSeen().includes(wishlistId)
+}
+
 function markSeen(wishlistId: string) {
+  seenThisSession.add(wishlistId)
+
   try {
     const seen = readSeen()
     if (!seen.includes(wishlistId)) {
@@ -38,6 +70,8 @@ function markSeen(wishlistId: string) {
     // Storage unavailable (private mode). The notice just shows again next
     // visit, which is the safe direction to fail.
   }
+
+  listeners.forEach((notify) => notify())
 }
 
 interface OpenListNoticeProps {
@@ -54,21 +88,20 @@ export function OpenListNotice({
   isOwner,
   visibilityMode,
 }: OpenListNoticeProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  // Whether this notice has been seen is external state that lives in the
+  // browser, not React state, so it is read through useSyncExternalStore rather
+  // than copied into a useState inside an effect. The server snapshot is
+  // "already seen", which keeps the dialog closed during SSR and through
+  // hydration - localStorage cannot be read on the server, and a first client
+  // render that disagreed with the server's would be a hydration mismatch.
+  const getSnapshot = useCallback(() => hasSeen(wishlistId), [wishlistId])
+  const seen = useSyncExternalStore(subscribe, getSnapshot, () => true)
 
-  useEffect(() => {
-    if (isOwner || visibilityMode !== 'open' || !wishlistId) return
-    // Reading storage in an effect, not during render, so the server render and
-    // the first client render agree.
-    if (!readSeen().includes(wishlistId)) {
-      setIsOpen(true)
-    }
-  }, [wishlistId, isOwner, visibilityMode])
+  const isOpen = !isOwner && visibilityMode === 'open' && !!wishlistId && !seen
 
-  const dismiss = () => {
-    markSeen(wishlistId)
-    setIsOpen(false)
-  }
+  // Recording the dismissal notifies the store, which closes the dialog. There
+  // is no separate open flag to keep in step with it.
+  const dismiss = () => markSeen(wishlistId)
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && dismiss()} role="alertdialog">
