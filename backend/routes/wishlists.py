@@ -20,6 +20,23 @@ BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
 router = APIRouter(prefix='/wishlists', tags=['wishlists'])
 
+VISIBILITY_MODES = ('blind', 'open')
+
+def validate_visibility_mode(mode: Optional[str]) -> Optional[str]:
+    """
+    'blind' keeps claims hidden from the list's owner; 'open' shows them, and
+    the client warns visitors before they claim. Anything else is rejected
+    rather than silently coerced - a typo must not quietly open a blind list.
+    """
+    if mode is None:
+        return None
+    if mode not in VISIBILITY_MODES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"visibility_mode must be one of {', '.join(VISIBILITY_MODES)}"
+        )
+    return mode
+
 def build_wishlist_response(db_wishlist: Wishlist, item_count: int) -> dict:
     """Helper to build a wishlist response dict with item count"""
     response_data = {k: v for k, v in db_wishlist.__dict__.items() if not k.startswith('_')}
@@ -39,6 +56,7 @@ async def create_wishlist(
     use_item_colors: bool = Form(False),
     default_view: str = Form('list'),
     due_date: Optional[str] = Form(None),  # Accept as string, parse below
+    visibility_mode: str = Form('blind'),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -71,7 +89,8 @@ async def create_wishlist(
         thumbnail_image=thumbnail_image_url,
         use_item_colors=use_item_colors,
         default_view=default_view,
-        due_date=parsed_due_date
+        due_date=parsed_due_date,
+        visibility_mode=validate_visibility_mode(visibility_mode) or 'blind'
     )
     db.add(db_wishlist)
     db.commit()
@@ -141,6 +160,7 @@ async def update_wishlist(
     default_view: Optional[str] = Form(None),
     due_date: Optional[str] = Form(None),
     remove_due_date: bool = Form(False),
+    visibility_mode: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -195,6 +215,10 @@ async def update_wishlist(
         db_wishlist.use_item_colors = use_item_colors
     if default_view is not None:
         db_wishlist.default_view = default_view
+    if visibility_mode is not None:
+        # Note: switching blind -> open reveals claims that were made while the
+        # list was blind. The client confirms this with the owner first.
+        db_wishlist.visibility_mode = validate_visibility_mode(visibility_mode)
 
     db.commit()
     db.refresh(db_wishlist)

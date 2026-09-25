@@ -1,9 +1,6 @@
 # Cardinal Wishlist
 
-Share a wishlist; friends and family claim what they're getting so nobody
-doubles up — and so the owner stays surprised.
-
-**Live:** https://cardinalwishlist.vercel.app/
+https://cardinalwishlist.vercel.app/
 
 ## What's in this repo
 
@@ -14,9 +11,7 @@ doubles up — and so the owner stays surprised.
 | `landing/` | Marketing page | Active |
 | `mobile/` | Expo / React Native app | **Dormant** — see below |
 
-### `desktop/` vs `mobile/` — read this before you start
-
-These names are misleading and they will trip you up.
+### `desktop/` vs `mobile/` 
 
 **`desktop/` is not desktop-only.** It's the entire web app, and it is the only
 frontend currently deployed. It is responsive: it has its own phone layout,
@@ -24,15 +19,11 @@ including a dedicated bottom nav (`src/components/layout/MobileNav.tsx`). When
 the TODO or a commit message says "mobile view", it almost always means **the
 narrow-viewport layout inside `desktop/`**, not the `mobile/` directory.
 
-**`mobile/` is a dormant first draft.** It's the original Expo/React Native app
+**`mobile/` is a old version of the app** It's the original Expo/React Native app
 from when the project started, kept because a real standalone native app is
 planned. It is not deployed, not actively developed, and its home screen still
 reflects the 2.x information model. Changes land there only to keep shared
-concepts (API shapes, auth, guest sessions) from drifting.
-
-So: **work on the web app happens in `desktop/`.** Only touch `mobile/` when the
-task names it explicitly, or when a backend change would otherwise leave the
-native client inconsistent.
+concepts (API shapes, auth, guest sessions) from drifting. Right now there is no updates to this for the foreseeable future.
 
 ## Design notes
 
@@ -44,6 +35,7 @@ covers.
 | --- | --- |
 | `design/v3.0.0/` | The v3 release: desktop home page layout, Up Next rules, due-date badges |
 | `design/guest/` | Guest sessions — how people claim items without an account |
+| `design/wishlist/` | Visibility modes — whether a list's owner can see who claimed what |
 
 ## Database
 

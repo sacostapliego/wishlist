@@ -173,6 +173,8 @@ export const wishlistAPI = {
       formData.append('use_item_colors', wishlist.use_item_colors ? 'true' : 'false');
       formData.append('default_view', wishlist.default_view ?? 'grid');
       if (wishlist.due_date) formData.append('due_date', wishlist.due_date);
+      // Defaults to blind: a list should never open itself by omission.
+      formData.append('visibility_mode', wishlist.visibility_mode ?? 'blind');
 
       const response = await api.post('/wishlists/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -198,6 +200,7 @@ export const wishlistAPI = {
     // Added fields (2026)
     if (wishlist.use_item_colors !== undefined) formData.append('use_item_colors', wishlist.use_item_colors ? 'true' : 'false');
     if (wishlist.default_view) formData.append('default_view', wishlist.default_view);
+    if (wishlist.visibility_mode) formData.append('visibility_mode', wishlist.visibility_mode);
     
     // Handle due_date — use remove_due_date flag when clearing
     if (wishlist.due_date) {

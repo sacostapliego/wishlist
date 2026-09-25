@@ -67,6 +67,7 @@ CREATE TABLE public.guest_sessions (
   CONSTRAINT guest_sessions_wishlist_id_fkey FOREIGN KEY (wishlist_id) REFERENCES public.wishlists(id)
 );
 CREATE TABLE public.wishlists (
+  visibility_mode character varying NOT NULL DEFAULT 'blind'::character varying CHECK (visibility_mode IN ('blind', 'open')),
   use_item_colors boolean NOT NULL DEFAULT false,
   default_view character varying NOT NULL DEFAULT 'grid'::character varying,
   due_date date,

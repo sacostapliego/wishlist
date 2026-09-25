@@ -2,6 +2,27 @@ import uuid
 from typing import List, Optional
 
 from models.item import WishListItem, WishListItemResponse
+from models.wishlist import Wishlist
+
+# A wishlist whose owner must not see who claimed what. The default everywhere,
+# because revealing a claim by accident cannot be undone.
+BLIND = 'blind'
+
+def _hides_claims_from(item: WishListItem, viewer_user_id: Optional[uuid.UUID]) -> bool:
+    """
+    True when this viewer is the list's owner and the list is blind.
+
+    A missing wishlist is treated as blind: an item with no list cannot be
+    claimed through a shared page anyway, and defaulting to hidden means a
+    future code path that forgets to load the relationship leaks nothing.
+    """
+    if viewer_user_id is None or item.user_id != viewer_user_id:
+        return False
+
+    wishlist: Optional[Wishlist] = item.wishlist
+    mode = wishlist.visibility_mode if wishlist else BLIND
+
+    return mode == BLIND
 
 def serialize_item(
     item: WishListItem,
@@ -13,10 +34,21 @@ def serialize_item(
 
     Claim identity is deliberately resolved here rather than in each route: the
     raw claimer ids never leave the server, only a display name and whether the
-    person asking is the one who claimed it. When per-wishlist claim visibility
-    lands, this is the one function that has to learn about it.
+    person asking is the one who claimed it.
+
+    This is also where blind mode is enforced. To the owner of a blind list, a
+    claimed item must be indistinguishable from an unclaimed one - not just
+    missing the name, but showing no claim, no timestamp, nothing that differs
+    between zero claims and one. Anything that varies with claim state is a leak.
     """
     item_dict = WishListItemResponse.model_validate(item).model_dump()
+
+    if _hides_claims_from(item, viewer_user_id):
+        item_dict['claimed_by_display_name'] = None
+        item_dict['is_claimed'] = False
+        item_dict['claimed_by_viewer'] = False
+        item_dict['claimed_at'] = None
+        return WishListItemResponse(**item_dict)
 
     display_name = None
     if item.claimed_by_user_id and item.claimed_by_user:

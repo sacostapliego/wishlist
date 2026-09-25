@@ -130,7 +130,9 @@ def read_wishlist_items(
 ):
     items = db.query(WishListItem).options(
         joinedload(WishListItem.claimed_by_user),
-        joinedload(WishListItem.claimed_by_guest_session)
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist)
     ).filter(
         WishListItem.user_id == current_user["user_id"]
     ).offset(skip).limit(limit).all()
@@ -156,7 +158,9 @@ def get_items_by_wishlist(
     
     items = db.query(WishListItem).options(
         joinedload(WishListItem.claimed_by_user),
-        joinedload(WishListItem.claimed_by_guest_session)
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist)
     ).filter(
         WishListItem.wishlist_id == wishlist_id
     ).all()
@@ -172,7 +176,9 @@ def read_wishlist_item(
 ):
     db_item = db.query(WishListItem).options(
         joinedload(WishListItem.claimed_by_user),
-        joinedload(WishListItem.claimed_by_guest_session)
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist)
     ).filter(
         WishListItem.id == item_id, 
         WishListItem.user_id == current_user["user_id"]
@@ -282,7 +288,9 @@ def read_user_wishlist(
 
     items = db.query(WishListItem).options(
         joinedload(WishListItem.claimed_by_user),
-        joinedload(WishListItem.claimed_by_guest_session)
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist)
     ).filter(
         WishListItem.user_id == user_id
     ).offset(skip).limit(limit).all()
@@ -410,7 +418,9 @@ def read_public_wishlist_items(
     # Get items for this wishlist with user information
     items = db.query(WishListItem).options(
         joinedload(WishListItem.claimed_by_user),
-        joinedload(WishListItem.claimed_by_guest_session)
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist)
     ).filter(
         WishListItem.wishlist_id == wishlist_id
     ).all()

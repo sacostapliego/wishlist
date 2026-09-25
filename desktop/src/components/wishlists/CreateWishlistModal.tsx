@@ -38,6 +38,7 @@ export function CreateWishlistModal({ isOpen, onClose, onSuccess }: CreateWishli
         use_item_colors: wishlistData.use_item_colors,
         default_view: wishlistData.default_view,
         due_date: wishlistData.due_date,
+        visibility_mode: wishlistData.visibility_mode,
       })
       
       if (formRef.current) {
