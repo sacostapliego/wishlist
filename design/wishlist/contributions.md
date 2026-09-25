@@ -1,6 +1,6 @@
 # Contribution items
 
-**Status:** backend implemented (v3); no UI yet
+**Status:** implemented (v3), unverified against a running app
 **Depends on:** [[visibility-modes.md]], [[../guest/guest-sessions.md]]
 
 ## What it is
@@ -156,12 +156,44 @@ though nobody had contributed.
 | The visibility rule, enforced | `backend/services/item_serializer.py` |
 | Tests for that rule | `backend/tests/test_item_serializer.py` |
 | Migration | `backend/supabase/migrations_v3_004_contributions.sql` |
+| Client API calls | `desktop/src/services/wishlist.ts` |
+| Pledge flow, incl. guests | `desktop/src/hooks/useItemContributions.ts` |
+| Progress bar, pledge form, contributor list | `desktop/src/components/items/ItemContributionSection.tsx` |
+| Where those are rendered | `desktop/src/components/items/ItemDetailContent.tsx` |
+| Owner's toggle and seed input | `desktop/src/components/items/ItemForm.tsx` |
 
-## Not built yet
+## The UI
 
-The UI. Two modes to draw — progress bar with a goal, running total without — a
-pledge form for members and guests, an owner seed input in the item form, and
-the blind-owner state that explains the blank.
+The item page carries it, in two places, split along the line between doing
+something and knowing something:
+
+- **A fixed bottom bar** holds the visitor's action — the figures, and *Chip in*
+  or *You're in for $50* with *Change* and *Withdraw*. The amount and note are
+  collected in a dialog rather than inline, because a form in a fixed bar covers
+  half a phone screen. The owner gets no bar; the API refuses their pledge.
+- **A panel in the page body** lists who has chipped in, and is where a blind
+  owner is told the figures are withheld. Information rather than action, and the
+  owner sees it too.
+
+Nothing about contributions appears on wishlist cards or grids, because claim
+state does not either — the item page is the only surface that discusses either.
+
+Two details worth keeping:
+
+**The pledge amount survives the guest name prompt.** A claim is one tap, but a
+pledge carries a number. A guest who types $50, gets asked their name, and has to
+type $50 again is being asked twice for the same thing, so the amount is held in
+`pendingPledge` and replayed after the session exists.
+
+**A total above the goal is not an error.** The bar caps at full and the numbers
+stay honest — the honor system does not enforce arithmetic, and "$5,500 of
+$5,000" with *Fully funded* is the truth.
+
+The owner's form puts the toggle **above** the price field, because turning it on
+changes what the price means: the label becomes *Goal*, and blank now means
+"running total, no bar" rather than "no price". The API's refusals — turning
+contributions off while pledges exist, on while the item is claimed — are
+surfaced verbatim, since each one is a sentence worth reading.
 
 ## Decided against
 

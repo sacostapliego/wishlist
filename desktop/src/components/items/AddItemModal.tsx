@@ -18,6 +18,17 @@ interface AddItemModalProps {
 
 type AddMode = 'manual' | 'link'
 
+/**
+ * The API refuses a few edits on purpose - turning contributions off while
+ * people have already pledged, turning them on while the item is claimed - and
+ * each refusal carries a sentence worth reading. Falling back to "Failed to
+ * update item" would throw that away and leave the owner guessing.
+ */
+function apiMessage(error: unknown, fallback: string): string {
+  const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+  return typeof detail === 'string' && detail ? detail : fallback
+}
+
 export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, onSuccess }: AddItemModalProps) {
   const [addMode, setAddMode] = useState<AddMode>('manual')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -82,6 +93,12 @@ export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, onSuccess
         priority: formData.priority || 0,
         wishlist_id: selectedWishlistId,
         is_purchased: false,
+        is_contribution: formData.isContribution || false,
+        // Only sent on a contribution item; the API rejects it otherwise.
+        owner_seed_amount:
+          formData.isContribution && formData.ownerSeedAmount
+            ? parseFloat(formData.ownerSeedAmount)
+            : null,
       }
 
       await wishlistAPI.createItem(itemDataPayload, imageFile)
@@ -113,7 +130,7 @@ export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, onSuccess
       console.error('Error adding item:', error)
       toaster.create({
         title: 'Error',
-        description: 'Failed to add item. Please try again.',
+        description: apiMessage(error, 'Failed to add item. Please try again.'),
         type: 'error',
       })
     } finally {

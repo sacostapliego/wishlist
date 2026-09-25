@@ -7,7 +7,8 @@ import type {
   UpdateItemData,
   ScrapedItemData,
   CreateWishlistData,
-  UpdateWishlistData
+  UpdateWishlistData,
+  ItemContribution
 } from '../types/types'
 
 export interface ClaimedItemResponse {
@@ -295,6 +296,54 @@ export const wishlistAPI = {
 
   unclaimItem: async (itemId: string, wishlistId?: string): Promise<{ message: string }> => {
     const response = await api.delete(`/wishlist/${itemId}/claim`, {
+      headers: guestHeaders(wishlistId),
+    });
+    return response.data;
+  },
+
+  // Contributions. Identity comes from the auth token or the guest session
+  // header, exactly as with claims, so there is no way to pledge as someone else.
+  //
+  // The write endpoints return the updated *item*, not the pledge, so the caller
+  // gets the new total in the same round trip and can redraw the bar without a
+  // second request.
+  getContributions: async (itemId: string, wishlistId?: string): Promise<ItemContribution[]> => {
+    const response = await api.get(`/wishlist/${itemId}/contributions`, {
+      headers: guestHeaders(wishlistId),
+    });
+    return response.data;
+  },
+
+  contributeToItem: async (
+    itemId: string,
+    amount: number,
+    note?: string | null,
+    wishlistId?: string
+  ): Promise<WishlistItem> => {
+    const response = await api.post(
+      `/wishlist/${itemId}/contributions`,
+      { amount, note: note?.trim() || null },
+      { headers: guestHeaders(wishlistId) }
+    );
+    return response.data;
+  },
+
+  updateMyContribution: async (
+    itemId: string,
+    amount: number,
+    note?: string | null,
+    wishlistId?: string
+  ): Promise<WishlistItem> => {
+    const response = await api.put(
+      `/wishlist/${itemId}/contributions/mine`,
+      { amount, note: note?.trim() || null },
+      { headers: guestHeaders(wishlistId) }
+    );
+    return response.data;
+  },
+
+  withdrawMyContribution: async (itemId: string, wishlistId?: string): Promise<WishlistItem> => {
+    const response = await api.delete(`/wishlist/${itemId}/contributions/mine`, {
       headers: guestHeaders(wishlistId),
     });
     return response.data;
