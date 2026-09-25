@@ -50,6 +50,39 @@ export interface WishlistItem {
   claimed_by_viewer?: boolean
   created_at?: string
   updated_at?: string
+
+  /**
+   * Contribution items are chipped in toward by several people rather than
+   * claimed outright by one, and the two are mutually exclusive. `price` doubles
+   * as the funding goal - no price means no target, so the item shows a running
+   * total instead of a progress bar.
+   */
+  is_contribution?: boolean
+  /** The owner's own declared head start. Counted in the total, never the count. */
+  owner_seed_amount?: number | null
+  /** Seed plus every pledge this viewer is allowed to see. */
+  contribution_total?: number | null
+  /** How many other people have chipped in. Excludes the owner's seed. */
+  contribution_count?: number | null
+  /**
+   * True when the viewer owns a blind list, so the figures above were withheld.
+   * It says "you cannot see this", not "there is something to see" - it is the
+   * same whether ten people have pledged or nobody has. Render the blank
+   * honestly rather than as "$0 of $5,000".
+   */
+  contributions_hidden?: boolean
+}
+
+/** One person's pledge toward a contribution item. */
+export interface ItemContribution {
+  id: string
+  amount: number
+  note?: string | null
+  created_at?: string
+  /** Resolved server-side; the raw contributor ids never leave the server. */
+  contributor_display_name?: string | null
+  /** Server-computed: true when the requester made this pledge. */
+  is_mine: boolean
 }
 
 export interface CreateWishlistData {
@@ -160,6 +193,8 @@ export interface CreateItemData {
   priority: number
   wishlist_id: string
   is_purchased: boolean
+  is_contribution?: boolean
+  owner_seed_amount?: number | null
 }
 
 export interface UpdateItemData {
@@ -170,6 +205,8 @@ export interface UpdateItemData {
   priority?: number
   wishlist_id?: string
   is_purchased?: boolean
+  is_contribution?: boolean
+  owner_seed_amount?: number | null
 }
 
 // Scraped data from URL

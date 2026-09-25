@@ -6,8 +6,9 @@ import { COLORS } from '../../styles/common'
 import { toaster } from '../ui/toaster'
 import getLightColor from '../common/getLightColor'
 import { ItemClaimingSection } from './ItemClaimingSection'
+import { ItemContributionBar, ItemContributionList } from './ItemContributionSection'
 import { ItemMenu, type MenuOption } from './ItemMenu'
-import type { WishlistItem } from '../../types/types'
+import type { ItemContribution, WishlistItem } from '../../types/types'
 
 export interface ItemDetailContentItem {
   id: string
@@ -16,6 +17,12 @@ export interface ItemDetailContentItem {
   price?: number | null
   url?: string | null
   image?: string | null
+  /** Contribution items show a funding panel instead of a claim button. */
+  is_contribution?: boolean
+  owner_seed_amount?: number | null
+  contribution_total?: number | null
+  contribution_count?: number | null
+  contributions_hidden?: boolean
 }
 
 interface ItemDetailContentProps {
@@ -51,6 +58,20 @@ interface ItemDetailContentProps {
     onGuestClaim: () => void
     onCancelGuestModal: () => void
   }
+  /** Contributions (forwarded from useItemContributions when not readOnly) */
+  contributionProps?: {
+    contributions: ItemContribution[]
+    myContribution: ItemContribution | null
+    isListLoading: boolean
+    isSubmitting: boolean
+    showGuestNameModal: boolean
+    guestName: string
+    setGuestName: (s: string) => void
+    onSubmitPledge: (amount: string, note: string) => void
+    onConfirmGuestPledge: () => void
+    onWithdrawPledge: () => void
+    onCancelGuestModal: () => void
+  }
   onRegisterCta?: () => void
 }
 
@@ -71,9 +92,11 @@ export function ItemDetailContent({
   isNameExpanded,
   setIsNameExpanded,
   claimProps,
+  contributionProps,
   onRegisterCta,
 }: ItemDetailContentProps) {
   const backgroundColor = getLightColor(wishlistColor || COLORS.cardGray)
+  const isContribution = Boolean(item.is_contribution)
   const px = compact ? 4 : 8
   const py = compact ? 3 : 4
   const imgMaxW = compact ? { base: '14rem', md: '16rem' } : { base: '20rem', md: '22rem', lg: '30rem' }
@@ -249,10 +272,27 @@ export function ItemDetailContent({
               {item.description}
             </Text>
           )}
+
+          {/* Who has chipped in, and - for the owner of a blind list - why they
+              cannot see it. Information, so it sits in the page rather than the
+              bottom action bar, and the owner gets it too. */}
+          {!readOnly && isContribution && contributionProps && (
+            <ItemContributionList
+              item={item as WishlistItem}
+              wishlistColor={wishlistColor}
+              contributions={contributionProps.contributions}
+              isLoading={contributionProps.isListLoading}
+              isOwner={isOwner}
+              ownerName={wishlistInfo?.ownerName}
+            />
+          )}
         </VStack>
       </VStack>
 
-      {!readOnly && !isOwner && isLoggedIn && claimProps && (
+      {/* Guests act here too. Taking part without an account is the point of
+          guest sessions - see design/guest/guest-sessions.md - so an account is
+          offered below the action, never placed in front of it. */}
+      {!readOnly && !isOwner && (isContribution ? contributionProps : claimProps) && (
         <Box
           position="fixed"
           bottom={{ base: 'calc(64px + 1rem + env(safe-area-inset-bottom, 0px))', md: '1rem' }}
@@ -263,37 +303,50 @@ export function ItemDetailContent({
           transition="all 0.2s"
         >
           <Box p={3} maxW="30rem" mx="auto">
-            <ItemClaimingSection
-              item={item as WishlistItem}
-              wishlistColor={wishlistColor}
-              isItemClaimed={claimProps.isItemClaimed}
-              canUserUnclaim={claimProps.canUserUnclaim}
-              isClaimLoading={claimProps.isClaimLoading}
-              showGuestNameModal={claimProps.showGuestNameModal}
-              guestName={claimProps.guestName}
-              setGuestName={claimProps.setGuestName}
-              onClaimItem={claimProps.onClaimItem}
-              onUnclaimItem={claimProps.onUnclaimItem}
-              onGuestClaim={claimProps.onGuestClaim}
-              onCancelGuestModal={claimProps.onCancelGuestModal}
-            />
-          </Box>
-        </Box>
-      )}
+            <VStack align="stretch" gap={2}>
+              {isContribution && contributionProps ? (
+                <ItemContributionBar
+                  item={item as WishlistItem}
+                  wishlistColor={wishlistColor}
+                  myContribution={contributionProps.myContribution}
+                  isSubmitting={contributionProps.isSubmitting}
+                  showGuestNameModal={contributionProps.showGuestNameModal}
+                  guestName={contributionProps.guestName}
+                  setGuestName={contributionProps.setGuestName}
+                  onSubmitPledge={contributionProps.onSubmitPledge}
+                  onConfirmGuestPledge={contributionProps.onConfirmGuestPledge}
+                  onWithdrawPledge={contributionProps.onWithdrawPledge}
+                  onCancelGuestModal={contributionProps.onCancelGuestModal}
+                />
+              ) : claimProps ? (
+                <ItemClaimingSection
+                  item={item as WishlistItem}
+                  wishlistColor={wishlistColor}
+                  isItemClaimed={claimProps.isItemClaimed}
+                  canUserUnclaim={claimProps.canUserUnclaim}
+                  isClaimLoading={claimProps.isClaimLoading}
+                  showGuestNameModal={claimProps.showGuestNameModal}
+                  guestName={claimProps.guestName}
+                  setGuestName={claimProps.setGuestName}
+                  onClaimItem={claimProps.onClaimItem}
+                  onUnclaimItem={claimProps.onUnclaimItem}
+                  onGuestClaim={claimProps.onGuestClaim}
+                  onCancelGuestModal={claimProps.onCancelGuestModal}
+                />
+              ) : null}
 
-      {!readOnly && !isOwner && !isLoggedIn && (
-        <Box position="fixed" bottom="calc(1rem + env(safe-area-inset-bottom, 0px))" left={0} right={0} px={4} zIndex={9}>
-          <Box p={3} maxW="30rem" mx="auto">
-            <Button
-              w="100%"
-              bg="white"
-              color="black"
-              size="lg"
-              onClick={onRegisterCta}
-              _hover={{ bg: 'gray.200' }}
-            >
-              Create an account to claim this item
-            </Button>
+              {!isLoggedIn && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={onRegisterCta}
+                  color={COLORS.text.secondary}
+                  _hover={{ bg: 'rgba(255,255,255,0.06)' }}
+                >
+                  Create an account to keep track of this
+                </Button>
+              )}
+            </VStack>
           </Box>
         </Box>
       )}

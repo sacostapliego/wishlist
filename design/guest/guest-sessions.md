@@ -1,7 +1,7 @@
 # Guest sessions
 
 **Status:** implemented (v3)
-**Applies to:** claiming, and contributions once those land
+**Applies to:** claiming and contributions
 
 ## Why guests exist at all
 
@@ -97,6 +97,23 @@ can be added later without another migration.
 **Do not add a "re-enter your name to recover" path.** That is exactly the
 vulnerability this design removes.
 
+## The client gate that undid this
+
+The backend, the token storage and `useItemClaiming` were all finished in v3, but
+the item page never rendered any of it. `ItemDetailContent` gated the claim
+button on `isLoggedIn` and showed everyone else *"Create an account to claim this
+item"* — the exact wall this design exists to remove. The guest branch of
+`useItemClaiming` was unreachable code.
+
+Fixed when contributions landed. A visitor who is not the owner gets the real
+action, member or guest, and the account offer sits **below** it as a quiet
+secondary button rather than in front of it. An account is worth having because
+it remembers what you claimed across devices; it is not the price of taking part.
+
+Worth remembering as a shape of bug: a feature can be complete in the model, the
+API, the service layer and the hook, and still not exist. Nothing failed, no test
+went red, and the endpoint worked perfectly when called by hand.
+
 ## Legacy claims
 
 `claimed_by_name` is kept, not dropped - guest claims made before this change
@@ -131,13 +148,19 @@ limiting on an unauthenticated write endpoint, not a replacement for it.
 | Client storage + API (web) | `desktop/src/services/guestSession.ts` |
 | Client storage + API (mobile) | `mobile/app/services/guestSession.ts` |
 | Claim UX | `*/hooks/useItemClaiming.*` |
+| Where guests are offered the action | `desktop/src/components/items/ItemDetailContent.tsx` |
+| Contribution UX (members and guests) | `desktop/src/hooks/useItemContributions.ts` |
 | Migration | `backend/supabase/migrations_v3.sql` |
 
 ## Open threads
 
-**Contributions** reuse this directly. A pledge row carries either
+**Contributions** reuse this directly, and are now built - see
+[[../wishlist/contributions.md]]. A pledge row carries either
 `contributor_user_id` or `guest_session_id` - two real foreign keys instead of a
 free-text name - so "edit my pledge" is the same permission check as unclaim.
+One wrinkle claiming does not have: a pledge carries an amount, so the amount a
+guest typed is held and replayed after the name prompt rather than asked for
+twice.
 
 **Per-wishlist claim visibility** (the blind/open wishlist modes) belongs in
 `serialize_item`. That function is deliberately the only place an item becomes a
