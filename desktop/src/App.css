@@ -15,15 +15,17 @@ body {
 /*
   How much of the viewport an overlaying browser toolbar is covering.
 
-  The app scrolls inside a container rather than the document, and iOS Safari
-  only collapses its URL bar on *document* scroll - so on this app the bar stays
-  expanded the whole time. `vh` resolves to the toolbar-collapsed viewport while
-  `dvh` tracks what is actually visible, so their difference is exactly the
-  overlap. It is 0 wherever nothing overlays, including every desktop browser.
+  `vh` resolves to the toolbar-collapsed viewport while `dvh` tracks what is
+  actually visible, so their difference is exactly the overlap. It is 0 wherever
+  nothing overlays, including every desktop browser and any browser without
+  `dvh`, which is what makes the 0px fallback safe.
 
-  Bottom-anchored fixed elements add this to their offset so they sit above the
-  toolbar instead of behind it. The fallback is 0px for browsers without `dvh`,
-  which get the same behaviour they had before.
+  This is for SIZING a full-height box: `calc(100vh - var(--toolbar-overlap))`
+  is `100dvh` with a working fallback, and that is the only thing it is used
+  for. Do NOT add it to a bottom-anchored `position: fixed` offset. iOS Safari
+  already places those against the visible viewport, so adding it there counts
+  the toolbar twice and leaves the element floating a toolbar's height above
+  where it belongs - measured on an iPhone, not guessed.
 */
 :root {
   --toolbar-overlap: 0px;

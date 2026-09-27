@@ -296,16 +296,24 @@ export function ItemDetailContent({
           The bar sits just above whatever the layout puts at the bottom of a
           phone screen: MobileNav's 60px for a signed-in viewer, but only
           GuestMobileNavBar's 20px strip for a guest, which is most of the
-          people who land on a shared item. `--toolbar-overlap` (App.css) then
-          lifts it clear of an overlaying browser toolbar, which on iOS Safari
-          never collapses here because the scrolling happens in a container. */}
+          people who land on a shared item.
+
+          Nothing here compensates for the browser's own toolbar, and nothing
+          should. iOS Safari re-anchors a bottom-fixed element to the visible
+          viewport by itself, so the bar rides just above the URL bar and drops
+          to the screen edge when that bar collapses on scroll. Adding a
+          `100vh - 100dvh` correction on top of that (as this once did) counts
+          the toolbar twice and strands the button a toolbar's height up the
+          screen. `env(safe-area-inset-bottom)` does the rest: it is 0 while the
+          toolbar covers that strip and grows to clear the home indicator once
+          the toolbar is gone. */}
       {!readOnly && !isOwner && (isContribution ? contributionProps : claimProps) && (
         <Box
           position="fixed"
           bottom={{
             base: isLoggedIn
-              ? 'calc(60px + 0.5rem + var(--toolbar-overlap, 0px) + env(safe-area-inset-bottom, 0px))'
-              : 'calc(20px + 0.5rem + var(--toolbar-overlap, 0px) + env(safe-area-inset-bottom, 0px))',
+              ? 'calc(60px + 0.5rem + env(safe-area-inset-bottom, 0px))'
+              : 'calc(20px + 0.5rem + env(safe-area-inset-bottom, 0px))',
             md: '1rem',
           }}
           /* --sidebar-width only exists inside ResponsiveLayout. A guest gets
