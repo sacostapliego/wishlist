@@ -88,9 +88,10 @@ def pledge(amount, contributed_under_mode=OPEN, user_id=None, guest_session_id=N
         guest_session=SimpleNamespace(display_name='Aunt May') if guest_session_id else None,
     )
 
-def contribution_item(list_mode=BLIND, pledges=(), seed=None):
+def contribution_item(list_mode=BLIND, pledges=(), seed=None, price=500.0):
     return make_item(
         list_mode=list_mode,
+        price=price,
         is_contribution=True,
         owner_seed_amount=seed,
         contributions=list(pledges),
@@ -242,6 +243,59 @@ def test_visitors_see_every_pledge_even_on_a_blind_list():
     assert item.contribution_total == 125.0
     assert item.contribution_count == 2
     assert item.contributions_hidden is False
+
+# The client picks between a progress bar and a running total by looking at
+# `price`, and draws the number from `contribution_total`. These pin the data
+# behind that choice: the server reports both faithfully and shapes neither.
+
+def test_an_item_with_a_goal_reports_the_goal_and_the_total_separately():
+    pledges = [pledge(300.0, OPEN, user_id=VISITOR_ID)]
+    item = serialize_item(
+        contribution_item(OPEN, pledges, price=5000.0),
+        viewer_user_id=VISITOR_ID
+    )
+
+    assert item.price == 5000.0
+    assert item.contribution_total == 300.0
+
+def test_an_item_with_no_goal_still_totals_its_pledges():
+    """'Help me pay for my car' has no target - a running total, not a bar."""
+    pledges = [
+        pledge(100.0, OPEN, user_id=VISITOR_ID),
+        pledge(75.0, OPEN, guest_session_id=GUEST_ID),
+    ]
+    item = serialize_item(
+        contribution_item(OPEN, pledges, price=None),
+        viewer_user_id=VISITOR_ID
+    )
+
+    # price stays None; a goal is never invented from the pledges
+    assert item.price is None
+    assert item.contribution_total == 175.0
+    assert item.contribution_count == 2
+
+def test_a_total_over_the_goal_is_not_clamped():
+    """
+    People are generous and the honor system does not enforce arithmetic. Capping
+    the bar is the client's presentational choice; the figures stay true.
+    """
+    pledges = [pledge(6000.0, OPEN, user_id=VISITOR_ID)]
+    item = serialize_item(
+        contribution_item(OPEN, pledges, price=5000.0),
+        viewer_user_id=VISITOR_ID
+    )
+
+    assert item.contribution_total == 6000.0
+    assert item.price == 5000.0
+
+def test_a_contribution_item_with_nothing_pledged_totals_zero():
+    item = serialize_item(
+        contribution_item(OPEN, price=5000.0),
+        viewer_user_id=VISITOR_ID
+    )
+
+    assert item.contribution_total == 0.0
+    assert item.contribution_count == 0
 
 def test_a_non_contribution_item_carries_no_contribution_figures():
     item = serialize_item(make_item(OPEN), viewer_user_id=OWNER_ID)
