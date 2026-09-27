@@ -7,13 +7,14 @@
     - Is there a way to create a collobration wishlist, where multiple users can edit a wishlist such as adding, removing, and editing items in a wishlist? 
 ----
 ### Desktop:
-- [x] Wide-screen layout (2xl and up); single column below that
-    - 1st section: Up Next hero, full width
-    - 2nd section: Items claimed | Upcoming calendar
-    - 3rd section: My wishlists | Finish Setting Up (own lists with no items or no date;
-      the rail is dropped and the carousel spans full width when there is nothing to fix)
+
 ### Mobile (the narrow-viewport layout inside desktop/, not the mobile/ Expo app):
-- [x] Page gutters made responsive; 32px side padding left 311px of content on a 375px phone
-- [x] Item page: clamped the claimed-by name and the scraped url
-- [x] Friends added to the mobile header (ProfileHeader)
-- [x] Scrolling: views were fixed-height scroll containers nested inside the layout's own
+
+### Contributions (check by hand — migration 004 is applied):
+- Contribution item with a goal shows a bar; without a goal shows a running total
+- Pledge as a signed-in user, change the amount, withdraw it
+- Pledge as a guest in a private window (name prompt keeps the amount you typed)
+- Same item as the owner: blind list hides the figures, open list shows them
+- Claiming a contribution item is refused with a readable message
+- Turning contributions off after a pledge is refused with a readable message
+- Contribution panel at 375px

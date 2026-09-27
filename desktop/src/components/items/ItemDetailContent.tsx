@@ -195,7 +195,10 @@ export function ItemDetailContent({
             >
               {item.name}
             </Heading>
-            {item.price !== undefined && item.price !== null && (
+            {/* On a contribution item the price IS the goal, and the funding panel
+                already says "$1,200 of $5,000". Printing it again up here showed
+                the same number twice in two different formats. */}
+            {!isContribution && item.price !== undefined && item.price !== null && (
               <Text color="white" fontSize={compact ? 'xl' : '2xl'} fontWeight="bold" flexShrink={0}>
                 ${Number(item.price).toFixed(2)}
               </Text>
