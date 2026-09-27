@@ -96,7 +96,19 @@ function FriendsPage() {
   }
 
   return (
-    <Box h={{base: "calc(100vh + 80px)", md:"calc(100vh - 32px)"}} w="100%" overflowY="auto" p={6}>
+    <Box
+      /*
+        Desktop only: a fixed-height pane that scrolls inside the layout.
+        On a phone this has to be auto — ResponsiveLayout is already a scroll
+        container, and a second one nested inside it traps the scroll and hides
+        content behind the bottom nav. Letting the page grow lets the layout's
+        own bottom margin clear the nav.
+      */
+      h={{ base: "auto", md: "calc(100vh - 32px)" }}
+      w="100%"
+      overflowY={{ base: "visible", md: "auto" }}
+      p={{ base: 4, md: 6 }}
+    >
       <VStack align="stretch" gap={6} maxW="800px" mx="auto">
         {/* Header */}
         <HStack justify="space-between">
@@ -143,7 +155,7 @@ function FriendsPage() {
               {friends.length === 0 ? (
                 <Box
                   bg="#1a1a1a"
-                  p={8}
+                  p={{ base: 4, md: 8 }}
                   borderRadius="lg"
                   textAlign="center"
                 >
@@ -210,7 +222,7 @@ function FriendsPage() {
               {requests.length === 0 ? (
                 <Box
                   bg="#1a1a1a"
-                  p={8}
+                  p={{ base: 4, md: 8 }}
                   borderRadius="lg"
                   textAlign="center"
                 >

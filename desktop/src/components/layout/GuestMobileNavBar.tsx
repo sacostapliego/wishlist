@@ -15,7 +15,7 @@ export default function GuestMobileNavBar() {
       bottom={0}
       left={0}
       right={0}
-      h="20px"
+      h="calc(20px + env(safe-area-inset-bottom, 0px))"
       minH="20px"
       bg={COLORS.background}
       zIndex={50}

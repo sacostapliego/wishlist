@@ -22,6 +22,9 @@ class Wishlist(Base):
     image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Added fields (2026)
+    # 'blind'  - the owner never sees claims on their own list (the surprise is the point)
+    # 'open'   - the owner sees everything, and visitors are told so before they claim
+    visibility_mode: Mapped[str] = mapped_column(String(10), default='blind', nullable=False)
     use_item_colors: Mapped[bool] = mapped_column(Boolean, default=False)
     default_view: Mapped[str] = mapped_column(String(10), default='list', nullable=False)  # 'list' or 'list'
     due_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
@@ -43,6 +46,7 @@ from .user import User
 User.wishlists = relationship('Wishlist', back_populates='user', cascade='all, delete-orphan')
 
 class WishlistBase(BaseModel):
+    visibility_mode: str = 'blind'
     title: str
     description: Optional[str] = None
     color: Optional[str] = None
@@ -58,6 +62,7 @@ class WishlistCreate(WishlistBase):
     pass
 
 class WishlistUpdate(BaseModel):
+    visibility_mode: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
     color: Optional[str] = None
@@ -83,6 +88,7 @@ class WishlistResponse(BaseModel):
     use_item_colors: bool = False
     default_view: str = 'list'
     due_date: Optional[date] = None
+    visibility_mode: str = 'blind'
     created_at: datetime
     updated_at: Optional[datetime] = None
     item_count: Optional[int] = 0

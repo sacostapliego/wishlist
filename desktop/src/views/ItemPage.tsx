@@ -9,6 +9,7 @@ import { toaster } from '../components/ui/toaster'
 import { ItemDetailContent } from '../components/items/ItemDetailContent'
 import { useItemDetail } from '../hooks/useItemDetail'
 import { useItemClaiming } from '../hooks/useItemClaiming'
+import { useItemContributions } from '../hooks/useItemContributions'
 import { ItemMenu, getItemMenuOptions } from '../components/items/ItemMenu'
 import { EditItemModal } from '../components/items/EditItemModal'
 import { useEffect, useState } from 'react'
@@ -59,6 +60,20 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
     handleUnclaimItem,
     cancelGuestModal,
   } = useItemClaiming(item, refetchData)
+
+  const {
+    contributions,
+    myContribution,
+    isListLoading: isContributionsLoading,
+    isSubmitting: isContributionSubmitting,
+    showGuestNameModal: showContributionGuestModal,
+    guestName: contributionGuestName,
+    setGuestName: setContributionGuestName,
+    submitPledge,
+    confirmGuestPledge,
+    withdrawPledge,
+    cancelGuestModal: cancelContributionGuestModal,
+  } = useItemContributions(item, refetchData)
 
   const handleEditItem = () => {
     setIsEditModalOpen(true)
@@ -121,7 +136,7 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
   if (error || !item) {
     return (
       <Box h="calc(100vh - 32px)" w="100%" display="flex" flexDirection="column" bg={COLORS.background}>
-        <Box bg={COLORS.background} px={8} py={4}>
+        <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4}>
           <HStack justify="space-between">
             <IconButton
               aria-label="Go back"
@@ -173,6 +188,19 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
           onUnclaimItem: handleUnclaimItem,
           onGuestClaim: handleGuestClaim,
           onCancelGuestModal: cancelGuestModal,
+        }}
+        contributionProps={{
+          contributions,
+          myContribution,
+          isListLoading: isContributionsLoading,
+          isSubmitting: isContributionSubmitting,
+          showGuestNameModal: showContributionGuestModal,
+          guestName: contributionGuestName,
+          setGuestName: setContributionGuestName,
+          onSubmitPledge: submitPledge,
+          onConfirmGuestPledge: confirmGuestPledge,
+          onWithdrawPledge: withdrawPledge,
+          onCancelGuestModal: cancelContributionGuestModal,
         }}
         onRegisterCta={() => router.push('/auth/register')}
       />

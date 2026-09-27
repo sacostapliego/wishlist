@@ -1,2 +1,4 @@
 .env
 /.vscode
+# Agent worktrees (settings.json here is still tracked on purpose)
+.claude/worktrees/

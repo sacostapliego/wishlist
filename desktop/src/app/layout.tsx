@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Provider } from '@/components/ui/provider'
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     images: ['/favicon.png'],
     type: 'website',
   },
+}
+
+/**
+ * viewport-fit=cover is what makes env(safe-area-inset-*) resolve to real values
+ * on notched iPhones — without it the bottom nav cannot reserve room for the
+ * home indicator, and its icons sit under it.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#141414',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

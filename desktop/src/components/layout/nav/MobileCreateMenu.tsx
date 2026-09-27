@@ -39,7 +39,11 @@ export function MobileCreateMenu({ isOpen, onClose, anchorRef, onCreateWishlist,
       {/* Menu — positioned above the button */}
       <Box
         position="fixed"
-        bottom={anchorRect ? `${window.innerHeight - anchorRect.top + 8}px` : '80px'}
+        bottom={
+          anchorRect
+            ? `${window.innerHeight - anchorRect.top + 8}px`
+            : 'calc(80px + env(safe-area-inset-bottom, 0px))'
+        }
         left={'50%'}
         transform="translateX(-50%)"
         bg={COLORS.cardDarkLight}

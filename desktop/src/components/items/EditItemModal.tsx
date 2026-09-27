@@ -15,6 +15,17 @@ interface EditItemModalProps {
   onSuccess?: () => void
 }
 
+/**
+ * The API refuses a few edits on purpose - turning contributions off while
+ * people have already pledged, turning them on while the item is claimed - and
+ * each refusal carries a sentence worth reading. Falling back to "Failed to
+ * update item" would throw that away and leave the owner guessing.
+ */
+function apiMessage(error: unknown, fallback: string): string {
+  const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+  return typeof detail === 'string' && detail ? detail : fallback
+}
+
 export function EditItemModal({ isOpen, onClose, itemId, onSuccess }: EditItemModalProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -39,6 +50,11 @@ export function EditItemModal({ isOpen, onClose, itemId, onSuccess }: EditItemMo
         url: itemData.url || '',
         currentImageUri: itemData.image ? `${API_URL}wishlist/${itemData.id}/image` : undefined,
         priority: itemData.priority || 0,
+        isContribution: itemData.is_contribution || false,
+        ownerSeedAmount:
+          itemData.owner_seed_amount !== undefined && itemData.owner_seed_amount !== null
+            ? String(itemData.owner_seed_amount)
+            : '',
       })
     } catch (error) {
       console.error('Error fetching item details:', error)
@@ -62,6 +78,14 @@ export function EditItemModal({ isOpen, onClose, itemId, onSuccess }: EditItemMo
         price: formData.price ? parseFloat(formData.price) : undefined,
         url: formData.url || undefined,
         priority: formData.priority,
+        is_contribution: formData.isContribution,
+        // Sending 0 rather than undefined when the owner clears the field, so
+        // clearing it actually clears it instead of being stripped below.
+        owner_seed_amount: formData.isContribution
+          ? formData.ownerSeedAmount
+            ? parseFloat(formData.ownerSeedAmount)
+            : 0
+          : undefined,
       }
 
       // Remove undefined values
@@ -89,7 +113,7 @@ export function EditItemModal({ isOpen, onClose, itemId, onSuccess }: EditItemMo
       console.error('Error updating item:', error)
       toaster.create({
         title: 'Error',
-        description: 'Failed to update item',
+        description: apiMessage(error, 'Failed to update item'),
         type: 'error'
       })
     } finally {

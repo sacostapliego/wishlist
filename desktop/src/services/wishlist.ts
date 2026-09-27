@@ -1,4 +1,5 @@
 import api from "./api";
+import { guestHeaders } from "./guestSession";
 import type { 
   Wishlist, 
   WishlistItem, 
@@ -6,13 +7,15 @@ import type {
   UpdateItemData,
   ScrapedItemData,
   CreateWishlistData,
-  UpdateWishlistData
+  UpdateWishlistData,
+  ItemContribution
 } from '../types/types'
 
 export interface ClaimedItemResponse {
   id: string;
   name: string;
-  price?: number;
+  description?: string | null;
+  price?: number | null;
   image?: string;
   owner_id: string;
   owner_name: string;
@@ -25,11 +28,6 @@ export interface ClaimedItemResponse {
 
 export interface ProcessImageResponse {
   image_data_url: string;
-}
-
-export interface ClaimItemData {
-  user_id?: string;
-  guest_name?: string;
 }
 
 export interface ImageUpload {
@@ -176,6 +174,8 @@ export const wishlistAPI = {
       formData.append('use_item_colors', wishlist.use_item_colors ? 'true' : 'false');
       formData.append('default_view', wishlist.default_view ?? 'grid');
       if (wishlist.due_date) formData.append('due_date', wishlist.due_date);
+      // Defaults to blind: a list should never open itself by omission.
+      formData.append('visibility_mode', wishlist.visibility_mode ?? 'blind');
 
       const response = await api.post('/wishlists/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -201,6 +201,7 @@ export const wishlistAPI = {
     // Added fields (2026)
     if (wishlist.use_item_colors !== undefined) formData.append('use_item_colors', wishlist.use_item_colors ? 'true' : 'false');
     if (wishlist.default_view) formData.append('default_view', wishlist.default_view);
+    if (wishlist.visibility_mode) formData.append('visibility_mode', wishlist.visibility_mode);
     
     // Handle due_date — use remove_due_date flag when clearing
     if (wishlist.due_date) {
@@ -237,7 +238,9 @@ export const wishlistAPI = {
   
   getPublicWishlistItems: async (wishlistId: string): Promise<WishlistItem[]> => {
     try {
-      const response = await api.get(`/wishlist/public/${wishlistId}`);
+      const response = await api.get(`/wishlist/public/${wishlistId}`, {
+        headers: guestHeaders(wishlistId),
+      });
       return response.data;
     } catch (error) {
       console.error(`Error fetching items for public wishlist ${wishlistId}:`, error);
@@ -282,13 +285,67 @@ export const wishlistAPI = {
     }
   },
 
-  claimItem: async (itemId: string, claimData: ClaimItemData): Promise<WishlistItem> => {
-    const response = await api.post(`/wishlist/${itemId}/claim`, claimData);
+  // Identity is taken from the auth token or the guest session header - there is
+  // deliberately no way to name who is claiming in the request body.
+  claimItem: async (itemId: string, wishlistId?: string): Promise<{ message: string }> => {
+    const response = await api.post(`/wishlist/${itemId}/claim`, null, {
+      headers: guestHeaders(wishlistId),
+    });
     return response.data;
   },
 
-  unclaimItem: async (itemId: string, unclaimData: ClaimItemData): Promise<WishlistItem> => {
-    const response = await api.delete(`/wishlist/${itemId}/claim`, { data: unclaimData });
+  unclaimItem: async (itemId: string, wishlistId?: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/wishlist/${itemId}/claim`, {
+      headers: guestHeaders(wishlistId),
+    });
+    return response.data;
+  },
+
+  // Contributions. Identity comes from the auth token or the guest session
+  // header, exactly as with claims, so there is no way to pledge as someone else.
+  //
+  // The write endpoints return the updated *item*, not the pledge, so the caller
+  // gets the new total in the same round trip and can redraw the bar without a
+  // second request.
+  getContributions: async (itemId: string, wishlistId?: string): Promise<ItemContribution[]> => {
+    const response = await api.get(`/wishlist/${itemId}/contributions`, {
+      headers: guestHeaders(wishlistId),
+    });
+    return response.data;
+  },
+
+  contributeToItem: async (
+    itemId: string,
+    amount: number,
+    note?: string | null,
+    wishlistId?: string
+  ): Promise<WishlistItem> => {
+    const response = await api.post(
+      `/wishlist/${itemId}/contributions`,
+      { amount, note: note?.trim() || null },
+      { headers: guestHeaders(wishlistId) }
+    );
+    return response.data;
+  },
+
+  updateMyContribution: async (
+    itemId: string,
+    amount: number,
+    note?: string | null,
+    wishlistId?: string
+  ): Promise<WishlistItem> => {
+    const response = await api.put(
+      `/wishlist/${itemId}/contributions/mine`,
+      { amount, note: note?.trim() || null },
+      { headers: guestHeaders(wishlistId) }
+    );
+    return response.data;
+  },
+
+  withdrawMyContribution: async (itemId: string, wishlistId?: string): Promise<WishlistItem> => {
+    const response = await api.delete(`/wishlist/${itemId}/contributions/mine`, {
+      headers: guestHeaders(wishlistId),
+    });
     return response.data;
   },
 

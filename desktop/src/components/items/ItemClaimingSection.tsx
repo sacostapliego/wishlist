@@ -47,9 +47,13 @@ export function ItemClaimingSection({
             align="center"
             gap={3}
           >
-            <HStack gap={2} flex="1">
-              <LuCircleCheck size={20} color={'white'} />
-              <Text color={'white'} fontSize="md" fontWeight="medium">
+            {/* minW={0} + lineClamp: a long guest name used to wrap and push
+                the Unclaim button out of the card on a phone. */}
+            <HStack gap={2} flex="1" minW={0}>
+              <Box flexShrink={0} display="flex">
+                <LuCircleCheck size={20} color={'white'} />
+              </Box>
+              <Text color={'white'} fontSize="md" fontWeight="medium" lineClamp={1}>
                 Claimed by {item.claimed_by_display_name || 'someone'}
               </Text>
             </HStack>
@@ -61,6 +65,7 @@ export function ItemClaimingSection({
                 color={'white'}
                 _hover={{ bg: 'rgba(255, 255, 255, 0.1)' }}
                 size="sm"
+                flexShrink={0}
               >
                 Unclaim
               </Button>

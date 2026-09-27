@@ -48,21 +48,28 @@ export default function MobileNav() {
 
   return (
     <>
+      {/*
+        The bar is 60px of touch targets *plus* the home-indicator inset, not
+        60px with the inset eaten out of it — on an iPhone the latter squeezes
+        the icons up against the bottom edge.
+      */}
       <Box
         position="fixed"
         bottom={0}
         left={0}
         right={0}
-        h="60px"
+        h="calc(60px + env(safe-area-inset-bottom, 0px))"
         bg="#141414"
+        borderTop="1px solid"
+        borderColor="whiteAlpha.100"
         zIndex={100}
         display={{ base: 'flex', md: 'none' }}
-        alignItems="center"
+        alignItems="flex-start"
         justifyContent="center"
         px={4}
-        pb="env(safe-area-inset-bottom)"
+        pb="env(safe-area-inset-bottom, 0px)"
       >
-        <HStack w="100%" justify="space-around" align="center">
+        <HStack w="100%" h="60px" justify="space-around" align="center">
           {navItems.map((item) => {
             const Icon = item.active ? item.activeIcon : item.inactiveIcon
 

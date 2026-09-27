@@ -49,7 +49,7 @@ export default function LoginPage() {
   return (
     <Box minH="100vh" bg={COLORS.background} display="flex" alignItems="center" justifyContent="center">
       <Container maxW="md">
-        <VStack gap={6} bg="#141414" p={8} borderRadius="xl">
+        <VStack gap={6} bg="#141414" p={{ base: 4, md: 8 }} borderRadius="xl">
           <VStack gap={2} w="100%" alignItems="flex-start">
             <Heading size="2xl" color="white">Welcome Back</Heading>
             <Text color={COLORS.text.secondary}>Sign in to continue</Text>

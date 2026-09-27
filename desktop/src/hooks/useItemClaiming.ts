@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { wishlistAPI } from '../services/wishlist'
+import { guestSessionAPI, clearGuestSession, getGuestToken } from '../services/guestSession'
 import { useAuth } from '../context/AuthContext'
 import { toaster } from '../components/ui/toaster'
 
@@ -10,8 +11,10 @@ interface WishlistItemDetails {
   description?: string
   url?: string
   image?: string
-  claimed_by_user_id?: string
-  claimed_by_name?: string
+  wishlist_id?: string
+  is_claimed?: boolean | null
+  /** Server-computed: true when the requester is the one who claimed it. */
+  claimed_by_viewer?: boolean
   claimed_by_display_name?: string
 }
 
@@ -27,15 +30,16 @@ export const useItemClaiming = (
   const handleClaimItem = async () => {
     if (!item) return
 
-    // If user is not authenticated, show guest modal immediately
-    if (!user?.id) {
+    // Guests need a session before they can claim. If they already have one on
+    // this wishlist we reuse it, so they only ever type their name once.
+    if (!user?.id && !getGuestToken(item.wishlist_id)) {
       setShowGuestNameModal(true)
       return
     }
 
     setIsClaimLoading(true)
     try {
-      await wishlistAPI.claimItem(item.id, { user_id: user.id })
+      await wishlistAPI.claimItem(item.id, item.wishlist_id)
       await refetchItemData()
       toaster.create({
         title: 'Success',
@@ -44,6 +48,11 @@ export const useItemClaiming = (
       })
     } catch (error) {
       console.error('Error claiming item:', error)
+      // A stale guest token is the likely cause of a 401 here, so drop it and
+      // let them name themselves again.
+      if (!user?.id && item.wishlist_id) {
+        clearGuestSession(item.wishlist_id)
+      }
       toaster.create({
         title: 'Error',
         description: 'Failed to claim item. It may already be claimed.',
@@ -64,7 +73,7 @@ export const useItemClaiming = (
       return
     }
 
-    if (!item) {
+    if (!item?.wishlist_id) {
       toaster.create({
         title: 'Error',
         description: 'Item not found',
@@ -75,7 +84,11 @@ export const useItemClaiming = (
 
     setIsClaimLoading(true)
     try {
-      await wishlistAPI.claimItem(item.id, { guest_name: guestName.trim() })
+      // Two steps on purpose: the session is what the token belongs to, and it
+      // outlives this one claim.
+      await guestSessionAPI.start(item.wishlist_id, guestName.trim())
+      await wishlistAPI.claimItem(item.id, item.wishlist_id)
+
       setShowGuestNameModal(false)
       setGuestName('')
       toaster.create({
@@ -101,11 +114,7 @@ export const useItemClaiming = (
 
     setIsClaimLoading(true)
     try {
-      const unclaimData = user?.id
-        ? { user_id: user.id }
-        : { guest_name: item.claimed_by_name || '' }
-
-      await wishlistAPI.unclaimItem(item.id, unclaimData)
+      await wishlistAPI.unclaimItem(item.id, item.wishlist_id)
       toaster.create({
         title: 'Success',
         description: 'You have unclaimed this item.',
@@ -129,12 +138,10 @@ export const useItemClaiming = (
     setGuestName('')
   }
 
-  const isItemClaimed = Boolean(item?.claimed_by_user_id || item?.claimed_by_name)
-  const canUserUnclaim = Boolean(
-    user?.id
-      ? item?.claimed_by_user_id === user.id
-      : item?.claimed_by_name
-  )
+  // Both flags come from the server. The client no longer infers who claimed
+  // what from the display name, which every visitor can see.
+  const isItemClaimed = Boolean(item?.is_claimed)
+  const canUserUnclaim = Boolean(item?.claimed_by_viewer)
 
   return {
     // State

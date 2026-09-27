@@ -71,6 +71,7 @@ export function LandingInteractiveDemo() {
       LANDING_DEMO_CLAIMED.map((c) => ({
         id: c.id,
         name: c.name,
+        description: c.description,
         price: c.price,
         owner_name: c.owner_name,
         color: c.color,
@@ -184,6 +185,7 @@ export function LandingInteractiveDemo() {
                   items={claimedSectionItems}
                   onShowAll={noop}
                   hideShowAll
+                  hideArrowButtons
                   onItemClick={(item) => openItem(item.wishlist_id!, item.id, true)}
                   getItemImageUrl={(item) => claimedImageById.get(item.id)}
                   compact

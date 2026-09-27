@@ -11,6 +11,8 @@ import { friendsAPI } from '../../services/friends'
 import { useAuth } from '../../context/AuthContext'
 import { toaster } from '../ui/toaster'
 import { WishlistThumbnail } from './WishlistThumbnail'
+import { OpenListNotice } from './OpenListNotice'
+import type { WishlistVisibility } from '../../types/types'
 
 interface SharedWishlistViewProps {
   wishlist: {
@@ -29,6 +31,7 @@ interface SharedWishlistViewProps {
     updated_at?: string
     created_at?: string
     due_date?: string | null
+    visibility_mode?: WishlistVisibility
   }
   demoMode?: boolean
   onDemoBack?: () => void
@@ -270,6 +273,17 @@ export function SharedWishlistView({
           </HStack>
         </VStack>
       </HStack>
+
+      {/* Visitors are told the owner can see claims before they claim anything.
+          A portalled dialog, so its position in the tree is immaterial. */}
+      {!demoMode && (
+        <OpenListNotice
+          wishlistId={wishlist.id}
+          ownerName={wishlist.owner_name}
+          isOwner={wishlist.owner_id === user?.id}
+          visibilityMode={wishlist.visibility_mode}
+        />
+      )}
 
       {!demoMode && <WishlistMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} options={menuOptions} />}
     </Box>

@@ -147,9 +147,24 @@ function AllWishlistsPage({ type }: AllWishlistsPageProps) {
   }
 
   return (
-    <Box h={{ base: "calc(100vh + 80px)", md: "calc(100vh - 32px)" }} w="100%" overflowY="auto" overflowX="hidden">
+    <Box
+      /*
+        Desktop only: a fixed-height pane that scrolls inside the layout.
+        On a phone this has to be auto — ResponsiveLayout is already a scroll
+        container, and a second one nested inside it traps the scroll and hides
+        content behind the bottom nav. Letting the page grow lets the layout's
+        own bottom margin clear the nav.
+      */
+      h={{ base: "auto", md: "calc(100vh - 32px)" }}
+      w="100%"
+      overflowY={{ base: "visible", md: "auto" }}
+      /* Pairing overflow-x:hidden with overflow-y:visible makes the browser
+         compute overflow-y as auto, re-nesting the scroll container. The
+         layout above already clips horizontally on mobile. */
+      overflowX={{ base: "visible", md: "hidden" }}
+    >
       {/* Header */}
-      <Box bg={COLORS.background} px={8} py={4} position="sticky" top={0} zIndex={10}>
+      <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4} position="sticky" top={0} zIndex={10}>
         <HStack gap={4}>
           <IconButton
             aria-label="Go back"
@@ -168,7 +183,7 @@ function AllWishlistsPage({ type }: AllWishlistsPageProps) {
         {wishlists.length === 0 ? (
           <Text color="gray.400">No wishlists found</Text>
         ) : (
-          <VStack align="stretch" gap={8}>
+          <VStack align="stretch" gap={{ base: 4, md: 8 }}>
             {/* Active Section */}
             <Box>
               <Heading size="md" color="white" mb={4}>Active</Heading>

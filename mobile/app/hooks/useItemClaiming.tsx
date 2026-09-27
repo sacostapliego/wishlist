@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useAuth } from '@/app/context/AuthContext';
 import { wishlistAPI } from '../services/wishlist';
+import { guestSessionAPI, clearGuestSession, getGuestToken } from '../services/guestSession';
 import { WishlistItemDetails } from '../types/wishlist';
 
 export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemData: () => Promise<void>) => {
@@ -13,18 +14,24 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
     const handleClaimItem = async () => {
         if (!item) return;
 
-        // If user is not authenticated, show guest modal immediately
-        if (!user?.id) {
+        // Guests need a session before they can claim. If they already have one
+        // on this wishlist we reuse it, so they only ever type their name once.
+        if (!user?.id && !(await getGuestToken(item.wishlist_id))) {
             setShowGuestNameModal(true);
             return;
         }
 
         setIsClaimLoading(true);
         try {
-            const result = await wishlistAPI.claimItem(item.id, { user_id: user.id });
+            await wishlistAPI.claimItem(item.id, item.wishlist_id);
             await refetchItemData();
         } catch (error) {
             console.error('Error claiming item:', error);
+            // A stale guest token is the likely cause of a 401 here, so drop it
+            // and let them name themselves again.
+            if (!user?.id && item.wishlist_id) {
+                await clearGuestSession(item.wishlist_id);
+            }
             Alert.alert('Error', 'Failed to claim item. It may already be claimed.');
         } finally {
             setIsClaimLoading(false);
@@ -37,14 +44,18 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
             return;
         }
 
-        if (!item) {
+        if (!item?.wishlist_id) {
             Alert.alert('Error', 'Item not found');
             return;
         }
 
         setIsClaimLoading(true);
         try {
-            await wishlistAPI.claimItem(item.id, { guest_name: guestName.trim() });
+            // Two steps on purpose: the session is what the token belongs to,
+            // and it outlives this one claim.
+            await guestSessionAPI.start(item.wishlist_id, guestName.trim());
+            await wishlistAPI.claimItem(item.id, item.wishlist_id);
+
             setShowGuestNameModal(false);
             setGuestName('');
             Alert.alert('Success', 'You have claimed this item!');
@@ -62,12 +73,7 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
 
         setIsClaimLoading(true);
         try {
-            const itemWithClaiming = item as any;
-            const unclaimData = user?.id 
-                ? { user_id: user.id }
-                : { guest_name: itemWithClaiming.claimed_by_name || '' };
-                
-            await wishlistAPI.unclaimItem(item.id, unclaimData);
+            await wishlistAPI.unclaimItem(item.id, item.wishlist_id);
             Alert.alert('Success', 'You have unclaimed this item.');
             await refetchItemData();
         } catch (error) {
@@ -83,13 +89,10 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
         setGuestName('');
     };
 
-    // Fix: Ensure these return boolean values, not undefined
-    const isItemClaimed = Boolean(item?.claimed_by_user_id || item?.claimed_by_name);
-    const canUserUnclaim = Boolean(
-        user?.id 
-            ? item?.claimed_by_user_id === user.id
-            : item?.claimed_by_name // This could be a string, so wrap in Boolean()
-    );
+    // Both flags come from the server. The client no longer infers who claimed
+    // what from the display name, which every visitor can see.
+    const isItemClaimed = Boolean(item?.is_claimed);
+    const canUserUnclaim = Boolean(item?.claimed_by_viewer);
 
     return {
         // State
@@ -97,11 +100,11 @@ export const useItemClaiming = (item: WishlistItemDetails | null, refetchItemDat
         guestName,
         setGuestName,
         isClaimLoading,
-        
-        // Computed values - now guaranteed to be boolean
+
+        // Computed values
         isItemClaimed,
         canUserUnclaim,
-        
+
         // Actions
         handleClaimItem,
         handleGuestClaim,

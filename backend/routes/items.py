@@ -5,15 +5,18 @@ import base64
 from fastapi import APIRouter, Depends, HTTPException, Form, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from typing import List, Optional
 from PIL import Image
 
 
 from models.wishlist import Wishlist
 from models.base import get_db
-from models.item import ClaimRequest, WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse, ScrapeRequest
-from middleware.auth import get_current_user
+from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse, ScrapeRequest
+from models.item_contribution import ItemContribution
+from middleware.auth import get_current_user, get_current_user_optional
+from services.guest_session import get_guest_token, resolve_guest_session
+from services.item_serializer import serialize_item, serialize_items
 from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
 from services.scraper import scrape_url
 
@@ -68,6 +71,28 @@ def _remove_white_background(image_data: bytes) -> bytes:
     return buffer.getvalue()
 
 ''' Create a new item '''
+""" Guards shared by item create and update """
+def _validate_contribution_fields(
+    is_contribution: bool,
+    owner_seed_amount: Optional[float]
+) -> None:
+    """
+    The owner's seed amount only means something on a contribution item, and a
+    negative one means nothing anywhere. Rejected rather than quietly dropped, so
+    a client sending the wrong shape hears about it.
+    """
+    if owner_seed_amount is not None:
+        if owner_seed_amount < 0:
+            raise HTTPException(
+                status_code=400,
+                detail='A contribution amount cannot be negative'
+            )
+        if not is_contribution:
+            raise HTTPException(
+                status_code=400,
+                detail='Only a contribution item can have a contribution amount'
+            )
+
 @router.post('/', response_model=WishListItemResponse)
 async def create_wishlist_item(
     # item
@@ -79,11 +104,17 @@ async def create_wishlist_item(
     priority: int = Form(0),
     wishlist_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    # contribution mode. `price` doubles as the goal, so an item with no price
+    # shows a running total instead of a progress bar.
+    is_contribution: bool = Form(False),
+    owner_seed_amount: Optional[float] = Form(None),
     # current_user/database session
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     try:
+        _validate_contribution_fields(is_contribution, owner_seed_amount)
+
         # process wishlist id
         wishlist_id = uuid.UUID(wishlist_id) if wishlist_id else None
         
@@ -101,7 +132,9 @@ async def create_wishlist_item(
             "is_purchased": is_purchased,
             "priority": priority,
             "wishlist_id": wishlist_id,
-            "image": image_url
+            "image": image_url,
+            "is_contribution": is_contribution,
+            "owner_seed_amount": owner_seed_amount
         }
         
         db_item = WishListItem(
@@ -112,7 +145,12 @@ async def create_wishlist_item(
         db.commit()
         db.refresh(db_item)
     
-        return db_item
+        return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
+    except HTTPException:
+        # a deliberate 4xx from validation above - do not rewrite it as a 500
+        if 'image_url' in locals() and image_url:
+            delete_file_from_s3(image_url)
+        raise
     except Exception as e:
         if 'image_url' in locals() and image_url:
             delete_file_from_s3(image_url)
@@ -127,26 +165,18 @@ def read_wishlist_items(
     db: Session = Depends(get_db)
 ):
     items = db.query(WishListItem).options(
-        joinedload(WishListItem.claimed_by_user)
+        joinedload(WishListItem.claimed_by_user),
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.user_id == current_user["user_id"]
     ).offset(skip).limit(limit).all()
     
-    # Convert to response format with claimed_by_display_name
-    response_items = []
-    for item in items:
-        item_dict = WishListItemResponse.model_validate(item).model_dump()
-        
-        if item.claimed_by_user_id and item.claimed_by_user:
-            item_dict['claimed_by_display_name'] = item.claimed_by_user.name or item.claimed_by_user.username
-        elif item.claimed_by_name:
-            item_dict['claimed_by_display_name'] = item.claimed_by_name
-        else:
-            item_dict['claimed_by_display_name'] = None
-            
-        response_items.append(WishListItemResponse(**item_dict))
-    
-    return response_items
+    return serialize_items(items, viewer_user_id=uuid.UUID(current_user["user_id"]))
 
 ''' Get items by wishlist '''
 @router.get('/items/{wishlist_id}', response_model=List[WishListItemResponse])
@@ -166,26 +196,18 @@ def get_items_by_wishlist(
         raise HTTPException(status_code=404, detail="Wishlist not found")
     
     items = db.query(WishListItem).options(
-        joinedload(WishListItem.claimed_by_user)
+        joinedload(WishListItem.claimed_by_user),
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.wishlist_id == wishlist_id
     ).all()
     
-    # Convert to response format with claimed_by_display_name
-    response_items = []
-    for item in items:
-        item_dict = WishListItemResponse.model_validate(item).model_dump()
-        
-        if item.claimed_by_user_id and item.claimed_by_user:
-            item_dict['claimed_by_display_name'] = item.claimed_by_user.name or item.claimed_by_user.username
-        elif item.claimed_by_name:
-            item_dict['claimed_by_display_name'] = item.claimed_by_name
-        else:
-            item_dict['claimed_by_display_name'] = None
-            
-        response_items.append(WishListItemResponse(**item_dict))
-    
-    return response_items
+    return serialize_items(items, viewer_user_id=uuid.UUID(current_user["user_id"]))
 
 """ Get a single item """
 @router.get('/{item_id}', response_model=WishListItemResponse)
@@ -195,7 +217,13 @@ def read_wishlist_item(
     db: Session = Depends(get_db)
 ):
     db_item = db.query(WishListItem).options(
-        joinedload(WishListItem.claimed_by_user)
+        joinedload(WishListItem.claimed_by_user),
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.id == item_id, 
         WishListItem.user_id == current_user["user_id"]
@@ -204,17 +232,7 @@ def read_wishlist_item(
     if not db_item:
         raise HTTPException(status_code=404, detail='Item not found')
     
-    # Convert to response format with claimed_by_display_name
-    item_dict = WishListItemResponse.model_validate(db_item).model_dump()
-    
-    if db_item.claimed_by_user_id and db_item.claimed_by_user:
-        item_dict['claimed_by_display_name'] = db_item.claimed_by_user.name or db_item.claimed_by_user.username
-    elif db_item.claimed_by_name:
-        item_dict['claimed_by_display_name'] = db_item.claimed_by_name
-    else:
-        item_dict['claimed_by_display_name'] = None
-        
-    return WishListItemResponse(**item_dict)
+    return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
 
 ''' Update an item '''
 @router.put('/{item_id}', response_model=WishListItemResponse)
@@ -228,6 +246,8 @@ async def update_wishlist_item(
     priority: Optional[int] = Form(None),
     wishlist_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    is_contribution: Optional[bool] = Form(None),
+    owner_seed_amount: Optional[float] = Form(None),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -272,10 +292,49 @@ async def update_wishlist_item(
         db_item.priority = priority
     if wishlist_uuid is not None:
         db_item.wishlist_id = wishlist_uuid
-    
+
+    # Contribution mode, after the simple fields because switching it has
+    # conditions the others do not.
+    effective_is_contribution = (
+        is_contribution if is_contribution is not None else bool(db_item.is_contribution)
+    )
+    _validate_contribution_fields(effective_is_contribution, owner_seed_amount)
+
+    if is_contribution is not None and bool(db_item.is_contribution) != is_contribution:
+        if is_contribution:
+            # Turning it on would make the item both claimed and funded.
+            if (
+                db_item.claimed_by_user_id
+                or db_item.claimed_by_guest_session_id
+                or db_item.claimed_by_name
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail='Release the claim on this item before it can take contributions'
+                )
+        else:
+            # Turning it off would strand pledges people have already made.
+            # Deleting them silently is the wrong default: someone said they
+            # would put money in, and the owner should have to see that before it
+            # is thrown away.
+            pledge_count = db.query(ItemContribution).filter(
+                ItemContribution.item_id == db_item.id
+            ).count()
+
+            if pledge_count:
+                raise HTTPException(
+                    status_code=400,
+                    detail='People have already contributed to this item, so it cannot stop taking contributions'
+                )
+
+        db_item.is_contribution = is_contribution
+
+    if owner_seed_amount is not None:
+        db_item.owner_seed_amount = owner_seed_amount
+
     db.commit()
     db.refresh(db_item)
-    return db_item
+    return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
 
 ''' Delete an item '''
 @router.delete('/{item_id}', response_model=dict)
@@ -305,29 +364,31 @@ def read_user_wishlist(
     user_id: uuid.UUID,
     skip: int = 0,
     limit: int = 100,
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    guest_token: Optional[str] = Depends(get_guest_token),
     db: Session = Depends(get_db)
 ):
+    viewer_user_id = uuid.UUID(current_user["user_id"]) if current_user else None
+    guest_session = resolve_guest_session(db, guest_token)
+    viewer_guest_session_id = guest_session.id if guest_session else None
+
     items = db.query(WishListItem).options(
-        joinedload(WishListItem.claimed_by_user)
+        joinedload(WishListItem.claimed_by_user),
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.user_id == user_id
     ).offset(skip).limit(limit).all()
     
-    # Convert to response format with claimed_by_display_name
-    response_items = []
-    for item in items:
-        item_dict = WishListItemResponse.model_validate(item).model_dump()
-        
-        if item.claimed_by_user_id and item.claimed_by_user:
-            item_dict['claimed_by_display_name'] = item.claimed_by_user.name or item.claimed_by_user.username
-        elif item.claimed_by_name:
-            item_dict['claimed_by_display_name'] = item.claimed_by_name
-        else:
-            item_dict['claimed_by_display_name'] = None
-            
-        response_items.append(WishListItemResponse(**item_dict))
-    
-    return response_items
+    return serialize_items(
+        items,
+        viewer_user_id=viewer_user_id,
+        viewer_guest_session_id=viewer_guest_session_id
+    )
 
 """ Remove white background from an item's image """
 @router.post('/{item_id}/remove-background', response_model=dict)
@@ -425,6 +486,8 @@ async def get_item_image(
 @router.get('/public/{wishlist_id}', response_model=List[WishListItemResponse])
 def read_public_wishlist_items(
     wishlist_id: uuid.UUID,
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    guest_token: Optional[str] = Depends(get_guest_token),
     db: Session = Depends(get_db)
 ):
     """Get items from a public wishlist without authentication"""
@@ -437,95 +500,125 @@ def read_public_wishlist_items(
     if not db_wishlist:
         raise HTTPException(status_code=404, detail="Wishlist not found or not public")
     
+    viewer_user_id = uuid.UUID(current_user["user_id"]) if current_user else None
+    guest_session = resolve_guest_session(db, guest_token, wishlist_id)
+    viewer_guest_session_id = guest_session.id if guest_session else None
+    
     # Get items for this wishlist with user information
     items = db.query(WishListItem).options(
-        joinedload(WishListItem.claimed_by_user)
+        joinedload(WishListItem.claimed_by_user),
+        joinedload(WishListItem.claimed_by_guest_session),
+        # the serializer needs the list's visibility_mode to enforce blind mode
+        joinedload(WishListItem.wishlist),
+        # and the pledges to total up contribution items, in one query for the
+        # whole page rather than one per item
+        selectinload(WishListItem.contributions)
     ).filter(
         WishListItem.wishlist_id == wishlist_id
     ).all()
     
-    # Convert to response format with claimed_by_display_name
-    response_items = []
-    for item in items:
-        item_dict = WishListItemResponse.model_validate(item).model_dump()
-        
-        # Add display name for claimed items
-        if item.claimed_by_user_id and item.claimed_by_user:
-            item_dict['claimed_by_display_name'] = item.claimed_by_user.name or item.claimed_by_user.username
-        elif item.claimed_by_name:
-            item_dict['claimed_by_display_name'] = item.claimed_by_name
-        else:
-            item_dict['claimed_by_display_name'] = None
-            
-        response_items.append(WishListItemResponse(**item_dict))
-    
-    return response_items
+    return serialize_items(
+        items,
+        viewer_user_id=viewer_user_id,
+        viewer_guest_session_id=viewer_guest_session_id
+    )
 
 """ Claim an item for purchase """
 @router.post('/{item_id}/claim')
 def claim_item(
     item_id: uuid.UUID,
-    claim_data: ClaimRequest,
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    guest_token: Optional[str] = Depends(get_guest_token),
     db: Session = Depends(get_db)
 ):
-    # Get the item
+    """
+    Identity comes from the JWT or the X-Guest-Token header, never from the
+    request body - a caller cannot claim on someone else's behalf.
+    """
     item = db.query(WishListItem).filter(WishListItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    
-    # Check if already claimed
-    if item.claimed_by_user_id or item.claimed_by_name:
+
+    # Only items on a shared wishlist can be claimed; knowing an item id is not
+    # permission to touch it.
+    wishlist = db.query(Wishlist).filter(
+        Wishlist.id == item.wishlist_id,
+        Wishlist.is_public == True
+    ).first()
+    if not wishlist:
+        raise HTTPException(status_code=404, detail="Item is not on a shared wishlist")
+
+    # Claiming and contributing are mutually exclusive, or an item ends up both
+    # 60% funded and claimed by one person. The contribution routes refuse the
+    # mirror case, and a database constraint refuses the combination outright.
+    if item.is_contribution:
+        raise HTTPException(
+            status_code=400,
+            detail="This item takes contributions rather than being claimed"
+        )
+
+    if item.claimed_by_user_id or item.claimed_by_guest_session_id or item.claimed_by_name:
         raise HTTPException(status_code=400, detail="Item is already claimed")
-    
-    # Claim the item - ONLY set one field, not both
-    if claim_data.user_id:
-        # For registered users, only set the user_id
-        item.claimed_by_user_id = claim_data.user_id
-        item.claimed_by_name = None  # Explicitly set to None
-    elif claim_data.guest_name:
-        # For guests, only set the name
-        item.claimed_by_name = claim_data.guest_name
-        item.claimed_by_user_id = None  # Explicitly set to None
+
+    if current_user:
+        item.claimed_by_user_id = uuid.UUID(current_user["user_id"])
+        item.claimed_by_guest_session_id = None
+        item.claimed_by_name = None
     else:
-        raise HTTPException(status_code=400, detail="Either user_id or guest_name is required")
-    
+        guest_session = resolve_guest_session(db, guest_token, item.wishlist_id)
+        if not guest_session:
+            raise HTTPException(
+                status_code=401,
+                detail="Sign in or start a guest session to claim this item"
+            )
+        item.claimed_by_guest_session_id = guest_session.id
+        item.claimed_by_user_id = None
+        item.claimed_by_name = None
+
     item.claimed_at = func.now()
-    
+    # Pinned now, not read later: if the owner opens the list afterwards, this
+    # claim stays hidden from them. See design/wishlist/visibility-modes.md.
+    item.claimed_under_mode = wishlist.visibility_mode
+
     db.commit()
     db.refresh(item)
-    
+
     return {"message": "Item claimed successfully"}
 
 """ Unclaim an item """
 @router.delete('/{item_id}/claim')
 def unclaim_item(
     item_id: uuid.UUID,
-    unclaim_data: ClaimRequest,
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    guest_token: Optional[str] = Depends(get_guest_token),
     db: Session = Depends(get_db)
 ):
-    # Get the item
+    """Only the person who claimed the item can release it."""
     item = db.query(WishListItem).filter(WishListItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    
-    # Check if the requester can unclaim
+
     can_unclaim = False
-    if unclaim_data.user_id and str(item.claimed_by_user_id) == unclaim_data.user_id:
-        can_unclaim = True
-    elif unclaim_data.guest_name and item.claimed_by_name == unclaim_data.guest_name:
-        can_unclaim = True
-    
+    if current_user and item.claimed_by_user_id:
+        can_unclaim = item.claimed_by_user_id == uuid.UUID(current_user["user_id"])
+    elif item.claimed_by_guest_session_id:
+        guest_session = resolve_guest_session(db, guest_token, item.wishlist_id)
+        can_unclaim = bool(guest_session and guest_session.id == item.claimed_by_guest_session_id)
+
+    # Legacy claims stored only a name, which proves nothing, so they are not
+    # releasable by a guest. The wishlist owner can still clear them.
     if not can_unclaim:
         raise HTTPException(status_code=403, detail="You cannot unclaim this item")
-    
-    # Unclaim the item
+
     item.claimed_by_user_id = None
+    item.claimed_by_guest_session_id = None
     item.claimed_by_name = None
     item.claimed_at = None
-    
+    item.claimed_under_mode = None
+
     db.commit()
     db.refresh(item)
-    
+
     return {"message": "Item unclaimed successfully"}
 
 """ Get claimed items for the current user """
@@ -555,6 +648,7 @@ def get_my_claimed_items(
         response_items.append({
             "id": str(item.id),
             "name": item.name,
+            "description": item.description,
             "price": item.price,
             "image": item.image,
             "owner_id": str(item.user_id),

@@ -8,6 +8,12 @@ export const COLORS = {
     primary: '#ffffff',
     secondary: 'rgba(255, 255, 255, 0.8)',
     muted: '#9ca3af',
+    /**
+     * Attribution subtext — "For: Marcus", an owner name under a list title.
+     * A step lighter than `muted` so the line reads as information about the
+     * card rather than a disabled label.
+     */
+    subtle: '#b8bec8',
     dark: '#334155'
   },
   inactive: '#64748b',
