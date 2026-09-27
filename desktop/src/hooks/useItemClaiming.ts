@@ -3,6 +3,7 @@ import { wishlistAPI } from '../services/wishlist'
 import { guestSessionAPI, clearGuestSession, getGuestToken } from '../services/guestSession'
 import { useAuth } from '../context/AuthContext'
 import { toaster } from '../components/ui/toaster'
+import { apiMessage } from '../utils/apiError'
 
 interface WishlistItemDetails {
   id: string
@@ -55,7 +56,10 @@ export const useItemClaiming = (
       }
       toaster.create({
         title: 'Error',
-        description: 'Failed to claim item. It may already be claimed.',
+        // The server says why it refused - the item takes contributions, the
+        // list is not shared, the claim is someone else's. Guessing "already
+        // claimed" here was wrong often enough to send debugging the wrong way.
+        description: apiMessage(error, 'Failed to claim item.'),
         type: 'error',
       })
     } finally {
@@ -101,7 +105,7 @@ export const useItemClaiming = (
       console.error('Error claiming item:', error)
       toaster.create({
         title: 'Error',
-        description: 'Failed to claim item. It may already be claimed.',
+        description: apiMessage(error, 'Failed to claim item.'),
         type: 'error',
       })
     } finally {
@@ -125,7 +129,7 @@ export const useItemClaiming = (
       console.error('Error unclaiming item:', error)
       toaster.create({
         title: 'Error',
-        description: 'Failed to unclaim item.',
+        description: apiMessage(error, 'Failed to unclaim item.'),
         type: 'error',
       })
     } finally {

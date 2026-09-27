@@ -351,8 +351,9 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           )}
         </Box>
 
-        {/* Contribution mode. Placed above the price because it changes what the
-            price means: on a contribution item the price is the funding goal. */}
+        {/* Contribution mode. Phrased as the situation it solves rather than
+            the mechanism - "expensive item" is what the owner is thinking, and
+            the subline says what turning it on actually does. */}
         <Box bg={COLORS.cardDarkLight} borderRadius="lg" p={3}>
           <Switch.Root
             checked={isContribution}
@@ -364,23 +365,27 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           >
             <Switch.HiddenInput />
             <Switch.Label fontSize="sm" fontWeight="medium" color={COLORS.text.primary}>
-              Accept contributions
+              Expensive item?
             </Switch.Label>
             <Switch.Control>
               <Switch.Thumb />
             </Switch.Control>
           </Switch.Root>
+          <Text fontSize="xs" color={COLORS.text.muted} mt={2}>
+            Let people chip in together instead of one person buying it.
+          </Text>
         </Box>
 
-        {/* Price, which doubles as the goal when contributions are on */}
+        {/* Price. Also the target to chip in toward when the switch is on, but
+            it is still just the price, so the label never changes. */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.primary}>
-            {isContribution ? 'Goal' : 'Price'}
+            Price
           </Text>
           <Input
             value={price}
             onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ''))}
-            placeholder={isContribution ? 'Enter goal (e.g., 5000)' : 'Enter price (e.g., 29.99)'}
+            placeholder={isContribution ? 'Enter price (e.g., 5000)' : 'Enter price (e.g., 29.99)'}
             bg={COLORS.cardDarkLight}
             color={COLORS.text.primary}
             borderColor={COLORS.cardDarkLight}
@@ -394,7 +399,7 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
         {isContribution && (
           <Box>
             <Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.primary}>
-              Your contribution
+              How much you&apos;re putting for this item
             </Text>
             <Input
               value={ownerSeedAmount}

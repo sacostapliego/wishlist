@@ -5,7 +5,14 @@ fastapi[standard]
 
 # Database
 sqlalchemy
+# Both PostgreSQL drivers, because the DATABASE_URL scheme picks which one
+# SQLAlchemy loads and that differs by environment: a bare `postgresql://`
+# resolves to psycopg2, while `postgresql+psycopg://` resolves to psycopg 3.
+# Render's URL uses the latter, and shipping only psycopg2 meant the container
+# died on import - leaving the previous image serving, so deploys appeared to
+# succeed while the API stayed on old code.
 psycopg2-binary
+psycopg[binary]
 alembic
 
 # Auth
