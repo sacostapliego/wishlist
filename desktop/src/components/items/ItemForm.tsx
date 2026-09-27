@@ -11,6 +11,7 @@ import {
   Spinner,
   Slider,
   NativeSelect,
+  Switch,
 } from '@chakra-ui/react'
 import { LuImage, LuScissors, LuPlus, LuCheck } from 'react-icons/lu'
 import { COLORS } from '../../styles/common'
@@ -28,6 +29,10 @@ export interface ItemFormData {
   newImageUri?: string
   priority?: number
   wishlistId?: string
+  /** Contribution items are chipped in toward instead of claimed outright. */
+  isContribution?: boolean
+  /** The owner's own head start, as typed. Only meaningful when contributing. */
+  ownerSeedAmount?: string
 }
 
 interface ItemFormProps {
@@ -72,6 +77,8 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       initialValues.currentImageUri || initialValues.newImageUri || undefined
     )
     const [priority, setPriority] = useState(initialValues.priority || 0)
+    const [isContribution, setIsContribution] = useState(initialValues.isContribution || false)
+    const [ownerSeedAmount, setOwnerSeedAmount] = useState(initialValues.ownerSeedAmount || '')
     const [isProcessingImage, setIsProcessingImage] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -82,6 +89,8 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       setUrl(initialValues.url || '')
       setImage(initialValues.currentImageUri || initialValues.newImageUri || undefined)
       setPriority(initialValues.priority || 0)
+      setIsContribution(initialValues.isContribution || false)
+      setOwnerSeedAmount(initialValues.ownerSeedAmount || '')
     }, [initialValues])
 
     useImperativeHandle(ref, () => ({
@@ -96,6 +105,8 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       setUrl(initialValues.url || '')
       setImage(initialValues.currentImageUri || undefined)
       setPriority(initialValues.priority || 0)
+      setIsContribution(initialValues.isContribution || false)
+      setOwnerSeedAmount(initialValues.ownerSeedAmount || '')
     }
 
     const compressImage = async (file: File): Promise<File> => {
@@ -214,7 +225,19 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
       }
 
       onSubmit(
-        { name, description, price, url, newImageUri: image, priority, wishlistId: selectedWishlistId },
+        {
+          name,
+          description,
+          price,
+          url,
+          newImageUri: image,
+          priority,
+          wishlistId: selectedWishlistId,
+          isContribution,
+          // Only sent when contributing - the API rejects a seed amount on an
+          // item that is not taking contributions.
+          ownerSeedAmount: isContribution ? ownerSeedAmount : '',
+        },
         imageFile
       )
     }
@@ -328,15 +351,36 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           )}
         </Box>
 
-        {/* Price */}
+        {/* Contribution mode. Placed above the price because it changes what the
+            price means: on a contribution item the price is the funding goal. */}
+        <Box bg={COLORS.cardDarkLight} borderRadius="lg" p={3}>
+          <Switch.Root
+            checked={isContribution}
+            onCheckedChange={(e) => setIsContribution(e.checked)}
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            w="100%"
+          >
+            <Switch.HiddenInput />
+            <Switch.Label fontSize="sm" fontWeight="medium" color={COLORS.text.primary}>
+              Accept contributions
+            </Switch.Label>
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+          </Switch.Root>
+        </Box>
+
+        {/* Price, which doubles as the goal when contributions are on */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.primary}>
-            Price
+            {isContribution ? 'Goal' : 'Price'}
           </Text>
           <Input
             value={price}
             onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ''))}
-            placeholder="Enter price (e.g., 29.99)"
+            placeholder={isContribution ? 'Enter goal (e.g., 5000)' : 'Enter price (e.g., 29.99)'}
             bg={COLORS.cardDarkLight}
             color={COLORS.text.primary}
             borderColor={COLORS.cardDarkLight}
@@ -345,6 +389,26 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
             type="text"
           />
         </Box>
+
+        {/* The owner's own head start */}
+        {isContribution && (
+          <Box>
+            <Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.primary}>
+              Your contribution
+            </Text>
+            <Input
+              value={ownerSeedAmount}
+              onChange={(e) => setOwnerSeedAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+              placeholder="Enter amount (e.g., 2000)"
+              bg={COLORS.cardDarkLight}
+              color={COLORS.text.primary}
+              borderColor={COLORS.cardDarkLight}
+              _placeholder={{ color: COLORS.text.muted }}
+              _focus={{ borderColor: COLORS.primary }}
+              type="text"
+            />
+          </Box>
+        )}
 
         {/* URL */}
         <Box>

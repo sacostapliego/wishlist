@@ -20,10 +20,12 @@ export interface WishlistItemDetails {
     url?: string;
     image?: string;
     priority?: number;
-    claimed_by_user_id?: string;
-    claimed_by_name?: string;
+    wishlist_id?: string;
     claimed_at?: string;
     claimed_by_display_name?: string;
+    is_claimed?: boolean | null;
+    /** Server-computed: true when the requester is the one who claimed it. */
+    claimed_by_viewer?: boolean;
 }
 
 export type WishlistItem = {

@@ -31,6 +31,7 @@ export interface LandingDemoItem {
 export interface LandingDemoClaimed {
   id: string
   name: string
+  description?: string
   owner_name: string
   price?: number
   color: string
@@ -91,6 +92,7 @@ export const LANDING_DEMO_CLAIMED: LandingDemoClaimed[] = [
   {
     id: 'demo-item-friend-birthday-1',
     name: 'Nvida 5090',
+    description: 'The 32GB one — he has been talking about it for months.',
     owner_name: 'Alex',
     color: 'rgb(196, 30, 58)',
     image_url: '/landing/demo-items/nvidia5090.png',
@@ -100,6 +102,7 @@ export const LANDING_DEMO_CLAIMED: LandingDemoClaimed[] = [
   {
     id: 'demo-item-friend-valentines-1',
     name: 'Miss Dior Essence perfume',
+    description: 'Her usual, 100ml if they have it in stock.',
     owner_name: 'Eva',
     color: 'rgb(232, 158, 184)',
     image_url: '/landing/demo-items/perfume.png',

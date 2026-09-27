@@ -144,9 +144,21 @@ function ProfilePage({ userId }: ProfilePageProps) {
   const hasSizes = Object.values(sizeValues).some(value => value)
 
   return (
-    <Box h="calc(100vh - 32px)" w="100%" overflowY="auto" bg={COLORS.background}>
+    <Box
+      /*
+        Desktop only: a fixed-height pane that scrolls inside the layout.
+        On a phone this has to be auto — ResponsiveLayout is already a scroll
+        container, and a second one nested inside it traps the scroll and hides
+        content behind the bottom nav. Letting the page grow lets the layout's
+        own bottom margin clear the nav.
+      */
+      h={{ base: "auto", md: "calc(100vh - 32px)" }}
+      w="100%"
+      overflowY={{ base: "visible", md: "auto" }}
+      bg={COLORS.background}
+    >
       {/* Header */}
-      <Box bg={COLORS.background} px={8} py={4} position="sticky" top={0} zIndex={10}>
+      <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4} position="sticky" top={0} zIndex={10}>
         <HStack justify="space-between">
           <IconButton
             aria-label="Go back"
@@ -186,7 +198,7 @@ function ProfilePage({ userId }: ProfilePageProps) {
 
       {/* Profile Content */}
       <VStack gap={6} align="stretch">
-        <Box gap={6} px={8} py={8}>
+        <Box gap={6} px={{ base: 4, md: 8 }} py={{ base: 5, md: 8 }}>
           {/* Profile Image and User Info */}
           <VStack gap={4}>
             <Box

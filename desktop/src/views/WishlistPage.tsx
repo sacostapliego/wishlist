@@ -13,7 +13,7 @@ import { WishlistItemView, type SortOption } from '../components/wishlists/Wishl
 import { useWishlistDetail } from '../hooks/useWislistDetail'
 import { WishlistFilters } from '../components/wishlists/WishlistFilters'
 import { userAPI } from '../services/user'
-import type { ApiError } from '../types/types'
+import type { ApiError, WishlistVisibility } from '../types/types'
 import { SimpleGridView } from '../components/wishlists/SimpleGridView'
 
 interface Wishlist {
@@ -33,6 +33,7 @@ interface Wishlist {
   use_item_colors?: boolean
   default_view?: 'grid' | 'list'
   due_date?: string | null
+  visibility_mode?: WishlistVisibility
 }
 
 interface MyWishlistResponse {
@@ -249,7 +250,7 @@ function WishlistPage({ id }: WishlistPageProps) {
 
   if (accessDenied) {
     return (
-      <Box h="calc(100vh - 32px)" w="100%" display="flex" alignItems="center" justifyContent="center" p={8}>
+      <Box h="calc(100vh - 32px)" w="100%" display="flex" alignItems="center" justifyContent="center" p={{ base: 4, md: 8 }}>
         <VStack gap={4}>
           <Heading size="lg" color="white">Private Wishlist</Heading>
           <Text color="gray.400" textAlign="center">
@@ -265,7 +266,22 @@ function WishlistPage({ id }: WishlistPageProps) {
   }
 
   return (
-    <Box h="calc(100vh - 32px)" w="100%" overflowY="auto" overflowX="hidden">
+    <Box
+      /*
+        Desktop only: a fixed-height pane that scrolls inside the layout.
+        On a phone this has to be auto — ResponsiveLayout is already a scroll
+        container, and a second one nested inside it traps the scroll and hides
+        content behind the bottom nav. Letting the page grow lets the layout's
+        own bottom margin clear the nav.
+      */
+      h={{ base: "auto", md: "calc(100vh - 32px)" }}
+      w="100%"
+      overflowY={{ base: "visible", md: "auto" }}
+      /* Pairing overflow-x:hidden with overflow-y:visible makes the browser
+         compute overflow-y as auto, re-nesting the scroll container. The
+         layout above already clips horizontally on mobile. */
+      overflowX={{ base: "visible", md: "hidden" }}
+    >
       <VStack align="stretch" gap={0}>
         {isOwner ? (
           <OwnerWishlistView 
@@ -325,7 +341,7 @@ function WishlistPage({ id }: WishlistPageProps) {
             />
           )
         ) : (
-          <Box px={8} py={4}>
+          <Box px={{ base: 4, md: 8 }} py={4}>
             <Text color="gray.400">No items yet...</Text>
           </Box>
         )}

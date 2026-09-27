@@ -37,3 +37,13 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
     except jwt.PyJWTError as e:
         print(f"JWT Error: {e}")
         raise HTTPException(status_code=401, detail='Invalid token')
+
+# Same as get_current_user, but returns None instead of raising when the caller
+# is not signed in. Used by endpoints that serve both members and guests.
+async def get_current_user_optional(authorization: Optional[str] = Header(None)):
+    if not authorization:
+        return None
+    try:
+        return await get_current_user(authorization)
+    except HTTPException:
+        return None

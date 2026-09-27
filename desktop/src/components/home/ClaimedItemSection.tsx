@@ -1,16 +1,18 @@
-import { Box, Heading, HStack, Button, SimpleGrid, Image, Text, VStack, useBreakpointValue } from '@chakra-ui/react'
+'use client'
+
+import { Box, Heading, HStack, Button, Text, VStack } from '@chakra-ui/react'
+import { FaChevronRight } from 'react-icons/fa'
 import { COLORS } from '../../styles/common'
 import { API_URL } from '../../services/api'
+import { SnapCarouselRow } from '../common/SnapCarouselRow'
+import { ClaimedItemCard, type ClaimedItem, type ClaimedItemCardProps } from '../items/ClaimedItemCard'
 
-interface ClaimedItem {
-  id: string
-  name: string
-  price?: number
-  image?: string
-  owner_name: string
-  color?: string
-  wishlist_id?: string
-}
+/**
+ * The marketing demo renders these cards inside a fixed-height laptop frame with
+ * two carousels stacked under it, so its thumbnail is a letterbox rather than
+ * the square used on the real home page — a square one pushes the frame over.
+ */
+const COMPACT_THUMB_RATIO = 1.35
 
 interface ClaimedItemsSectionProps {
   items: ClaimedItem[]
@@ -22,6 +24,64 @@ interface ClaimedItemsSectionProps {
   compact?: boolean
   /** Omit the "Show all" control (e.g. marketing demo). */
   hideShowAll?: boolean
+  /** Hide prev/next arrows (small static demos). */
+  hideArrowButtons?: boolean
+}
+
+/**
+ * Closes the row with the count home is holding back, sized exactly like a
+ * card so the row still reads as one rhythm.
+ */
+function ShowAllTile({
+  count,
+  compact,
+  thumbRatio,
+  width,
+  onClick,
+}: {
+  count: number
+  compact: boolean
+  thumbRatio: number
+  width: ClaimedItemCardProps['width']
+  onClick: () => void
+}) {
+  return (
+    <VStack
+      as="button"
+      w={width}
+      flexShrink={0}
+      align="stretch"
+      gap={compact ? 1 : 2}
+      p={compact ? 2 : 0}
+      cursor="pointer"
+      onClick={onClick}
+      aria-label={`Show all claimed items, ${count} more`}
+    >
+      <Box
+        w="100%"
+        aspectRatio={thumbRatio}
+        borderRadius="md"
+        bg="rgba(255,255,255,0.05)"
+        border="1px dashed"
+        borderColor="rgba(255,255,255,0.18)"
+        transition="background 0.2s"
+        _hover={{ bg: 'rgba(255,255,255,0.1)' }}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        gap={2}
+      >
+        <Box as={FaChevronRight} boxSize={compact ? '1rem' : '1.5rem'} color={COLORS.text.muted} />
+        <Text fontSize={compact ? 'xs' : 'sm'} fontWeight="bold" color="white">
+          +{count} more
+        </Text>
+      </Box>
+      <Text fontSize="xs" color={COLORS.text.subtle} textAlign="center" lineClamp={1}>
+        Show all
+      </Text>
+    </VStack>
+  )
 }
 
 export function ClaimedItemsSection({
@@ -31,6 +91,7 @@ export function ClaimedItemsSection({
   getItemImageUrl,
   compact = false,
   hideShowAll = false,
+  hideArrowButtons = false,
 }: ClaimedItemsSectionProps) {
   const resolveImageUrl = (item: ClaimedItem) => {
     const custom = getItemImageUrl?.(item)
@@ -43,16 +104,21 @@ export function ClaimedItemsSection({
     return ''
   }
 
-  // Determine max items based on screen size
-  const maxItemsBp = useBreakpointValue({ base: 6, md: 8, xl: 8 }) || 8
-  const maxItems = compact ? Math.min(maxItemsBp, 4) : maxItemsBp
+  /**
+   * Home previews, it doesn't list — the rest live on /items/claimed. The cap
+   * is a flat 5 so the row ends on a deliberate "+N more" tile rather than
+   * trailing off mid-scroll at whatever width the viewport happens to be.
+   */
+  const maxItems = compact ? 4 : 5
   const displayedItems = items.slice(0, maxItems)
+  const overflowCount = items.length - displayedItems.length
 
-  const edge = compact ? { base: 2 as const, md: 3 as const } : { base: 4 as const, md: 8 as const }
+  const headingPx = compact ? { base: 2, md: 3 } : { base: 4, md: 8 }
+  const inset = compact ? { base: '0.5rem', md: '0.75rem' } : { base: '1rem', md: '2rem' }
 
   return (
-    <Box px={edge} mb={compact ? 1 : 2}>
-      <HStack justifyContent="space-between" mb={compact ? 3 : 4}>
+    <Box mb={compact ? 1 : 2}>
+      <HStack justifyContent="space-between" mb={compact ? 3 : 4} px={headingPx}>
         <Heading size={compact ? 'md' : 'lg'} color="white">
           Items Claimed
         </Heading>
@@ -63,71 +129,35 @@ export function ClaimedItemsSection({
         )}
       </HStack>
 
-      <SimpleGrid columns={{ base: 2, md: compact ? 2 : 3, lg: compact ? 2 : 3, xl: compact ? 2 : 4 }} gap={compact ? 2 : 4}>
+      <SnapCarouselRow
+        inset={inset}
+        gap={compact ? { base: 2, md: 2 } : { base: 3, md: 4 }}
+        hideArrows={hideArrowButtons}
+        arrowSize={compact ? 'sm' : 'md'}
+        contentKey={displayedItems.length}
+      >
         {displayedItems.map((item) => (
-          <HStack
+          <ClaimedItemCard
             key={item.id}
-            bg="#1a1a1a"
-            borderRadius="lg"
-            cursor="pointer"
-            onClick={() => onItemClick && onItemClick(item)}
-            transition="all 0.2s"
-            _hover={{ bg: '#2a2a2a' }}
-            gap={0}
-            overflow="hidden"
-            w={{ base: '100%' }}
-            h={compact ? { base: '4.25rem', md: '4.75rem' } : { base: '5rem', md: '6rem' }}
-          >
-            <Box
-              w={compact ? { base: '3.75rem', md: '4.75rem' } : { base: '4rem', md: '6rem' }}
-              h={compact ? { base: '4.25rem', md: '4.75rem' } : { base: '5rem', md: '6rem' }}
-              flexShrink={0}
-              bg={item.color || 'gray.700'}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Image
-                src={resolveImageUrl(item)}
-                alt={item.name}
-                maxW="100%"
-                maxH="100%"
-                objectFit="contain"
-                p={0.5}
-              />
-            </Box>
-            <VStack align="start" gap={0} flex={1} p={compact ? 2 : 3} overflow="hidden">
-              <Text
-                color="white"
-                fontWeight="bold"
-                fontSize={
-                  compact
-                    ? { base: '0.65rem', md: 'xs' }
-                    : {
-                        base: '0.7rem',
-                        md: 'md',
-                      }
-                }
-                lineClamp={2}
-              >
-                {item.name}
-              </Text>
-              <Text color={COLORS.text.secondary} fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }} lineClamp={1}>
-                For: {item.owner_name}
-              </Text>
-              {item.price && (
-                <Text
-                  color={COLORS.text.primary}
-                  fontSize={compact ? { base: '0.58rem', md: 'xs' } : { base: '0.65rem', md: 'sm' }}
-                  fontWeight="semibold"
-                >
-                  ${item.price.toFixed(2)}
-                </Text>
-              )}
-            </VStack>
-          </HStack>
+            item={item}
+            imageUrl={resolveImageUrl(item)}
+            onOpen={(clicked) => onItemClick?.(clicked)}
+            compact={compact}
+            thumbRatio={compact ? COMPACT_THUMB_RATIO : 1}
+            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '9rem', sm: '10.5rem', md: '13rem', lg: '14rem' }}
+          />
         ))}
-      </SimpleGrid>
+
+        {overflowCount > 0 && (
+          <ShowAllTile
+            count={overflowCount}
+            compact={compact}
+            thumbRatio={compact ? COMPACT_THUMB_RATIO : 1}
+            width={compact ? { base: '9rem', md: '10.5rem' } : { base: '9rem', sm: '10.5rem', md: '13rem', lg: '14rem' }}
+            onClick={() => onShowAll?.()}
+          />
+        )}
+      </SnapCarouselRow>
     </Box>
   )
 }

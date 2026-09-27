@@ -1,7 +1,44 @@
-Repo contains:
-- Backend
-- Frontend (Mobile)
-- Frontend (Desktop)
-- Landing Page
+# Cardinal Wishlist
 
 https://cardinalwishlist.vercel.app/
+
+## What's in this repo
+
+| Directory | What it is | Status |
+| --- | --- | --- |
+| `backend/` | FastAPI + SQLAlchemy against Supabase Postgres | Active |
+| `desktop/` | **The web app.** Next.js + Chakra UI. Responsive — serves both desktop and phone browsers. | Active, deployed |
+| `landing/` | Marketing page | Active |
+| `mobile/` | Expo / React Native app | **Dormant** — see below |
+
+### `desktop/` vs `mobile/` 
+
+**`desktop/` is not desktop-only.** It's the entire web app, and it is the only
+frontend currently deployed. It is responsive: it has its own phone layout,
+including a dedicated bottom nav (`src/components/layout/MobileNav.tsx`). When
+the TODO or a commit message says "mobile view", it almost always means **the
+narrow-viewport layout inside `desktop/`**, not the `mobile/` directory.
+
+**`mobile/` is a old version of the app** It's the original Expo/React Native app
+from when the project started, kept because a real standalone native app is
+planned. It is not deployed, not actively developed, and its home screen still
+reflects the 2.x information model. Changes land there only to keep shared
+concepts (API shapes, auth, guest sessions) from drifting. Right now there is no updates to this for the foreseeable future.
+
+## Design notes
+
+`design/` holds the reasoning behind non-obvious decisions — what was chosen,
+what was rejected, and why. Read the relevant doc before changing the area it
+covers.
+
+| Doc | Covers |
+| --- | --- |
+| `design/v3.0.0/` | The v3 release: desktop home page layout, Up Next rules, due-date badges |
+| `design/guest/` | Guest sessions — how people claim items without an account |
+| `design/wishlist/` | Visibility modes — whether a list's owner can see who claimed what |
+
+## Database
+
+Schema lives in `backend/supabase/`. `schema.sql` is a reference snapshot of
+current state (not runnable as-is); numbered `migrations_*.sql` files are the
+ones you actually run, in order, against the live database.
