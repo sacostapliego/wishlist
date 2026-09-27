@@ -202,7 +202,6 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
           onWithdrawPledge: withdrawPledge,
           onCancelGuestModal: cancelContributionGuestModal,
         }}
-        onRegisterCta={() => router.push('/auth/register')}
       />
 
       {/* Edit Item Modal */}

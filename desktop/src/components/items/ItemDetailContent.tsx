@@ -72,7 +72,6 @@ interface ItemDetailContentProps {
     onWithdrawPledge: () => void
     onCancelGuestModal: () => void
   }
-  onRegisterCta?: () => void
 }
 
 export function ItemDetailContent({
@@ -93,7 +92,6 @@ export function ItemDetailContent({
   setIsNameExpanded,
   claimProps,
   contributionProps,
-  onRegisterCta,
 }: ItemDetailContentProps) {
   const backgroundColor = getLightColor(wishlistColor || COLORS.cardGray)
   const isContribution = Boolean(item.is_contribution)
@@ -292,20 +290,38 @@ export function ItemDetailContent({
         </VStack>
       </VStack>
 
-      {/* Guests act here too. Taking part without an account is the point of
-          guest sessions - see design/guest/guest-sessions.md - so an account is
-          offered below the action, never placed in front of it. */}
+      {/* Guests act here too - taking part without an account is the point of
+          guest sessions, see design/guest/guest-sessions.md.
+
+          The bar sits just above whatever the layout puts at the bottom of a
+          phone screen: MobileNav's 60px for a signed-in viewer, but only
+          GuestMobileNavBar's 20px strip for a guest, which is most of the
+          people who land on a shared item. `--toolbar-overlap` (App.css) then
+          lifts it clear of an overlaying browser toolbar, which on iOS Safari
+          never collapses here because the scrolling happens in a container. */}
       {!readOnly && !isOwner && (isContribution ? contributionProps : claimProps) && (
         <Box
           position="fixed"
-          bottom={{ base: 'calc(64px + 1rem + env(safe-area-inset-bottom, 0px))', md: '1rem' }}
-          left={{ base: 0, md: 'calc(var(--sidebar-width) + 51px)' }}
+          bottom={{
+            base: isLoggedIn
+              ? 'calc(60px + 0.5rem + var(--toolbar-overlap, 0px) + env(safe-area-inset-bottom, 0px))'
+              : 'calc(20px + 0.5rem + var(--toolbar-overlap, 0px) + env(safe-area-inset-bottom, 0px))',
+            md: '1rem',
+          }}
+          /* --sidebar-width only exists inside ResponsiveLayout. A guest gets
+             GuestLayout, where the var is undefined, the calc is invalid and
+             `left` falls back to auto - which shrink-wrapped the bar into the
+             bottom-right corner. Guests have no sidebar to clear anyway. */
+          left={{ base: 0, md: isLoggedIn ? 'calc(var(--sidebar-width, 0px) + 51px)' : 0 }}
           right={{ base: 0, md: '16px' }}
-          px={4}
+          px={{ base: 4, md: 8 }}
           zIndex={9}
           transition="all 0.2s"
         >
-          <Box p={3} maxW="30rem" mx="auto">
+          {/* Lines up with the content column above it - same padding, same
+              50rem cap as the url row - so the button reads as part of the page
+              rather than as a floating chip. */}
+          <Box px={{ base: 3, md: 0 }} pb={2} maxW={{ base: '30rem', md: '50rem' }} mx={{ base: 'auto', md: 0 }}>
             <VStack align="stretch" gap={2}>
               {isContribution && contributionProps ? (
                 <ItemContributionBar
@@ -337,18 +353,6 @@ export function ItemDetailContent({
                   onCancelGuestModal={claimProps.onCancelGuestModal}
                 />
               ) : null}
-
-              {!isLoggedIn && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={onRegisterCta}
-                  color={COLORS.text.secondary}
-                  _hover={{ bg: 'rgba(255,255,255,0.06)' }}
-                >
-                  Create an account to keep track of this
-                </Button>
-              )}
             </VStack>
           </Box>
         </Box>

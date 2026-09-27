@@ -8,6 +8,7 @@ import { toaster } from '../ui/toaster'
 import { ItemForm, type ItemFormData, type ItemFormRef } from './ItemForm'
 import { ScrapeUrlForm } from './ScrapeUrlForm'
 import type { Wishlist } from '../../types/types'
+import { apiMessage } from '../../utils/apiError'
 
 interface AddItemModalProps {
   isOpen: boolean
@@ -17,17 +18,6 @@ interface AddItemModalProps {
 }
 
 type AddMode = 'manual' | 'link'
-
-/**
- * The API refuses a few edits on purpose - turning contributions off while
- * people have already pledged, turning them on while the item is claimed - and
- * each refusal carries a sentence worth reading. Falling back to "Failed to
- * update item" would throw that away and leave the owner guessing.
- */
-function apiMessage(error: unknown, fallback: string): string {
-  const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-  return typeof detail === 'string' && detail ? detail : fallback
-}
 
 export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, onSuccess }: AddItemModalProps) {
   const [addMode, setAddMode] = useState<AddMode>('manual')

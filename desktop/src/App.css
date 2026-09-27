@@ -12,6 +12,29 @@ body {
   background-color: #141414;
 }
 
+/*
+  How much of the viewport an overlaying browser toolbar is covering.
+
+  The app scrolls inside a container rather than the document, and iOS Safari
+  only collapses its URL bar on *document* scroll - so on this app the bar stays
+  expanded the whole time. `vh` resolves to the toolbar-collapsed viewport while
+  `dvh` tracks what is actually visible, so their difference is exactly the
+  overlap. It is 0 wherever nothing overlays, including every desktop browser.
+
+  Bottom-anchored fixed elements add this to their offset so they sit above the
+  toolbar instead of behind it. The fallback is 0px for browsers without `dvh`,
+  which get the same behaviour they had before.
+*/
+:root {
+  --toolbar-overlap: 0px;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --toolbar-overlap: calc(100vh - 100dvh);
+  }
+}
+
 /* iOS scroll fix - momentum scrolling and prevent scroll chaining */
 @supports (-webkit-touch-callout: none) {
   .scroll-container-ios {

@@ -3,6 +3,7 @@ import { wishlistAPI } from '../services/wishlist'
 import { guestSessionAPI, clearGuestSession, getGuestToken } from '../services/guestSession'
 import { useAuth } from '../context/AuthContext'
 import { toaster } from '../components/ui/toaster'
+import { apiMessage } from '../utils/apiError'
 import type { ItemContribution, WishlistItem } from '../types/types'
 
 interface ContributionItem {
@@ -66,16 +67,6 @@ export const useItemContributions = (
 
   const myContribution = contributions.find((c) => c.is_mine) ?? null
 
-  /**
-   * Turns whatever the API said into something a person can act on. The backend
-   * refuses a few states deliberately - already pledged, item claimed, owner
-   * pledging to their own item - and each deserves better than "Request failed".
-   */
-  const describeFailure = (error: unknown, fallback: string): string => {
-    const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-    return typeof detail === 'string' && detail ? detail : fallback
-  }
-
   const applyUpdatedItem = async (updated: WishlistItem) => {
     // The write returned the item with fresh totals, but the page owns that
     // state, so refetch rather than trying to thread it back by hand.
@@ -129,7 +120,7 @@ export const useItemContributions = (
       }
       toaster.create({
         title: 'Could not contribute',
-        description: describeFailure(error, 'Failed to add your contribution.'),
+        description: apiMessage(error, 'Failed to add your contribution.'),
         type: 'error',
       })
     } finally {
@@ -182,7 +173,7 @@ export const useItemContributions = (
       console.error('Error contributing as guest:', error)
       toaster.create({
         title: 'Could not contribute',
-        description: describeFailure(error, 'Failed to add your contribution.'),
+        description: apiMessage(error, 'Failed to add your contribution.'),
         type: 'error',
       })
     } finally {
@@ -206,7 +197,7 @@ export const useItemContributions = (
       console.error('Error withdrawing contribution:', error)
       toaster.create({
         title: 'Could not withdraw',
-        description: describeFailure(error, 'Failed to remove your contribution.'),
+        description: apiMessage(error, 'Failed to remove your contribution.'),
         type: 'error',
       })
     } finally {
