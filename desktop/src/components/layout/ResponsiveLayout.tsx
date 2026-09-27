@@ -17,7 +17,13 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   useScrollToTop()
 
   return (
-    <Flex minH="100vh" bg={{base:"#141414", md:"#070707"}} p={{ base: 0, md: 4 }} gap={{ base: 0, md: 4 }}>
+    <Flex
+      /* See GuestLayout - the signed-in shell is sized the same way. */
+      minH="calc(100vh - var(--toolbar-overlap, 0px))"
+      bg={{ base: '#141414', md: '#070707' }}
+      p={{ base: 0, md: 4 }}
+      gap={{ base: 0, md: 4 }}
+    >
       {/* Show Sidebar Toggle when Hidden */}
       {sidebarState === 'hidden' && (
         <IconButton

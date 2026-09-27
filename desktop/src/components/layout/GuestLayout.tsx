@@ -9,8 +9,11 @@ export default function GuestLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Box
-        minH="100vh"
-        h="100vh"
+        /* 100dvh, written so browsers without `dvh` still get 100vh - see
+           --toolbar-overlap in App.css. Sized to what is actually visible, so
+           the end of the content is not left sitting under a browser toolbar. */
+        minH="calc(100vh - var(--toolbar-overlap, 0px))"
+        h="calc(100vh - var(--toolbar-overlap, 0px))"
         overflowY="auto"
         overflowX="hidden"
         className="scroll-container-ios"
