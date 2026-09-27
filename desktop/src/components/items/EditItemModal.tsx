@@ -7,23 +7,13 @@ import { wishlistAPI } from '../../services/wishlist'
 import { toaster } from '../ui/toaster'
 import { API_URL } from '../../services/api'
 import { createPortal } from 'react-dom'
+import { apiMessage } from '../../utils/apiError'
 
 interface EditItemModalProps {
   isOpen: boolean
   onClose: () => void
   itemId: string
   onSuccess?: () => void
-}
-
-/**
- * The API refuses a few edits on purpose - turning contributions off while
- * people have already pledged, turning them on while the item is claimed - and
- * each refusal carries a sentence worth reading. Falling back to "Failed to
- * update item" would throw that away and leave the owner guessing.
- */
-function apiMessage(error: unknown, fallback: string): string {
-  const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-  return typeof detail === 'string' && detail ? detail : fallback
 }
 
 export function EditItemModal({ isOpen, onClose, itemId, onSuccess }: EditItemModalProps) {
