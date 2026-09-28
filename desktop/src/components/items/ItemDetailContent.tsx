@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, VStack, Heading, Text, Image, IconButton, HStack, Button, Stack } from '@chakra-ui/react'
+import { Box, VStack, Heading, Text, Image, IconButton, HStack, Button, Stack, Portal } from '@chakra-ui/react'
 import { LuArrowLeft, LuEllipsisVertical, LuCopy, LuExternalLink } from 'react-icons/lu'
 import { COLORS } from '../../styles/common'
 import { toaster } from '../ui/toaster'
@@ -294,9 +294,10 @@ export function ItemDetailContent({
           guest sessions, see design/guest/guest-sessions.md.
 
           The bar sits just above whatever the layout puts at the bottom of a
-          phone screen: MobileNav's 60px for a signed-in viewer, but only
-          GuestMobileNavBar's 20px strip for a guest, which is most of the
-          people who land on a shared item.
+          phone screen: MobileNav's 60px for a signed-in viewer. A guest - most
+          of the people who land on a shared item - only has GuestMobileNavBar's
+          blank 20px strip, which the button covers, so it sits right above the
+          URL bar.
 
           Nothing here compensates for the browser's own toolbar, and nothing
           should. iOS Safari re-anchors a bottom-fixed element to the visible
@@ -308,62 +309,72 @@ export function ItemDetailContent({
           toolbar covers that strip and grows to clear the home indicator once
           the toolbar is gone. */}
       {!readOnly && !isOwner && (isContribution ? contributionProps : claimProps) && (
-        <Box
-          position="fixed"
-          bottom={{
-            base: isLoggedIn
-              ? 'calc(60px + 0.5rem + env(safe-area-inset-bottom, 0px))'
-              : 'calc(20px + 0.5rem + env(safe-area-inset-bottom, 0px))',
-            md: '1rem',
-          }}
-          /* --sidebar-width only exists inside ResponsiveLayout. A guest gets
-             GuestLayout, where the var is undefined, the calc is invalid and
-             `left` falls back to auto - which shrink-wrapped the bar into the
-             bottom-right corner. Guests have no sidebar to clear anyway. */
-          left={{ base: 0, md: isLoggedIn ? 'calc(var(--sidebar-width, 0px) + 51px)' : 0 }}
-          right={{ base: 0, md: '16px' }}
-          px={{ base: 4, md: 8 }}
-          zIndex={9}
-          transition="all 0.2s"
-        >
-          {/* Lines up with the content column above it - same padding, same
-              50rem cap as the url row - so the button reads as part of the page
-              rather than as a floating chip. */}
-          <Box px={{ base: 3, md: 0 }} pb={2} maxW={{ base: '30rem', md: '50rem' }} mx={{ base: 'auto', md: 0 }}>
-            <VStack align="stretch" gap={2}>
-              {isContribution && contributionProps ? (
-                <ItemContributionBar
-                  item={item as WishlistItem}
-                  wishlistColor={wishlistColor}
-                  myContribution={contributionProps.myContribution}
-                  isSubmitting={contributionProps.isSubmitting}
-                  showGuestNameModal={contributionProps.showGuestNameModal}
-                  guestName={contributionProps.guestName}
-                  setGuestName={contributionProps.setGuestName}
-                  onSubmitPledge={contributionProps.onSubmitPledge}
-                  onConfirmGuestPledge={contributionProps.onConfirmGuestPledge}
-                  onWithdrawPledge={contributionProps.onWithdrawPledge}
-                  onCancelGuestModal={contributionProps.onCancelGuestModal}
-                />
-              ) : claimProps ? (
-                <ItemClaimingSection
-                  item={item as WishlistItem}
-                  wishlistColor={wishlistColor}
-                  isItemClaimed={claimProps.isItemClaimed}
-                  canUserUnclaim={claimProps.canUserUnclaim}
-                  isClaimLoading={claimProps.isClaimLoading}
-                  showGuestNameModal={claimProps.showGuestNameModal}
-                  guestName={claimProps.guestName}
-                  setGuestName={claimProps.setGuestName}
-                  onClaimItem={claimProps.onClaimItem}
-                  onUnclaimItem={claimProps.onUnclaimItem}
-                  onGuestClaim={claimProps.onGuestClaim}
-                  onCancelGuestModal={claimProps.onCancelGuestModal}
-                />
-              ) : null}
-            </VStack>
+        /* Guests get the bar portalled to <body>. GuestLayout's scroll box has
+           -webkit-overflow-scrolling: touch, and iOS Safari clips a fixed child
+           of such a box and keeps it under GuestMobileNavBar whatever its
+           z-index - which cut the button in half. Signed-in viewers stay in the
+           tree: their `left` reads --sidebar-width off ResponsiveLayout, which a
+           portal would lose, and they sit clear of MobileNav anyway. */
+        <Portal disabled={isLoggedIn}>
+          <Box
+            position="fixed"
+            bottom={{
+              base: isLoggedIn
+                ? 'calc(60px + 0.5rem + env(safe-area-inset-bottom, 0px))'
+                : 'calc(0.5rem + env(safe-area-inset-bottom, 0px))',
+              md: '1rem',
+            }}
+            /* --sidebar-width only exists inside ResponsiveLayout. A guest gets
+               GuestLayout, where the var is undefined, the calc is invalid and
+               `left` falls back to auto - which shrink-wrapped the bar into the
+               bottom-right corner. Guests have no sidebar to clear anyway. */
+            left={{ base: 0, md: isLoggedIn ? 'calc(var(--sidebar-width, 0px) + 51px)' : 0 }}
+            right={{ base: 0, md: '16px' }}
+            px={{ base: 4, md: 8 }}
+            /* A guest's button sits over GuestMobileNavBar's strip (z 50) rather
+               than stacking on top of it, so it lands right above the URL bar. */
+            zIndex={{ base: isLoggedIn ? 9 : 51, md: 9 }}
+            transition="all 0.2s"
+          >
+            {/* Lines up with the content column above it - same padding, same
+                50rem cap as the url row - so the button reads as part of the page
+                rather than as a floating chip. */}
+            <Box px={{ base: 3, md: 0 }} pb={{ base: 0, md: 2 }} maxW={{ base: '30rem', md: '50rem' }} mx={{ base: 'auto', md: 0 }}>
+              <VStack align="stretch" gap={2}>
+                {isContribution && contributionProps ? (
+                  <ItemContributionBar
+                    item={item as WishlistItem}
+                    wishlistColor={wishlistColor}
+                    myContribution={contributionProps.myContribution}
+                    isSubmitting={contributionProps.isSubmitting}
+                    showGuestNameModal={contributionProps.showGuestNameModal}
+                    guestName={contributionProps.guestName}
+                    setGuestName={contributionProps.setGuestName}
+                    onSubmitPledge={contributionProps.onSubmitPledge}
+                    onConfirmGuestPledge={contributionProps.onConfirmGuestPledge}
+                    onWithdrawPledge={contributionProps.onWithdrawPledge}
+                    onCancelGuestModal={contributionProps.onCancelGuestModal}
+                  />
+                ) : claimProps ? (
+                  <ItemClaimingSection
+                    item={item as WishlistItem}
+                    wishlistColor={wishlistColor}
+                    isItemClaimed={claimProps.isItemClaimed}
+                    canUserUnclaim={claimProps.canUserUnclaim}
+                    isClaimLoading={claimProps.isClaimLoading}
+                    showGuestNameModal={claimProps.showGuestNameModal}
+                    guestName={claimProps.guestName}
+                    setGuestName={claimProps.setGuestName}
+                    onClaimItem={claimProps.onClaimItem}
+                    onUnclaimItem={claimProps.onUnclaimItem}
+                    onGuestClaim={claimProps.onGuestClaim}
+                    onCancelGuestModal={claimProps.onCancelGuestModal}
+                  />
+                ) : null}
+              </VStack>
+            </Box>
           </Box>
-        </Box>
+        </Portal>
       )}
 
       {!readOnly && <ItemMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} options={menuOptions} />}
