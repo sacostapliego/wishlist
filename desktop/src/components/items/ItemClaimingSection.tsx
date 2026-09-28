@@ -3,6 +3,12 @@ import { LuCircleCheck, LuCircle } from 'react-icons/lu'
 import { COLORS } from '../../styles/common'
 import getLightColor from '../common/getLightColor'
 import type { WishlistItem } from '../../types/types'
+import { useRandomPhrase } from '../../hooks/useRandomPhrase'
+
+const CLAIM_LABELS = [
+  'Claim this item',
+  "I'm getting this",
+] as const
 
 interface ItemClaimingSectionProps {
   item: WishlistItem
@@ -34,6 +40,7 @@ export function ItemClaimingSection({
   onCancelGuestModal,
 }: ItemClaimingSectionProps) {
   const baseLightColor = getLightColor(wishlistColor || COLORS.cardGray)
+  const claimLabel = useRandomPhrase(CLAIM_LABELS)
 
   return (
     <>
@@ -79,13 +86,12 @@ export function ItemClaimingSection({
             bg={baseLightColor}
             onClick={onClaimItem}
             disabled={isClaimLoading}
-            _hover={{ bg: 'rgba(255, 255, 255, 0.05)' }}
-            justifyContent="flex-start"
+            _hover={{ opacity: 0.9 }}
           >
             <HStack gap={2}>
-              <LuCircle size={20} color={'white'} />
-              <Text color={'white'} fontSize="md" fontWeight="medium">
-                I'm getting this
+              <LuCircle size={18} color={'white'} />
+              <Text color={'white'} fontWeight="medium">
+                {claimLabel}
               </Text>
             </HStack>
           </Button>

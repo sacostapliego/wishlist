@@ -6,6 +6,12 @@ import { LuEyeOff, LuHandCoins, LuUsers } from 'react-icons/lu'
 import { COLORS } from '../../styles/common'
 import getLightColor from '../common/getLightColor'
 import type { ItemContribution, WishlistItem } from '../../types/types'
+import { useRandomPhrase } from '../../hooks/useRandomPhrase'
+
+const CONTRIBUTE_LABELS = [
+  'Put money towards this',
+  'Add money for this item',
+] as const
 
 /** Cents are noise on a $5,000 goal, so they only appear when they exist. */
 function money(amount: number): string {
@@ -19,7 +25,7 @@ function money(amount: number): string {
 }
 
 function pledgedCount(count: number): string {
-  return count === 1 ? '1 person has chipped in' : `${count} people have chipped in`
+  return count === 1 ? '1 person has contributed' : `${count} people have contributed`
 }
 
 interface ContributionProgressProps {
@@ -56,11 +62,6 @@ function ContributionProgress({ item, accent }: ContributionProgressProps) {
             </Text>
           )}
         </Text>
-        {hasGoal && total >= goal && (
-          <Text color={accent} fontSize="sm" fontWeight="semibold" flexShrink={0}>
-            Fully funded
-          </Text>
-        )}
       </HStack>
 
       {hasGoal && (
@@ -117,6 +118,7 @@ export function ItemContributionBar({
   onCancelGuestModal,
 }: ItemContributionBarProps) {
   const accent = getLightColor(wishlistColor || COLORS.cardGray)
+  const contributeLabel = useRandomPhrase(CONTRIBUTE_LABELS)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
@@ -179,8 +181,7 @@ export function ItemContributionBar({
             disabled={isSubmitting}
           >
             <HStack gap={2}>
-              <LuHandCoins size={18} />
-              <Text fontWeight="medium">Chip in</Text>
+              <Text fontWeight="medium">{contributeLabel}</Text>
             </HStack>
           </Button>
         )}
@@ -193,7 +194,7 @@ export function ItemContributionBar({
           <Dialog.Content bg={COLORS.cardDarkLight} mx={4}>
             <Dialog.Header>
               <Dialog.Title color="white">
-                {myContribution ? 'Change your contribution' : 'Chip in'}
+                {myContribution ? 'Change your contribution' : 'Put money towards this'}
               </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
@@ -320,7 +321,7 @@ interface ItemContributionListProps {
 }
 
 /**
- * Who has chipped in, shown in the page body rather than the bottom bar because
+ * Who has contributed, shown in the page body rather than the bottom bar because
  * it is information, not an action.
  *
  * For the owner of a blind list this is where the withheld figures are explained.
@@ -374,24 +375,26 @@ export function ItemContributionList({
             bar is a visitor's action and they do not get one. */}
         {isOwner && <ContributionProgress item={item} accent={accent} />}
 
-        <HStack gap={2}>
-          <Box flexShrink={0} display="flex">
-            <LuUsers size={16} color={COLORS.text.secondary} />
-          </Box>
-          <Text color={COLORS.text.secondary} fontSize="sm">
-            {count === 0 ? 'Nobody has chipped in yet' : pledgedCount(count)}
+        {/* One line at a time: the count only shows once the list has loaded,
+            so "Nobody has contributed" never sits next to "Loading…". */}
+        {isLoading ? (
+          <Text color={COLORS.text.muted} fontSize="sm">
+            Loading contributions…
           </Text>
-        </HStack>
+        ) : (
+          <HStack gap={2}>
+            <Box flexShrink={0} display="flex">
+              <LuUsers size={16} color={COLORS.text.secondary} />
+            </Box>
+            <Text color={COLORS.text.secondary} fontSize="sm">
+              {count === 0 ? 'Nobody has contributed yet' : pledgedCount(count)}
+            </Text>
+          </HStack>
+        )}
 
         {seed > 0 && (
           <Text color={COLORS.text.muted} fontSize="xs">
             Includes {money(seed)} from {isOwner ? 'you' : ownerName || 'the owner'}.
-          </Text>
-        )}
-
-        {isLoading && (
-          <Text color={COLORS.text.muted} fontSize="sm">
-            Loading contributions…
           </Text>
         )}
 
