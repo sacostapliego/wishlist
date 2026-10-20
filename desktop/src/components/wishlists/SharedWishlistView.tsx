@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, HStack, VStack, Heading, Text, Avatar, IconButton } from '@chakra-ui/react'
+import { Box, HStack, VStack, Stack, Heading, Text, Avatar, IconButton } from '@chakra-ui/react'
 import { LuArrowLeft, LuEllipsisVertical } from 'react-icons/lu'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -11,6 +11,9 @@ import { friendsAPI } from '../../services/friends'
 import { useAuth } from '../../context/AuthContext'
 import { toaster } from '../ui/toaster'
 import { WishlistThumbnail } from './WishlistThumbnail'
+import getLightColor from '../common/getLightColor'
+import getFadeGradient from '../common/getFadeGradient'
+import { DueBadge, hasDueCountdown } from '../common/DueBadge'
 import { OpenListNotice } from './OpenListNotice'
 import type { WishlistVisibility } from '../../types/types'
 
@@ -55,15 +58,28 @@ export function SharedWishlistView({
   const profileImage =
     demoMode || !wishlist.owner_id ? null : `${API_URL}users/${wishlist.owner_id}/profile-image`
 
+  /*
+    Phone (full header only): Apple Music album layout — artwork stacked over
+    centred title, owner and a metadata line, each a step smaller. The compact
+    demo header keeps its side-by-side row at every width.
+  */
+  const r = <T,>(phone: T, desktop: T) => (compactHeader ? desktop : { base: phone, md: desktop })
+
   const thumbBox = compactHeader
     ? ({ base: '4rem', md: '5.5rem', lg: '6rem', '2xl': '7rem' } as Record<string, string>)
-    : { base: '9rem', md: '13rem', lg: '15rem', '2xl': '17rem' }
+    : { base: 'min(54vw, 13.5rem)', md: '13rem', lg: '15rem', '2xl': '17rem' }
   const thumbIcon = compactHeader
     ? ({ base: '2.25rem', md: '2.75rem', lg: '3rem', '2xl': '3.25rem' } as Record<string, string>)
-    : { base: '5rem', md: '6rem', lg: '8rem', '2xl': '10rem' }
+    : { base: '5.75rem', md: '6rem', lg: '8rem', '2xl': '10rem' }
   const titleSize = compactHeader
-    ? { base: 'lg' as const, md: 'xl' as const, lg: '2xl' as const }
-    : { base: 'xl' as const, md: '3xl' as const, lg: '4xl' as const }
+    ? ({ base: 'lg' as const, md: 'xl' as const, lg: '2xl' as const })
+    : ({ base: '2xl' as const, md: '3xl' as const, lg: '4xl' as const })
+  const headerColor = wishlist.color || COLORS.cardGray
+  // Phone: fade the list colour into the page, as Apple Music does under an album
+  const headerBg = r(getFadeGradient(headerColor), headerColor)
+  // Owner name in a pale tint of the list colour; getLightColor only understands rgb() strings
+  const ownerNameColor = r(/^rgb\(/.test(headerColor) ? getLightColor(headerColor, 0.65) : 'white', 'white')
+  const iconButtonSize = r('md' as const, compactHeader ? 'md' as const : 'lg' as const)
 
   useEffect(() => {
     if (demoMode) {
@@ -189,18 +205,20 @@ export function SharedWishlistView({
 
   return (
     <Box
-      bg={wishlist.color || COLORS.cardGray}
+      bg={headerBg}
       px={compactHeader ? 3 : { base: 4, md: 6 }}
-      py={compactHeader ? 3 : { base: 4, md: 6 }}
+      /* The layout already insets the phone status bar, so the top needs little more */
+      pt={r(1, compactHeader ? 3 : 6)}
+      pb={r(4, compactHeader ? 3 : 6)}
     >
       {/* Header with back button and menu */}
-      <HStack justify="space-between" mb={compactHeader ? 2 : 4}>
+      <HStack justify="space-between" mb={r(2, compactHeader ? 2 : 4)}>
         <IconButton
           aria-label="Go back"
           variant="ghost"
           onClick={handleBack}
           color="white"
-          size={compactHeader ? 'md' : 'lg'}
+          size={iconButtonSize}
         >
           <LuArrowLeft />
         </IconButton>
@@ -211,7 +229,7 @@ export function SharedWishlistView({
             variant="ghost"
             onClick={() => setIsMenuOpen(true)}
             color="white"
-            size={compactHeader ? 'md' : 'lg'}
+            size={iconButtonSize}
             disabled={loading}
           >
             <LuEllipsisVertical />
@@ -219,7 +237,11 @@ export function SharedWishlistView({
         )}
       </HStack>
 
-      <HStack align="flex-end" gap={compactHeader ? 4 : 6}>
+      <Stack
+        direction={r('column', 'row')}
+        align={r('center', 'flex-end')}
+        gap={r(4, compactHeader ? 4 : 6)}
+      >
         {/* Wishlist Icon */}
         <WishlistThumbnail
           wishlist={wishlist}
@@ -230,21 +252,27 @@ export function SharedWishlistView({
         />
 
         {/* Wishlist Info */}
-        <VStack align="start" gap={compactHeader ? 1 : 2} pb={compactHeader ? 2 : 4}>
+        <VStack
+          align={r('center', 'start')}
+          textAlign={r('center', 'start')}
+          gap={r(1, compactHeader ? 1 : 2)}
+          pb={r(0, compactHeader ? 2 : 4)}
+        >
           <Heading size={titleSize} color="white" lineHeight="1.2" wordBreak="break-word">
             {wishlist.title}
           </Heading>
 
           {wishlist.description && (
-            <Text color={COLORS.text.secondary} fontSize={compactHeader ? 'xs' : 'sm'} mt={compactHeader ? 0 : 2} lineClamp={1}>
+            <Text display={r('none', 'block')} color={COLORS.text.secondary} fontSize={compactHeader ? 'xs' : 'sm'} mt={compactHeader ? 0 : 2} lineClamp={1}>
               {wishlist.description}
             </Text>
           )}
 
-          <HStack gap={2} color={COLORS.text.secondary} fontSize={compactHeader ? 'xs' : 'sm'} mt={compactHeader ? 0 : 2}>
+          <HStack gap={2} color={COLORS.text.secondary} fontSize={r('md', compactHeader ? 'xs' : 'sm')} mt={r(0, compactHeader ? 0 : 2)}>
             {!demoMode && (
               <Avatar.Root
                 size="xs"
+                display={r('none', 'inline-flex')}
                 cursor="pointer"
                 onClick={() => router.push(`/profile/${wishlist.owner_id}`)}
               >
@@ -254,7 +282,7 @@ export function SharedWishlistView({
             )}
             <Text
               fontWeight="semibold"
-              color="white"
+              color={ownerNameColor}
               cursor="pointer"
               onClick={() => (demoMode ? router.push('/auth/login') : router.push(`/profile/${wishlist.owner_id}`))}
             >
@@ -271,8 +299,29 @@ export function SharedWishlistView({
               </>
             )}
           </HStack>
+
+          {/* Phone metadata line — the desktop folds this into the owner row */}
+          {!compactHeader && (
+            <HStack display={{ base: 'flex', md: 'none' }} gap={1.5} color={COLORS.text.secondary} fontSize="xs">
+              <Text>
+                {wishlist.item_count || 0} {wishlist.item_count === 1 ? 'item' : 'items'}
+              </Text>
+              {hasDueCountdown(wishlist.due_date) && (
+                <>
+                  <Text>•</Text>
+                  <DueBadge due_date={wishlist.due_date} size="md" />
+                </>
+              )}
+            </HStack>
+          )}
+
+          {!compactHeader && wishlist.description && (
+            <Text display={{ base: 'block', md: 'none' }} color={COLORS.text.secondary} fontSize="xs" lineClamp={2} mt={1}>
+              {wishlist.description}
+            </Text>
+          )}
         </VStack>
-      </HStack>
+      </Stack>
 
       {/* Visitors are told the owner can see claims before they claim anything.
           A portalled dialog, so its position in the tree is immaterial. */}

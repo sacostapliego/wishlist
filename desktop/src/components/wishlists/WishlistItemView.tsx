@@ -16,6 +16,11 @@ export interface WishlistItem {
   priority: number
   created_at?: string
   updated_at?: string
+  is_claimed?: boolean | null
+  claimed_by_viewer?: boolean
+  is_contribution?: boolean
+  contribution_total?: number | null
+  contributions_hidden?: boolean
 }
 
 interface WishlistItemViewProps {
@@ -34,6 +39,25 @@ const getPriorityValue = (priority?: string | number): number => {
   if (priority === undefined || priority === null) return 2
   const parsed = parseInt(priority.toString(), 10)
   return !isNaN(parsed) && parsed >= 0 && parsed <= 4 ? parsed : 2
+}
+
+/**
+ * Short claim / funding status for a row. The server already withholds claims
+ * and pledges from the owner of a blind list, so this shows only what the
+ * viewer may know — and nothing at all for an item nobody has acted on.
+ */
+const getItemStatus = (item: WishlistItem): { label: string; done: boolean } | null => {
+  if (item.is_contribution) {
+    const total = item.contribution_total ?? 0
+    if (item.contributions_hidden || total <= 0) return null
+    if (item.price) {
+      if (total >= item.price) return { label: 'Funded', done: true }
+      return { label: `$${Math.round(total)} of $${Math.round(item.price)}`, done: false }
+    }
+    return { label: `$${Math.round(total)} raised`, done: false }
+  }
+  if (item.is_claimed) return { label: item.claimed_by_viewer ? 'Claimed by you' : 'Claimed', done: true }
+  return null
 }
 
 const formatDate = (dateString?: string) => {
@@ -85,6 +109,10 @@ export function WishlistItemView({
     return ''
   }
 
+  // Phone, list colour off: plain divided rows (Apple Music track list) instead of filled cards
+  const plainRows = !wishlistColor && !compact
+  const rowPlain = <T,>(phone: T, otherwise: T) => (plainRows ? { base: phone, md: otherwise } : otherwise)
+
   const imgBox = compact ? { base: '3.25rem', md: '3.75rem' } : { base: '5rem', md: '9rem' }
 
   const handleItemClick = (item: WishlistItem) => {
@@ -96,7 +124,7 @@ export function WishlistItemView({
   }
 
   return (
-    <VStack align="stretch" gap={compact ? '0.5rem' : { base: '1rem', md: '1rem' }} px={compact ? { base: '0.75rem', md: '1rem' } : { base: '1rem', md: '2rem' }} py={compact ? 2 : { base: '0', md: '1rem' }}>
+    <VStack align="stretch" gap={compact ? '0.5rem' : { base: plainRows ? 0 : '1rem', md: '1rem' }} px={compact ? { base: '0.75rem', md: '1rem' } : { base: '1rem', md: '2rem' }} py={compact ? 2 : { base: '0', md: '1rem' }}>
       {sortedItems.map((item) => {
         const imgSrc = resolveImageSrc(item)
         const hasImage = Boolean(imgSrc)
@@ -109,15 +137,17 @@ export function WishlistItemView({
         const displayDate = item.updated_at || item.created_at
 
         const isSelected = selectedItems.includes(item.id)
+        const status = getItemStatus(item)
 
         return (
           <HStack
             key={item.id}
-            p={compact ? '0.5rem 0.65rem' : '1rem'}
+            p={compact ? '0.5rem 0.65rem' : rowPlain('0.75rem 0', '1rem')}
             gap={compact ? '0.75rem' : { base: '1rem', md: '2rem' }}
             cursor="pointer"
             transition="all 0.2s"
-            borderRadius="0.375rem"
+            borderRadius={rowPlain('0', '0.375rem')}
+            borderBottom={rowPlain('1px solid rgba(255, 255, 255, 0.08)', 'none')}
             _hover={{ bg: backgroundLightColor }}
             onClick={() => handleItemClick(item)}
             bg={
@@ -125,7 +155,7 @@ export function WishlistItemView({
                 ? backgroundLightColor 
                 : wishlistColor 
                   ? itemBackgroundColor 
-                  : COLORS.cardGray
+                  : rowPlain('transparent', COLORS.cardGray)
             }
             position="relative"
           >
@@ -174,29 +204,39 @@ export function WishlistItemView({
             >
               {/* Item Name */}
               {hasImage && (<Box flex={1} minW={0}>
-                <Text color="white" fontWeight="medium" fontSize={compact ? 'sm' : '1rem'} lineClamp={2}>
+                <Text color="white" fontWeight="medium" fontSize={compact ? 'sm' : '1rem'} lineClamp={compact ? 2 : { base: 1, md: 2 }}>
                   {item.name}
                 </Text>
               </Box>)}
 
               {!hasImage && (
                 <Box h={imgBox} flex={1} minW={0} display="flex" alignItems="center">
-                  <Text color="white" fontWeight="medium" fontSize={compact ? 'sm' : '1rem'} lineClamp={2}>
+                  <Text color="white" fontWeight="medium" fontSize={compact ? 'sm' : '1rem'} lineClamp={compact ? 2 : { base: 1, md: 2 }}>
                     {item.name}
                   </Text>
                 </Box>
               )}
 
-              {/* Price */}
-              <Box w={{ base: '4rem', md: '6.25rem' }} textAlign={{base:"left", md:"right"}}>
-                {item.price !== undefined && item.price !== null ? (
+              {/* Price, with claim / funding status beside it on phones and under it on desktop */}
+              <Stack
+                direction={{ base: 'row', md: 'column' }}
+                align={{ base: 'center', md: 'flex-end' }}
+                gap={{ base: 2, md: 0.5 }}
+                w={{ base: 'auto', md: '6.25rem' }}
+                textAlign={{base:"left", md:"right"}}
+              >
+                {item.price !== undefined && item.price !== null && (
                   <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : '0.875rem'} fontWeight="semibold">
                     ${item.price.toFixed(2)}
                   </Text>
-                ) : (
-                  <Text></Text>
                 )}
-              </Box>
+                {status && (
+                  <HStack gap={1} color={status.done ? '#8FD6A8' : COLORS.text.subtle} fontSize={compact ? '10px' : 'xs'} fontWeight="semibold" whiteSpace="nowrap">
+                    {status.done && <LuCheck />}
+                    <Text>{status.label}</Text>
+                  </HStack>
+                )}
+              </Stack>
             </Stack>
 
             {/* Date - Hidden on mobile */}

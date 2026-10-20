@@ -11,6 +11,7 @@ import { OwnerWishlistView } from '../components/wishlists/OwnerWishlistView'
 import { SharedWishlistView } from '../components/wishlists/SharedWishlistView'
 import { WishlistItemView, type SortOption } from '../components/wishlists/WishlistItemView'
 import { useWishlistDetail } from '../hooks/useWislistDetail'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import { WishlistFilters } from '../components/wishlists/WishlistFilters'
 import { userAPI } from '../services/user'
 import type { ApiError, WishlistVisibility } from '../types/types'
@@ -92,6 +93,9 @@ function WishlistPage({ id }: WishlistPageProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(wishlist?.default_view || 'list')
 
   const { items, isLoading: itemsLoading, refetchItems } = useWishlistDetail(id, undefined, true)
+
+  // Re-pin to the top once the header replaces the loading placeholder
+  useScrollToTop(!authLoading && !loading && !itemsLoading)
 
   useEffect(() => {
     if (id && !authLoading) {
