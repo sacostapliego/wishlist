@@ -19,9 +19,16 @@ import { LuCamera, LuX } from 'react-icons/lu'
 import { useAuth } from '../context/AuthContext'
 import { toaster } from '../components/ui/toaster'
 import { COLORS } from '../styles/common'
+import { safeNextPath } from '../hooks/useBackNavigation'
 import { ProfileImageCropper } from '../components/profile/ProfileImageCropper'
 import imageCompression from 'browser-image-compression'
 import type { ApiError } from '../types/types'
+
+/** The page to return to after signing in — set when a guest signs in from a shared list. */
+function nextQuery(): string {
+  const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
+  return next ? `?next=${encodeURIComponent(next)}` : ''
+}
 
 // Shared input styles
 const inputStyles = {
@@ -174,7 +181,7 @@ export default function RegisterPage() {
           description: 'Account created successfully!',
           type: 'success',
         })
-        router.push('/')
+        router.replace(safeNextPath(new URLSearchParams(window.location.search).get('next')) ?? '/')
       } else {
         toaster.create({
           title: 'Error',
@@ -334,7 +341,7 @@ export default function RegisterPage() {
                   color={COLORS.primary}
                   fontWeight="semibold"
                   cursor="pointer"
-                  onClick={() => router.push('/auth/login')}
+                  onClick={() => router.replace(`/auth/login${nextQuery()}`)}
                   _hover={{ textDecoration: 'underline' }}
                 >
                   Sign In

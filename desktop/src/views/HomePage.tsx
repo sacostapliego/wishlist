@@ -12,7 +12,6 @@ import { wishlistAPI, type ClaimedItemResponse } from '../services/wishlist'
 import { friendsAPI, type FriendWishlistResponse, type FriendRequestInfo } from '../services/friends'
 import { toaster } from '../components/ui/toaster'
 import { useRouter } from 'next/navigation'
-import { ProfileHeader } from '../components/layout/ProfileHeader'
 import { useAuth } from '../context/AuthContext'
 import { API_URL } from '../services/api'
 import { COLORS } from '../styles/common'
@@ -328,7 +327,6 @@ function HomePage() {
       bg={COLORS.background}
       py={2}
     >
-      <ProfileHeader />
       <HomeHeader
         displayName={displayName}
         profileImage={profileImage}

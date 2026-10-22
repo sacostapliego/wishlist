@@ -16,6 +16,7 @@ import { WishlistFilters } from '../components/wishlists/WishlistFilters'
 import { userAPI } from '../services/user'
 import type { ApiError, WishlistVisibility } from '../types/types'
 import { SimpleGridView } from '../components/wishlists/SimpleGridView'
+import { useBackNavigation } from '../hooks/useBackNavigation'
 
 interface Wishlist {
   id: string
@@ -80,6 +81,7 @@ interface WishlistPageProps {
 
 function WishlistPage({ id }: WishlistPageProps) {
   const router = useRouter()
+  const back = useBackNavigation('/')
   const { user, loading: authLoading, isLoggedIn } = useAuth()
   
   const [wishlist, setWishlist] = useState<Wishlist | null>(null)
@@ -240,8 +242,11 @@ function WishlistPage({ id }: WishlistPageProps) {
 
   useEffect(() => {
     if (!authLoading && !loading && !wishlist && !accessDenied && !itemsLoading) {
-      router.replace(isLoggedIn ? '/' : '/auth/login')
+      if (isLoggedIn) back.leaveTo('/')
+      else router.replace('/auth/login')
     }
+  // `back` is rebuilt every render; listing it would re-fire this and step back twice
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, loading, wishlist, accessDenied, itemsLoading, isLoggedIn, router])
 
   if (authLoading || loading || itemsLoading) {

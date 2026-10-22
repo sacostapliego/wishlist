@@ -4,6 +4,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
 import '@/App.css'
 import { Analytics } from '@vercel/analytics/next'
+import { NavigationTracker } from '@/hooks/useBackNavigation'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cardinalwishlist.vercel.app'
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Provider>
           <AuthProvider>
+            <NavigationTracker />
             {children}
             <Toaster />
             <Analytics />
