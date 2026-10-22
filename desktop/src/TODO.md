@@ -15,9 +15,9 @@
   bottom-fixed elements to the visible viewport on its own, so the bar's offset must NOT include
   `--toolbar-overlap` — doing so counted the toolbar twice and left the button a toolbar's height up
   the screen. See the warning in App.css before touching that token again.
-- `h={{ base: 'calc(100vh + 80px)' }}` in ItemPage, FriendsPage and AllWishlistsPage is an older
-  workaround for the same iOS viewport problem, from before the layout shells were sized to `100dvh`.
-  Check whether it now over-compensates; HomePage already moved off the pattern.
+- `h={{ base: 'calc(100vh + 80px)' }}` in ItemPage is an older workaround for the same iOS viewport
+  problem, from before the layout shells were sized to `100dvh`. Check whether it now
+  over-compensates; HomePage, FriendsPage and AllWishlistsPage already moved off the pattern.
 
 ### Contributions (check by hand — migration 004 is applied):
 - Contribution item with a goal shows a bar; without a goal shows a running total

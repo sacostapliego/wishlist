@@ -6,6 +6,13 @@ import { Box, Button, Input, VStack, Text, Heading, Container } from '@chakra-ui
 import { useAuth } from '../context/AuthContext'
 import { toaster } from '../components/ui/toaster'
 import { COLORS } from '../styles/common'
+import { safeNextPath } from '../hooks/useBackNavigation'
+
+/** The page to return to after signing in — set when a guest signs in from a shared list. */
+function nextQuery(): string {
+  const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
+  return next ? `?next=${encodeURIComponent(next)}` : ''
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -25,7 +32,8 @@ export default function LoginPage() {
       const response = await login(email, password)
       if (response?.user) {
         toaster.create({ title: 'Success', description: 'Logged in successfully!', type: 'success' })
-        router.push('/')
+        // replace, not push: back from here should not land on the login form
+        router.replace(safeNextPath(new URLSearchParams(window.location.search).get('next')) ?? '/')
       }
     } catch (e: unknown) {
       const msg =
@@ -91,7 +99,7 @@ export default function LoginPage() {
                 color={COLORS.primary}
                 fontWeight="semibold"
                 cursor="pointer"
-                onClick={() => router.push('/auth/register')}
+                onClick={() => router.replace(`/auth/register${nextQuery()}`)}
                 _hover={{ textDecoration: 'underline' }}
               >
                 Register here

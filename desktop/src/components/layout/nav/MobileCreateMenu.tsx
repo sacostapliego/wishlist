@@ -1,82 +1,106 @@
-import { Box, VStack, Button, Text } from '@chakra-ui/react'
+import { Box, VStack, HStack, Text } from '@chakra-ui/react'
 import { createPortal } from 'react-dom'
-import { useState, useEffect } from 'react'
-import { LuList, LuPlus } from 'react-icons/lu'
+import { useEffect } from 'react'
+import { LuList, LuGift } from 'react-icons/lu'
 import { COLORS } from '../../../styles/common'
 
 interface MobileCreateMenuProps {
   isOpen: boolean
   onClose: () => void
-  anchorRef: React.RefObject<HTMLButtonElement | null>
   onCreateWishlist: () => void
   onAddItem: () => void
 }
 
-export function MobileCreateMenu({ isOpen, onClose, anchorRef, onCreateWishlist, onAddItem }: MobileCreateMenuProps) {
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+interface SheetOptionProps {
+  icon: React.ElementType
+  title: string
+  description: string
+  onClick: () => void
+}
 
+function SheetOption({ icon, title, description, onClick }: SheetOptionProps) {
+  return (
+    <HStack
+      as="button"
+      gap={4}
+      p={4}
+      w="100%"
+      textAlign="left"
+      borderRadius="lg"
+      cursor="pointer"
+      _hover={{ bg: 'whiteAlpha.100' }}
+      _active={{ bg: 'whiteAlpha.100' }}
+      onClick={onClick}
+    >
+      <Box
+        w="44px"
+        h="44px"
+        flexShrink={0}
+        borderRadius="lg"
+        bg="whiteAlpha.100"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Box as={icon} boxSize="20px" />
+      </Box>
+      <VStack align="start" gap={0}>
+        <Text fontWeight="semibold">{title}</Text>
+        <Text fontSize="sm" color={COLORS.text.muted}>{description}</Text>
+      </VStack>
+    </HStack>
+  )
+}
+
+/**
+ * A sheet rising from the bottom edge, sitting just above the nav bar so the
+ * create button stays visible to close it again — within thumb reach, and
+ * full-width so neither choice is a small target.
+ */
+export function MobileCreateMenu({ isOpen, onClose, onCreateWishlist, onAddItem }: MobileCreateMenuProps) {
   useEffect(() => {
-    if (isOpen && anchorRef.current) {
-      setAnchorRect(anchorRef.current.getBoundingClientRect())
-    }
-  }, [isOpen])
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
   return createPortal(
     <>
-      {/* Backdrop */}
+      {/* Backdrop — stops above the nav bar, which sits at zIndex 100 */}
+      <Box position="fixed" inset={0} zIndex={90} bg="blackAlpha.600" onClick={onClose} />
+
       <Box
+        role="dialog"
+        aria-label="Create"
         position="fixed"
-        top={0}
         left={0}
         right={0}
-        bottom={0}
-        zIndex={9999}
-        onClick={onClose}
-      />
-
-      {/* Menu — positioned above the button */}
-      <Box
-        position="fixed"
-        bottom={
-          anchorRect
-            ? `${window.innerHeight - anchorRect.top + 8}px`
-            : 'calc(80px + env(safe-area-inset-bottom, 0px))'
-        }
-        left={'50%'}
-        transform="translateX(-50%)"
+        bottom="calc(60px + env(safe-area-inset-bottom, 0px))"
+        zIndex={95}
         bg={COLORS.cardDarkLight}
-        borderRadius="lg"
-        p={2}
-        zIndex={10000}
-        minW="200px"
-        boxShadow="0 -4px 20px rgba(0,0,0,0.5)"
+        color={COLORS.text.primary}
+        borderTopRadius="2xl"
+        px={3}
+        pt={3}
+        pb={2}
+        boxShadow="0 -8px 24px rgba(0,0,0,0.5)"
       >
         <VStack align="stretch" gap={1}>
-          <Button
-            justifyContent="flex-start"
-            onClick={() => {
-              onCreateWishlist()
-              onClose()
-            }}
-            size="lg"
-          >
-            <Box as={LuList} mr={3} />
-            <Text>Create Wishlist</Text>
-          </Button>
-
-          <Button
-            justifyContent="flex-start"
-            onClick={() => {
-              onAddItem()
-              onClose()
-            }}
-            size="lg"
-          >
-            <Box as={LuPlus} mr={3} />
-            <Text>Add Item to Wishlist</Text>
-          </Button>
+          <SheetOption
+            icon={LuList}
+            title="New wishlist"
+            description="Start a list for an occasion"
+            onClick={onCreateWishlist}
+          />
+          <SheetOption
+            icon={LuGift}
+            title="Add an item"
+            description="Put something on one of your lists"
+            onClick={onAddItem}
+          />
         </VStack>
       </Box>
     </>,

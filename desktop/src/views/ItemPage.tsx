@@ -1,8 +1,7 @@
 'use client'
 
 import { Box, Heading, Text, IconButton, HStack } from '@chakra-ui/react'
-import { useRouter } from 'next/navigation'
-import { LuArrowLeft, LuEllipsisVertical, LuCopy, LuExternalLink } from 'react-icons/lu'
+import { LuEllipsisVertical, LuCopy, LuExternalLink } from 'react-icons/lu'
 import { COLORS } from '../styles/common'
 import { API_URL } from '../services/api'
 import { toaster } from '../components/ui/toaster'
@@ -16,6 +15,8 @@ import { useEffect, useState } from 'react'
 import { wishlistAPI } from '../services/wishlist'
 import { ConfirmDialog } from '../components/common/ConfirmDialog'
 import { useAuth } from '../context/AuthContext'
+import { useBackNavigation } from '../hooks/useBackNavigation'
+import { BackButton } from '../components/common/BackButton'
 
 interface ItemPageProps {
   wishlistId: string
@@ -23,13 +24,13 @@ interface ItemPageProps {
 }
 
 function ItemPage({ wishlistId, itemId }: ItemPageProps) {
-  const router = useRouter()
   const [isNameExpanded, setIsNameExpanded] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const { isLoggedIn } = useAuth()
+  const back = useBackNavigation(`/wishlist/${wishlistId}`)
   const isPublicView = !isLoggedIn
 
   const { item, wishlistColor, wishlistInfo, isLoading, error, isOwner, refetchItemData: refetchData } = useItemDetail(
@@ -108,7 +109,7 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
         description: 'Item deleted successfully!',
         type: 'success',
       })
-      router.push(`/wishlist/${wishlistId}`)
+      back.leaveTo(`/wishlist/${wishlistId}`)
     } catch (error) {
       console.error('Failed to delete item:', error)
       toaster.create({
@@ -138,15 +139,7 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
       <Box h="calc(100vh - 32px)" w="100%" display="flex" flexDirection="column" bg={COLORS.background}>
         <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4}>
           <HStack justify="space-between">
-            <IconButton
-              aria-label="Go back"
-              variant="ghost"
-              onClick={() => router.back()}
-              color="white"
-              size="lg"
-            >
-              <LuArrowLeft />
-            </IconButton>
+            <BackButton fallback={`/wishlist/${wishlistId}`} />
           </HStack>
         </Box>
         <Box flex="1" display="flex" alignItems="center" justifyContent="center">
@@ -169,7 +162,7 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
         wishlistInfo={wishlistInfo}
         isOwner={isOwner ?? false}
         isLoggedIn={isLoggedIn}
-        onBack={() => router.back()}
+        onBack={back.goBack}
         readOnly={false}
         compact={false}
         isMenuOpen={isMenuOpen}

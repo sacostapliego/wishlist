@@ -1,14 +1,14 @@
 'use client'
 
-import { Box, HStack, VStack, Heading, Text, IconButton, SimpleGrid } from '@chakra-ui/react'
-import { LuArrowLeft } from 'react-icons/lu'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { Box, HStack, VStack, Heading, Text, SimpleGrid } from '@chakra-ui/react'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { wishlistAPI, type ClaimedItemResponse } from '../services/wishlist'
 import { isWishlistActive } from '../utils/wishlistUtils'
 import { COLORS } from '../styles/common'
 import { API_URL } from '../services/api'
 import { ClaimedItemCard, type ClaimedItem } from '../components/items/ClaimedItemCard'
+import { BackButton } from '../components/common/BackButton'
 
 interface ClaimedItemGridProps {
   items: ClaimedItem[]
@@ -35,10 +35,8 @@ function ClaimedItemGrid({ items, onNavigate, getImageUrl }: ClaimedItemGridProp
 
 function AllClaimedItemsPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [items, setItems] = useState<ClaimedItem[]>([])
   const [loading, setLoading] = useState(true)
-  const fromMobileNav = searchParams?.get('fromMobileNav') === 'true'
 
   useEffect(() => {
     loadItems()
@@ -109,17 +107,7 @@ function AllClaimedItemsPage() {
       {/* Header */}
       <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4} position="sticky" top={0} zIndex={10}>
         <HStack gap={4}>
-          {!fromMobileNav && (
-            <IconButton
-              aria-label="Go back"
-              variant="ghost"
-              onClick={() => router.back()}
-              color="white"
-              size="lg"
-            >
-              <LuArrowLeft />
-            </IconButton>
-          )}
+          <BackButton fallback="/" />
           <Heading size="xl" color="white">Items Claimed</Heading>
         </HStack>
       </Box>

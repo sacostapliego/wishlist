@@ -14,12 +14,18 @@ interface AddItemModalProps {
   isOpen: boolean
   onClose: () => void
   preSelectedWishlistId?: string
+  /**
+   * Selected first if it turns out to be one of the user's lists — e.g. the
+   * list on screen, which may be a friend's. Unlike preSelectedWishlistId the
+   * picker still loads, so it can be changed.
+   */
+  preferredWishlistId?: string
   onSuccess?: () => void
 }
 
 type AddMode = 'manual' | 'link'
 
-export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, onSuccess }: AddItemModalProps) {
+export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, preferredWishlistId, onSuccess }: AddItemModalProps) {
   const [addMode, setAddMode] = useState<AddMode>('manual')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [wishlists, setWishlists] = useState<Wishlist[]>([])
@@ -53,7 +59,8 @@ export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, onSuccess
       setWishlists(response)
 
       if (!preSelectedWishlistId && response && response.length > 0) {
-        setSelectedWishlistId(response[0].id)
+        const preferred = response.find((w) => w.id === preferredWishlistId)
+        setSelectedWishlistId((preferred ?? response[0]).id)
       }
     } catch (error) {
       console.error('Failed to fetch wishlists:', error)

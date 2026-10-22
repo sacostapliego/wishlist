@@ -3,7 +3,7 @@
 import { Box, HStack, VStack, Stack, Heading, Text, Avatar, IconButton } from '@chakra-ui/react'
 import { LuArrowLeft, LuEllipsisVertical } from 'react-icons/lu'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { COLORS } from '../../styles/common'
 import { API_URL } from '../../services/api'
 import { WishlistMenu, getSharedMenuOptions } from './WishlistMenu'
@@ -16,6 +16,7 @@ import getFadeGradient from '../common/getFadeGradient'
 import { DueBadge, hasDueCountdown } from '../common/DueBadge'
 import { OpenListNotice } from './OpenListNotice'
 import type { WishlistVisibility } from '../../types/types'
+import { useBackNavigation } from '../../hooks/useBackNavigation'
 
 interface SharedWishlistViewProps {
   wishlist: {
@@ -48,8 +49,12 @@ export function SharedWishlistView({
   compactHeader = false,
 }: SharedWishlistViewProps) {
   const router = useRouter()
-  const handleBack = () => (onDemoBack ? onDemoBack() : router.back())
+  const pathname = usePathname()
   const { user, isLoggedIn } = useAuth()
+  // A guest who opened a shared link has nowhere in the app to go back to
+  const back = useBackNavigation(isLoggedIn ? '/wishlists/friends' : null)
+  const showBack = Boolean(onDemoBack) || back.canGoBack
+  const handleBack = () => (onDemoBack ? onDemoBack() : back.goBack())
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFriend, setIsFriend] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
@@ -199,8 +204,8 @@ export function SharedWishlistView({
         onRemoveSaved: isSaved ? handleRemoveSaved : undefined,
       })
     : getSharedMenuOptions({
-        onCreateAccount: () => router.push('/auth/register'),
-        onSignIn: () => router.push('/auth/login'),
+        onCreateAccount: () => router.push(`/auth/register?next=${encodeURIComponent(pathname)}`),
+        onSignIn: () => router.push(`/auth/login?next=${encodeURIComponent(pathname)}`),
       })
 
   return (
@@ -219,6 +224,8 @@ export function SharedWishlistView({
           onClick={handleBack}
           color="white"
           size={iconButtonSize}
+          /* hidden, not removed, so the menu button keeps its place on the right */
+          visibility={showBack ? 'visible' : 'hidden'}
         >
           <LuArrowLeft />
         </IconButton>

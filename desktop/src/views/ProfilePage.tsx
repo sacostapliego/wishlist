@@ -2,14 +2,14 @@
 
 import { Box, VStack, Heading, Text, IconButton, HStack, Image, Button } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
-import { LuArrowLeft, LuEllipsisVertical, LuSettings } from 'react-icons/lu'
+import { LuEllipsisVertical, LuSettings } from 'react-icons/lu'
+import { BackButton } from '../components/common/BackButton'
 import { useEffect, useState } from 'react'
 import { COLORS } from '../styles/common'
 import { useAuth } from '../context/AuthContext'
 import { API_URL } from '../services/api'
 import { SizeCards } from '../components/profile/SizeCards'
 import userAPI, { type PublicUserDetailsResponse } from '../services/user'
-import { toaster } from '../components/ui/toaster'
 import { friendsAPI, type FriendWishlistResponse } from '../services/friends'
 import { WishlistCarousel } from '../components/home/WishlistCarousel'
 import { EditSizesModal } from '../components/modals/EditSizesModal'
@@ -33,8 +33,11 @@ function ProfilePage({ userId }: ProfilePageProps) {
   const [friendWishlists, setFriendWishlists] = useState<WishlistDisplayItem[]>([])
   const [loading, setLoading] = useState(false)
   const [isEditSizesOpen, setIsEditSizesOpen] = useState(false)
+  const [notFound, setNotFound] = useState(false)
   
   const isSelf = isLoggedIn && (!userId || userId === user?.id)
+  // A guest who opened a profile link has no friends list to return to
+  const backFallback = isLoggedIn ? '/friends' : null
   
   useEffect(() => {
     if (isSelf) {
@@ -79,16 +82,14 @@ function ProfilePage({ userId }: ProfilePageProps) {
   const loadPublicUser = async (id: string) => {
     try {
       setLoading(true)
+      setNotFound(false)
       const userData = await userAPI.getPublicUserDetails(id)
       setPublicUser(userData)
     } catch (error) {
       console.error('Error loading user profile:', error)
-      toaster.create({
-        title: 'Error',
-        description: 'Failed to load user profile',
-        type: 'error',
-      })
-      router.back()
+      // Stay put and say so: stepping back from inside a fetch can leave the
+      // site when the profile was opened from a link.
+      setNotFound(true)
     } finally {
       setLoading(false)
     }
@@ -102,18 +103,23 @@ function ProfilePage({ userId }: ProfilePageProps) {
     return null
   }
 
-  if (loading || (!isSelf && !publicUser)) {
+  if (!isSelf && notFound) {
     return (
-      <Box h="calc(100vh - 32px)" w="100%" display="flex" alignItems="center" justifyContent="center">
-        <Text color="white">Loading...</Text>
+      <Box h={{ base: '60vh', md: 'calc(100vh - 32px)' }} w="100%" display="flex" flexDirection="column">
+        <Box px={{ base: 4, md: 8 }} py={4}>
+          <BackButton fallback={backFallback} />
+        </Box>
+        <Box flex="1" display="flex" alignItems="center" justifyContent="center">
+          <Text color={COLORS.text.secondary}>This profile could not be found.</Text>
+        </Box>
       </Box>
     )
   }
 
-  if (!isSelf && !publicUser) {
+  if (loading || (!isSelf && !publicUser)) {
     return (
       <Box h="calc(100vh - 32px)" w="100%" display="flex" alignItems="center" justifyContent="center">
-        <Text color="white">User not found</Text>
+        <Text color="white">Loading...</Text>
       </Box>
     )
   }
@@ -159,16 +165,11 @@ function ProfilePage({ userId }: ProfilePageProps) {
     >
       {/* Header */}
       <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4} position="sticky" top={0} zIndex={10}>
-        <HStack justify="space-between">
-          <IconButton
-            aria-label="Go back"
-            variant="ghost"
-            onClick={() => router.back()}
-            color="white"
-            size="lg"
-          >
-            <LuArrowLeft />
-          </IconButton>
+        <HStack>
+          {/* Your own profile is the "You" tab on a phone; a friend's is a step from Friends */}
+          {isSelf ? <BackButton fallback="/" isMobileTab /> : <BackButton fallback={backFallback} />}
+          {/* Spacer, so the right-hand button stays right when there is no back arrow */}
+          <Box flex="1" />
 
           {isSelf && (
             <IconButton

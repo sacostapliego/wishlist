@@ -1,7 +1,7 @@
 'use client'
 
-import { Box, VStack, HStack, Heading, Text, Button, IconButton, Avatar } from '@chakra-ui/react'
-import { LuArrowLeft, LuUserPlus, LuChevronRight, LuCheck, LuX } from 'react-icons/lu'
+import { Box, VStack, HStack, Heading, Text, Button, Avatar } from '@chakra-ui/react'
+import { LuUserPlus, LuChevronRight, LuCheck, LuX } from 'react-icons/lu'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { COLORS } from '../styles/common'
@@ -10,6 +10,7 @@ import { toaster } from '../components/ui/toaster'
 import { API_URL } from '../services/api'
 import { AddFriendModal } from '../components/friends/AddFriendModal'
 import { Tabs } from '@chakra-ui/react'
+import { BackButton } from '../components/common/BackButton'
 
 function FriendsPage() {
   const router = useRouter()
@@ -89,7 +90,7 @@ function FriendsPage() {
 
   if (loading) {
     return (
-      <Box h={{base: "calc(100vh + 80px)", md:"calc(100vh - 32px)"}} w="100%" display="flex" alignItems="center" justifyContent="center">
+      <Box h={{ base: '60vh', md: 'calc(100vh - 32px)' }} w="100%" display="flex" alignItems="center" justifyContent="center">
         <Text color="white">Loading...</Text>
       </Box>
     )
@@ -113,13 +114,7 @@ function FriendsPage() {
         {/* Header */}
         <HStack justify="space-between">
           <HStack gap={3}>
-            <IconButton
-              aria-label="Back"
-              variant="ghost"
-              onClick={() => router.back()}
-            >
-              <LuArrowLeft />
-            </IconButton>
+            <BackButton fallback="/" isMobileTab />
             <Heading size="xl" color="white">Friends</Heading>
           </HStack>
           <Button

@@ -1,7 +1,6 @@
 'use client'
 
-import { Box, HStack, VStack, Heading, Text, IconButton, SimpleGrid, Image } from '@chakra-ui/react'
-import { LuArrowLeft } from 'react-icons/lu'
+import { Box, HStack, VStack, Heading, Text, SimpleGrid, Image, Button } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { wishlistAPI } from '../services/wishlist'
@@ -9,6 +8,8 @@ import { friendsAPI } from '../services/friends'
 import { resolveWishlistThumbnail } from '../utils/wishlistIcons'
 import { isWishlistActive } from '../utils/wishlistUtils'
 import { COLORS } from '../styles/common'
+import { BackButton } from '../components/common/BackButton'
+import { useBackNavigation } from '../hooks/useBackNavigation'
 import type { Wishlist as WishlistType, FriendWishlist as FriendWishlistType } from '../types/types'
 
 interface Wishlist {
@@ -85,6 +86,42 @@ function WishlistGrid({ wishlists, type, onNavigate }: WishlistGridProps) {
   )
 }
 
+/**
+ * Phone only: the Lists tab covers both pages, so it gets a switch between
+ * them. Swapping replaces rather than pushes — flipping back and forth should
+ * not pile up entries for the back button to wade through.
+ */
+function ListSwitch({ type }: { type: 'friends' | 'mine' }) {
+  const { replace } = useBackNavigation(null)
+
+  const options = [
+    { value: 'mine', label: 'Mine', href: '/wishlists/mine' },
+    { value: 'friends', label: "Friends'", href: '/wishlists/friends' },
+  ] as const
+
+  return (
+    <HStack display={{ base: 'flex', md: 'none' }} gap={1} p={1} mt={3} bg={COLORS.cardDarkLight} borderRadius="full">
+      {options.map((option) => {
+        const isSelected = option.value === type
+        return (
+          <Button
+            key={option.value}
+            flex="1"
+            size="sm"
+            borderRadius="full"
+            bg={isSelected ? 'whiteAlpha.200' : 'transparent'}
+            color={isSelected ? 'white' : COLORS.text.muted}
+            aria-pressed={isSelected}
+            onClick={() => !isSelected && replace(option.href)}
+          >
+            {option.label}
+          </Button>
+        )
+      })}
+    </HStack>
+  )
+}
+
 function AllWishlistsPage({ type }: AllWishlistsPageProps) {
   const router = useRouter()
   const [wishlists, setWishlists] = useState<Wishlist[]>([])
@@ -140,7 +177,7 @@ function AllWishlistsPage({ type }: AllWishlistsPageProps) {
 
   if (loading) {
     return (
-      <Box h={{ base: "calc(100vh + 80px)", md: "calc(100vh - 32px)" }} w="100%" display="flex" alignItems="center" justifyContent="center">
+      <Box h={{ base: '60vh', md: 'calc(100vh - 32px)' }} w="100%" display="flex" alignItems="center" justifyContent="center">
         <Text color="white">Loading...</Text>
       </Box>
     )
@@ -166,17 +203,11 @@ function AllWishlistsPage({ type }: AllWishlistsPageProps) {
       {/* Header */}
       <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4} position="sticky" top={0} zIndex={10}>
         <HStack gap={4}>
-          <IconButton
-            aria-label="Go back"
-            variant="ghost"
-            onClick={() => router.back()}
-            color="white"
-            size="lg"
-          >
-            <LuArrowLeft />
-          </IconButton>
-          <Heading size="xl" color="white">{title}</Heading>
+          <BackButton fallback="/" isMobileTab />
+          <Heading size="xl" color="white" display={{ base: 'none', md: 'block' }}>{title}</Heading>
+          <Heading size="xl" color="white" display={{ base: 'block', md: 'none' }}>Wishlists</Heading>
         </HStack>
+        <ListSwitch type={type} />
       </Box>
 
       <Box px={{ base: 4, md: 8 }} py={{ base: 4, md: 6 }}>
