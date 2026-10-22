@@ -1,8 +1,8 @@
 'use client'
 
-import { Box, VStack, Heading, Text, Button, HStack, IconButton, Image, Stack } from '@chakra-ui/react'
+import { Box, VStack, Heading, Text, Button, HStack, Image, Stack } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
-import { LuArrowLeft, LuLogOut } from 'react-icons/lu'
+import { LuLogOut } from 'react-icons/lu'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { COLORS } from '../styles/common'
@@ -11,6 +11,7 @@ import { EditProfilePictureModal } from '../components/modals/EditProfilePicture
 import { ConfirmDialog } from '../components/common/ConfirmDialog'
 import userAPI from '../services/user'
 import { toaster } from '../components/ui/toaster'
+import { BackButton } from '../components/common/BackButton'
 
 function SettingsPage() {
   const router = useRouter()
@@ -22,7 +23,7 @@ function SettingsPage() {
   const handleLogout = async () => {
     try {
       await logout()
-      router.push('/auth/login')
+      router.replace('/auth/login')
     } catch (error) {
       console.error('Logout failed:', error)
     }
@@ -74,15 +75,7 @@ function SettingsPage() {
       {/* Header */}
       <Box bg={COLORS.background} px={{ base: 4, md: 8 }} py={4} position="sticky" top={0} zIndex={10}>
         <HStack justify="space-between">
-          <IconButton
-            aria-label="Go back"
-            variant="ghost"
-            onClick={() => router.back()}
-            color="white"
-            size="lg"
-          >
-            <LuArrowLeft />
-          </IconButton>
+          <BackButton fallback="/profile" />
           <Heading size="lg" color="white">
             Settings
           </Heading>

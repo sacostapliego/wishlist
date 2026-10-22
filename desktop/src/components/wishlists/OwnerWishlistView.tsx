@@ -17,6 +17,7 @@ import getFadeGradient from '../common/getFadeGradient'
 import { DueBadge, hasDueCountdown } from '../common/DueBadge'
 import { wishlistAPI } from '../../services/wishlist'
 import { ConfirmDialog } from '../common/ConfirmDialog'
+import { useBackNavigation } from '../../hooks/useBackNavigation'
 
 interface OwnerWishlistViewProps {
   wishlist: {
@@ -63,7 +64,8 @@ export function OwnerWishlistView({
   compactHeader = false,
 }: OwnerWishlistViewProps) {
   const router = useRouter()
-  const handleBack = () => (onDemoBack ? onDemoBack() : router.back())
+  const back = useBackNavigation('/wishlists/mine')
+  const handleBack = () => (onDemoBack ? onDemoBack() : back.goBack())
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false)
@@ -138,8 +140,9 @@ export function OwnerWishlistView({
         description: `"${wishlist.title}" has been deleted.`,
         type: 'success',
       })
-      router.replace('/')
-      window.location.reload()
+      // A full load replacing this entry: the list's page is gone from history
+      // (back cannot land on it), and the sidebar refetches without the list.
+      window.location.replace('/')
     } catch (error) {
       console.error('Failed to delete wishlist:', error)
       toaster.create({

@@ -160,7 +160,8 @@ function NotificationMenu({
 }
 
 /**
- * Desktop home header: greeting, notifications, avatar.
+ * Home header: greeting, notifications, and (desktop only) the avatar — on a
+ * phone the bottom bar's You tab already leads to the profile.
  *
  * Notifications are derived on the client from data the page already loads —
  * pending friend requests and friends' lists coming due — so this needs no
@@ -192,13 +193,12 @@ export function HomeHeader({ displayName, profileImage, notifications, onNavigat
 
   return (
     <HStack
-      display={{ base: 'none', md: 'flex' }}
-      px={8}
-      h="72px"
+      px={{ base: 4, md: 8 }}
+      h={{ base: '60px', md: '72px' }}
       gap={4}
       color={COLORS.text.primary}
     >
-      <Text fontSize="22px" fontWeight="bold">
+      <Text fontSize={{ base: '20px', md: '22px' }} fontWeight="bold" lineClamp={1}>
         {greeting()}, {displayName}
       </Text>
 
@@ -230,7 +230,12 @@ export function HomeHeader({ displayName, profileImage, notifications, onNavigat
         )}
       </Box>
 
-      <Avatar.Root size="sm" cursor="pointer" onClick={() => onNavigate('/profile')}>
+      <Avatar.Root
+        size="sm"
+        cursor="pointer"
+        display={{ base: 'none', md: 'inline-flex' }}
+        onClick={() => onNavigate('/profile')}
+      >
         <Avatar.Fallback name={displayName} />
         <Avatar.Image src={profileImage || undefined} />
       </Avatar.Root>
