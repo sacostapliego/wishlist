@@ -109,8 +109,12 @@ export function WishlistItemView({
     return ''
   }
 
-  // Phone, list colour off: plain divided rows (Apple Music track list) instead of filled cards
-  const plainRows = !wishlistColor && !compact
+  /*
+    Phone: divided rows (Apple Music track list) instead of separated cards.
+    With the list colour on, rows carry a soft tint of it and the image tile the
+    full colour - solid rows would undo the header's fade into the page.
+  */
+  const plainRows = !compact
   const rowPlain = <T,>(phone: T, otherwise: T) => (plainRows ? { base: phone, md: otherwise } : otherwise)
 
   const imgBox = compact ? { base: '3.25rem', md: '3.75rem' } : { base: '5rem', md: '9rem' }
@@ -125,7 +129,7 @@ export function WishlistItemView({
 
   return (
     <VStack align="stretch" gap={compact ? '0.5rem' : { base: plainRows ? 0 : '1rem', md: '1rem' }} px={compact ? { base: '0.75rem', md: '1rem' } : { base: '1rem', md: '2rem' }} py={compact ? 2 : { base: '0', md: '1rem' }}>
-      {sortedItems.map((item) => {
+      {sortedItems.map((item, index) => {
         const imgSrc = resolveImageSrc(item)
         const hasImage = Boolean(imgSrc)
         const baseWishlistColor = wishlistColor || COLORS.cardGray
@@ -137,26 +141,27 @@ export function WishlistItemView({
         const displayDate = item.updated_at || item.created_at
 
         const isSelected = selectedItems.includes(item.id)
+        const tint = (share: number) => `color-mix(in oklab, ${itemBackgroundColor} ${share}%, #141414)`
+        const cardBg = wishlistColor ? itemBackgroundColor : COLORS.cardGray
+        const rowBg = isSelected
+          ? rowPlain(wishlistColor ? tint(40) : backgroundLightColor, backgroundLightColor)
+          : rowPlain(wishlistColor ? tint(18) : 'transparent', cardBg)
         const status = getItemStatus(item)
 
         return (
           <HStack
             key={item.id}
-            p={compact ? '0.5rem 0.65rem' : rowPlain('0.75rem 0', '1rem')}
+            p={compact ? '0.5rem 0.65rem' : rowPlain(wishlistColor ? '0.75rem' : '0.75rem 0', '1rem')}
             gap={compact ? '0.75rem' : { base: '1rem', md: '2rem' }}
             cursor="pointer"
             transition="all 0.2s"
             borderRadius={rowPlain('0', '0.375rem')}
+            /* Every plain row closes with a divider; the first also opens with one so the list is ruled top and bottom */
+            borderTop={index === 0 ? rowPlain('1px solid rgba(255, 255, 255, 0.08)', 'none') : undefined}
             borderBottom={rowPlain('1px solid rgba(255, 255, 255, 0.08)', 'none')}
-            _hover={{ bg: backgroundLightColor }}
+            _hover={{ bg: rowPlain(wishlistColor ? tint(28) : backgroundLightColor, backgroundLightColor) }}
             onClick={() => handleItemClick(item)}
-            bg={
-              isSelected 
-                ? backgroundLightColor 
-                : wishlistColor 
-                  ? itemBackgroundColor 
-                  : rowPlain('transparent', COLORS.cardGray)
-            }
+            bg={rowBg}
             position="relative"
           >
             {/* Selection Checkbox */}
@@ -185,7 +190,7 @@ export function WishlistItemView({
                 w={imgBox}
                 h={imgBox}
                 borderRadius="0.375rem"
-                bg={backgroundLightColor}
+                bg={wishlistColor ? rowPlain(itemBackgroundColor, backgroundLightColor) : backgroundLightColor}
                 flexShrink={0}
                 display="flex"
                 alignItems="center"
