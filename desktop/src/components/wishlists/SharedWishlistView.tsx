@@ -77,8 +77,8 @@ export function SharedWishlistView({
   const headerColor = wishlist.color || COLORS.cardGray
   // Phone: fade the list colour into the page, as Apple Music does under an album
   const headerBg = r(getFadeGradient(headerColor), headerColor)
-  // Owner name in a pale tint of the list colour; getLightColor only understands rgb() strings
-  const ownerNameColor = r(/^rgb\(/.test(headerColor) ? getLightColor(headerColor, 0.65) : 'white', 'white')
+  // Phone: owner name a step down from the title's pure white
+  const ownerNameColor = r('rgba(255, 255, 255, 0.85)', 'white')
   const iconButtonSize = r('md' as const, compactHeader ? 'md' as const : 'lg' as const)
 
   useEffect(() => {
