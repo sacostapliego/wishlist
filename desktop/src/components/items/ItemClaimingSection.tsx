@@ -47,7 +47,8 @@ export function ItemClaimingSection({
       <Box>
         {isItemClaimed ? (
           <HStack
-            p={4}
+            /* Phone: a step slimmer, so it does not out-shout the item above it */
+            p={{ mdDown: 3, md: 4 }}
             borderRadius="lg"
             bg={baseLightColor}
             justify="space-between"
@@ -60,7 +61,7 @@ export function ItemClaimingSection({
               <Box flexShrink={0} display="flex">
                 <LuCircleCheck size={20} color={'white'} />
               </Box>
-              <Text color={'white'} fontSize="md" fontWeight="medium" lineClamp={1}>
+              <Text color={'white'} fontSize={{ mdDown: 'sm', md: 'md' }} fontWeight="medium" lineClamp={1}>
                 Claimed by {item.claimed_by_display_name || 'someone'}
               </Text>
             </HStack>
@@ -81,7 +82,7 @@ export function ItemClaimingSection({
         ) : (
           <Button
             w="100%"
-            p={4}
+            p={{ mdDown: 3, md: 4 }}
             borderRadius="lg"
             bg={baseLightColor}
             onClick={onClaimItem}

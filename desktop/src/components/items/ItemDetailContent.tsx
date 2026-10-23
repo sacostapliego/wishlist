@@ -96,9 +96,17 @@ export function ItemDetailContent({
 }: ItemDetailContentProps) {
   const backgroundColor = getLightColor(wishlistColor || COLORS.cardGray)
   const isContribution = Boolean(item.is_contribution)
-  const px = compact ? 4 : 8
-  const py = compact ? 3 : 4
-  const imgMaxW = compact ? { base: '14rem', md: '16rem' } : { base: '20rem', md: '22rem', lg: '30rem' }
+  /*
+    Phone sizes follow the wishlist view this page opens from: a 1rem gutter
+    like its rows, and type a step down from desktop. At desktop sizes the
+    title and price ran ~24px on a 400px-wide screen, so a two-line name and
+    its price filled most of the space above the claim bar. `mdDown` keeps
+    every desktop size exactly as it was.
+  */
+  const px = compact ? 4 : { base: 4, md: 8 }
+  const py = compact ? 3 : { base: 2, md: 4 }
+  const imgMaxW = compact ? { base: '14rem', md: '16rem' } : { base: 'min(72vw, 18rem)', md: '22rem', lg: '30rem' }
+  const iconButtonSize = compact ? ('md' as const) : ({ base: 'md', md: 'lg' } as const)
 
   const handleCopyUrl = async () => {
     if (item?.url) {
@@ -137,16 +145,16 @@ export function ItemDetailContent({
     >
       <Box bg={COLORS.background} px={px} py={py} position={compact ? 'relative' : 'sticky'} top={0} zIndex={10}>
         <HStack justify="space-between">
-          <IconButton aria-label="Go back" variant="ghost" onClick={onBack} color="white" size={compact ? 'md' : 'lg'}>
+          <IconButton aria-label="Go back" variant="ghost" onClick={onBack} color="white" size={iconButtonSize}>
             <LuArrowLeft />
           </IconButton>
 
           {!isOwner && wishlistInfo && (
             <VStack gap={0} flex="1" mx={compact ? 2 : 4}>
-              <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : 'sm'}>
+              <Text color={COLORS.text.secondary} fontSize={compact ? 'xs' : { mdDown: 'xs', md: 'sm' }} lineClamp={1}>
                 {wishlistInfo.ownerName}
               </Text>
-              <Text color="white" fontSize={compact ? 'sm' : 'md'} fontWeight="semibold">
+              <Text color="white" fontSize={compact ? 'sm' : { mdDown: 'sm', md: 'md' }} fontWeight="semibold" lineClamp={1}>
                 {wishlistInfo.name}
               </Text>
             </VStack>
@@ -155,7 +163,7 @@ export function ItemDetailContent({
           {isOwner && <Box flex="1" />}
 
           {isOwner && !readOnly ? (
-            <IconButton aria-label="Menu" variant="ghost" onClick={() => setIsMenuOpen(true)} color="white" size={compact ? 'md' : 'lg'}>
+            <IconButton aria-label="Menu" variant="ghost" onClick={() => setIsMenuOpen(true)} color="white" size={iconButtonSize}>
               <LuEllipsisVertical />
             </IconButton>
           ) : (
@@ -164,7 +172,7 @@ export function ItemDetailContent({
         </HStack>
       </Box>
 
-      <VStack align="stretch" px={px} pb={compact ? 4 : { base: 32, md: 32 }} gap={compact ? 4 : 6}>
+      <VStack align="stretch" px={px} pb={compact ? 4 : { base: 32, md: 32 }} gap={compact ? 4 : { base: 5, md: 6 }}>
         {imageSrc && (
           <Box
             w={imgMaxW}
@@ -182,9 +190,11 @@ export function ItemDetailContent({
         )}
 
         <VStack align="stretch" gap={compact ? 3 : 4} mx="auto" w="100%">
-          <Stack direction={{ base: 'column', md: 'column' }} justify="space-between" align="start" gap={compact ? 2 : 4}>
+          <Stack direction={{ base: 'column', md: 'column' }} justify="space-between" align="start" gap={compact ? 2 : { base: 1, md: 4 }}>
             <Heading
               size={compact ? 'lg' : '2xl'}
+              fontSize={compact ? undefined : { mdDown: 'xl' }}
+              lineHeight={compact ? undefined : { mdDown: '1.3' }}
               color="white"
               flex="1"
               lineClamp={isNameExpanded ? undefined : 2}
@@ -198,14 +208,14 @@ export function ItemDetailContent({
                 already says "$1,200 of $5,000". Printing it again up here showed
                 the same number twice in two different formats. */}
             {!isContribution && item.price !== undefined && item.price !== null && (
-              <Text color="white" fontSize={compact ? 'xl' : '2xl'} fontWeight="bold" flexShrink={0}>
+              <Text color="white" fontSize={compact ? 'xl' : { mdDown: 'lg', md: '2xl' }} fontWeight={compact ? 'bold' : { mdDown: 'semibold', md: 'bold' }} flexShrink={0}>
                 ${Number(item.price).toFixed(2)}
               </Text>
             )}
           </Stack>
 
           {item.url && !readOnly && (
-            <Box bg={COLORS.cardGray} borderRadius="lg" p={compact ? 3 : 4} maxW={'50rem'}>
+            <Box bg={COLORS.cardGray} borderRadius="lg" p={compact ? 3 : { base: 1.5, md: 4 }} maxW={'50rem'}>
               <HStack gap={3}>
                 <Button
                   variant="ghost"
@@ -270,7 +280,7 @@ export function ItemDetailContent({
           )}
 
           {item.description && (
-            <Text color={COLORS.text.secondary} fontSize={compact ? 'sm' : 'md'}>
+            <Text color={COLORS.text.secondary} fontSize={compact ? 'sm' : { mdDown: 'sm', md: 'md' }}>
               {item.description}
             </Text>
           )}
