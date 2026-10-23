@@ -15,6 +15,9 @@ import { MobileCreateMenu } from './nav/MobileCreateMenu'
 import { CreateWishlistModal } from '../wishlists/CreateWishlistModal'
 import { AddItemModal } from '../items/AddItemModal'
 
+/** Height of the bar's touch area, above the home-indicator inset. Things that sit on top of the bar offset by this. */
+export const MOBILE_NAV_HEIGHT = '54px'
+
 type Tab = 'home' | 'lists' | 'friends' | 'you'
 
 /**
@@ -62,7 +65,7 @@ function NavTab({ label, isActive, onClick, icon, badge = 0 }: NavTabProps) {
       cursor="pointer"
       css={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <Box position="relative" fontSize="22px" lineHeight={1}>
+      <Box position="relative" fontSize="20px" lineHeight={1}>
         {icon}
         {badge > 0 && (
           <Box
@@ -123,8 +126,8 @@ export default function MobileNav() {
   return (
     <>
       {/*
-        The bar is 60px of touch targets *plus* the home-indicator inset, not
-        60px with the inset eaten out of it — on an iPhone the latter squeezes
+        The bar is MOBILE_NAV_HEIGHT of touch targets *plus* the home-indicator
+        inset, not that height with the inset eaten out of it — on an iPhone the latter squeezes
         the icons up against the bottom edge.
       */}
       <Box
@@ -134,7 +137,7 @@ export default function MobileNav() {
         bottom={0}
         left={0}
         right={0}
-        h="calc(60px + env(safe-area-inset-bottom, 0px))"
+        h={`calc(${MOBILE_NAV_HEIGHT} + env(safe-area-inset-bottom, 0px))`}
         bg="#141414"
         borderTop="1px solid"
         borderColor="whiteAlpha.100"
@@ -143,7 +146,7 @@ export default function MobileNav() {
         px={2}
         pb="env(safe-area-inset-bottom, 0px)"
       >
-        <Flex h="60px" align="stretch">
+        <Flex h={MOBILE_NAV_HEIGHT} align="stretch">
           <NavTab
             label="Home"
             isActive={activeTab === 'home'}
@@ -157,21 +160,23 @@ export default function MobileNav() {
             icon={<TabIcon isActive={activeTab === 'lists'} active={PiListBulletsBold} inactive={PiListBullets} />}
           />
 
-          {/* Create is an action, not a place — set apart as a filled button */}
+          {/* Create is an action, not a place — set apart as a filled button.
+              Neutral white rather than a brand or list colour, so it reads the
+              same on every screen and never clashes with a list's own colour. */}
           <Flex flex="1" align="center" justify="center">
             <Flex
               as="button"
               aria-label={isCreateMenuOpen ? 'Close create menu' : 'Create'}
               aria-expanded={isCreateMenuOpen}
               onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
-              w="48px"
-              h="40px"
-              borderRadius="xl"
-              bg={COLORS.primary}
-              color="white"
+              w="42px"
+              h="34px"
+              borderRadius="lg"
+              bg="white"
+              color="#141414"
               align="center"
               justify="center"
-              fontSize="22px"
+              fontSize="20px"
               cursor="pointer"
               css={{ WebkitTapHighlightColor: 'transparent' }}
             >

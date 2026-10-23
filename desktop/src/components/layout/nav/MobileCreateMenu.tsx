@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useEffect } from 'react'
 import { LuList, LuGift } from 'react-icons/lu'
 import { COLORS } from '../../../styles/common'
+import { MOBILE_NAV_HEIGHT } from '../MobileNav'
 
 interface MobileCreateMenuProps {
   isOpen: boolean
@@ -78,7 +79,7 @@ export function MobileCreateMenu({ isOpen, onClose, onCreateWishlist, onAddItem 
         position="fixed"
         left={0}
         right={0}
-        bottom="calc(60px + env(safe-area-inset-bottom, 0px))"
+        bottom={`calc(${MOBILE_NAV_HEIGHT} + env(safe-area-inset-bottom, 0px))`}
         zIndex={95}
         bg={COLORS.cardDarkLight}
         color={COLORS.text.primary}

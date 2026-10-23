@@ -22,7 +22,7 @@ const listeners = new Set<() => void>()
 
 /*
   A `replace` swaps the current history entry instead of adding one, which a
-  pathname alone cannot reveal. Replacing through `replaceTracked` sets this so
+  pathname alone cannot reveal. Replacing through the hook's `replace` sets this so
   the stack swaps its top too. The stack must never hold *more* entries than
   the browser: that is the case where back would leave the site. Holding fewer
   (after a reload, say) only means back goes to the page's parent instead.

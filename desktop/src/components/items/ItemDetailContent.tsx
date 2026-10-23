@@ -9,6 +9,7 @@ import { ItemClaimingSection } from './ItemClaimingSection'
 import { ItemContributionBar, ItemContributionList } from './ItemContributionSection'
 import { ItemMenu, type MenuOption } from './ItemMenu'
 import type { ItemContribution, WishlistItem } from '../../types/types'
+import { MOBILE_NAV_HEIGHT } from '../layout/MobileNav'
 
 export interface ItemDetailContentItem {
   id: string
@@ -294,7 +295,7 @@ export function ItemDetailContent({
           guest sessions, see design/guest/guest-sessions.md.
 
           The bar sits just above whatever the layout puts at the bottom of a
-          phone screen: MobileNav's 60px for a signed-in viewer. A guest - most
+          phone screen: MobileNav's MOBILE_NAV_HEIGHT for a signed-in viewer. A guest - most
           of the people who land on a shared item - only has GuestMobileNavBar's
           blank 20px strip, which the button covers, so it sits right above the
           URL bar.
@@ -320,7 +321,7 @@ export function ItemDetailContent({
             position="fixed"
             bottom={{
               base: isLoggedIn
-                ? 'calc(60px + 0.5rem + env(safe-area-inset-bottom, 0px))'
+                ? `calc(${MOBILE_NAV_HEIGHT} + 0.5rem + env(safe-area-inset-bottom, 0px))`
                 : 'calc(0.5rem + env(safe-area-inset-bottom, 0px))',
               md: '1rem',
             }}
