@@ -7,6 +7,7 @@ import Sidebar from './SideBar'
 import MobileNav from './MobileNav'
 import { useSidebarResize } from '../../hooks/useSidebarResize'
 import { useScrollToTop } from '../../hooks/useScrollToTop'
+import { ScrollDebug } from './ScrollDebug'
 
 interface ResponsiveLayoutProps {
   children?: ReactNode
@@ -99,6 +100,9 @@ export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Mobile Bottom Nav */}
        <MobileNav />
+
+      {/* Opt-in scroll/viewport readout - see ScrollDebug */}
+      {process.env.NEXT_PUBLIC_SCROLL_DEBUG === '1' && <ScrollDebug />}
     </Flex>
   )
 }
