@@ -14,7 +14,7 @@ from models.item import WishListItem
 from middleware.auth import get_current_user
 from models.user import User
 
-from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
+from services.s3_service import upload_file_to_s3, delete_file_from_s3, image_response, s3_client
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
 
@@ -67,6 +67,8 @@ async def create_wishlist(
     if thumbnail_type == 'image' and thumbnail_image is not None:
         try:
             thumbnail_image_url = await upload_file_to_s3(thumbnail_image, folder="wishlist_thumbnails")
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
 
@@ -176,12 +178,16 @@ async def update_wishlist(
 
     # Handle thumbnail image upload
     if thumbnail_image is not None:
-        if db_wishlist.thumbnail_image is not None:
-            delete_file_from_s3(db_wishlist.thumbnail_image)
+        # Upload first, so a rejected file keeps the old thumbnail
         try:
-            db_wishlist.thumbnail_image = await upload_file_to_s3(thumbnail_image, folder="wishlist_thumbnails")
+            thumbnail_image_url = await upload_file_to_s3(thumbnail_image, folder="wishlist_thumbnails")
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
+        if db_wishlist.thumbnail_image is not None:
+            delete_file_from_s3(db_wishlist.thumbnail_image)
+        db_wishlist.thumbnail_image = thumbnail_image_url
     elif remove_thumbnail_image:
         if db_wishlist.thumbnail_image is not None:
             delete_file_from_s3(db_wishlist.thumbnail_image)
@@ -315,10 +321,8 @@ async def get_wishlist_thumbnail(
         s3_key = db_wishlist.thumbnail_image.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
 
         s3_response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
-        image_data = s3_response['Body'].read()
 
-        content_type = s3_response.get('ContentType', 'image/jpeg')
-        return Response(content=image_data, media_type=content_type)
+        return image_response(s3_response)
 
     except Exception as e:
         print(f"Error retrieving wishlist thumbnail: {str(e)}")

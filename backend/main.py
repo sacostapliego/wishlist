@@ -6,17 +6,23 @@ THINGS NEEDED FROM INDEX
 TODO
 1. More error handling, with try and except
 2. Security Headers
-3. Request Rate Limiting
 """
 
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from middleware.body_limit import BodySizeLimitMiddleware
 from routes import items, users, auth, wishlists, relationships, guest_sessions, contributions
+from services.s3_service import MAX_UPLOAD_BYTES
 
 app = FastAPI(
     title='Wishlist API',
     openapi_url='/openapi.json',)
+
+# Request size. Added before CORS so CORS stays outermost, otherwise the browser
+# sees a blocked request instead of the 413. The extra megabyte covers the form
+# fields sent alongside an image.
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=MAX_UPLOAD_BYTES + 1024 * 1024)
 
 # CORS
 

@@ -12,6 +12,7 @@ from services.guest_session import (
     resolve_guest_session,
     get_guest_token,
 )
+from services.rate_limit import rate_limit
 
 router = APIRouter(prefix='/guest-session', tags=['guest-session'])
 
@@ -19,7 +20,8 @@ router = APIRouter(prefix='/guest-session', tags=['guest-session'])
 @router.post('/', response_model=GuestSessionResponse)
 def start_guest_session(
     payload: GuestSessionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit('guest-session', limit=30, window_seconds=60 * 60))
 ):
     """
     Lets someone take part without an account. They give a display name, and we

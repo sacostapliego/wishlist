@@ -6,7 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Form, Response, UploadFil
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload, selectinload
+from fastapi.concurrency import run_in_threadpool
 from typing import List, Optional
+from urllib.parse import urlsplit
 from PIL import Image
 
 
@@ -17,48 +19,67 @@ from models.item_contribution import ItemContribution
 from middleware.auth import get_current_user, get_current_user_optional
 from services.guest_session import get_guest_token, resolve_guest_session
 from services.item_serializer import serialize_item, serialize_items
-from services.s3_service import upload_file_to_s3, delete_file_from_s3, s3_client
+from services.rate_limit import rate_limit
+from services.s3_service import upload_file_to_s3, delete_file_from_s3, image_response, read_image_upload, s3_client
 from services.scraper import scrape_url
 
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+
+# Longest side the background remover works on. The pixel loop is the slow part
+# and its cost grows with area, so this is what keeps a request bounded. Matches
+# what the item form compresses to.
+MAX_BACKGROUND_REMOVAL_SIDE = 1200
 
 router = APIRouter(prefix='/wishlist', tags=['wishlist'])
 
 ''' Scrap item details from a URL '''
 @router.post('/scrape-url', tags=['scraper'])
-async def scrape_item_from_url(scrape_request: ScrapeRequest, current_user: dict = Depends(get_current_user)):
+async def scrape_item_from_url(
+    scrape_request: ScrapeRequest,
+    current_user: dict = Depends(get_current_user),
+    _: None = Depends(rate_limit('scrape', limit=10, window_seconds=60))
+):
     scraped_data = scrape_url(str(scrape_request.url))
     if "error" in scraped_data:
         raise HTTPException(status_code=400, detail=scraped_data["error"])
     return scraped_data
 
 @router.post('/process-image/remove-background', tags=['image-processing'])
-async def process_image_remove_background(image: UploadFile = File(...)):
+async def process_image_remove_background(
+    image: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    _: None = Depends(rate_limit('remove-background', limit=10, window_seconds=60))
+):
     """
     Receives an image, removes the white background, and returns the new image as a base64 string.
     """
     try:
-        image_data = await image.read()
-        
-        # Use the existing helper to process the image
-        processed_image_data = _remove_white_background(image_data)
-        
+        image_data, _format = await read_image_upload(image)
+
+        # Use the existing helper to process the image. CPU-bound, so it runs off
+        # the event loop or every other request would wait for it.
+        processed_image_data = await run_in_threadpool(_remove_white_background, image_data)
+
         # Encode the result as a base64 data URL to send back to the client
         base64_encoded_image = base64.b64encode(processed_image_data).decode('utf-8')
         data_url = f"data:image/png;base64,{base64_encoded_image}"
         
         return {"image_data_url": data_url}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
 
 """ Helper function to remove white background """
 def _remove_white_background(image_data: bytes) -> bytes:
     """Processes image data with Pillow to remove white background."""
-    img = Image.open(io.BytesIO(image_data)).convert("RGBA")
+    img = Image.open(io.BytesIO(image_data))
+    img.thumbnail((MAX_BACKGROUND_REMOVAL_SIDE, MAX_BACKGROUND_REMOVAL_SIDE))
+    img = img.convert("RGBA")
     datas = img.getdata()
     newData = []
     # Tolerance for "off-white" colors
-    tolerance = 20 
+    tolerance = 20
     for item_pixel in datas:
         if item_pixel[0] > 255 - tolerance and item_pixel[1] > 255 - tolerance and item_pixel[2] > 255 - tolerance:
             newData.append((255, 255, 255, 0))
@@ -72,6 +93,43 @@ def _remove_white_background(image_data: bytes) -> bytes:
 
 ''' Create a new item '''
 """ Guards shared by item create and update """
+def _validate_item_url(url: Optional[str]) -> None:
+    """
+    Item links are opened by other people, so only web links are stored. A missing
+    scheme is allowed because people type 'amazon.com/thing' by hand; what this
+    refuses is the likes of javascript: and data:.
+    """
+    if url and urlsplit(url).scheme.lower() not in ('', 'http', 'https'):
+        raise HTTPException(status_code=400, detail='Item link must be a web address')
+
+def _own_wishlist_id(
+    db: Session,
+    wishlist_id: Optional[str],
+    current_user: dict
+) -> Optional[uuid.UUID]:
+    """
+    Parse a wishlist id from the form and confirm it belongs to the caller, so
+    nobody can place items on someone else's list. A list the caller does not own
+    is a 404, the same answer as one that does not exist.
+    """
+    if not wishlist_id:
+        return None
+
+    try:
+        wishlist_uuid = uuid.UUID(wishlist_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail='Invalid wishlist ID format')
+
+    db_wishlist = db.query(Wishlist).filter(
+        Wishlist.id == wishlist_uuid,
+        Wishlist.user_id == current_user["user_id"]
+    ).first()
+
+    if not db_wishlist:
+        raise HTTPException(status_code=404, detail='Wishlist not found')
+
+    return wishlist_uuid
+
 def _validate_contribution_fields(
     is_contribution: bool,
     owner_seed_amount: Optional[float]
@@ -114,10 +172,11 @@ async def create_wishlist_item(
 ):
     try:
         _validate_contribution_fields(is_contribution, owner_seed_amount)
+        _validate_item_url(url)
 
         # process wishlist id
-        wishlist_id = uuid.UUID(wishlist_id) if wishlist_id else None
-        
+        wishlist_id = _own_wishlist_id(db, wishlist_id, current_user)
+
         # handle image upload if provided
         image_url = None
         if image:
@@ -259,24 +318,11 @@ async def update_wishlist_item(
     if not db_item:
         raise HTTPException(status_code=404, detail='Item not found')
     
+    _validate_item_url(url)
+
     # Process wishlist_id
-    wishlist_uuid = None
-    if wishlist_id:
-        try:
-            wishlist_uuid = uuid.UUID(wishlist_id)
-        except ValueError:
-            raise HTTPException(status_code=400, detail='Invalid wishlist ID format')
-    
-    # Handle image update if provided
-    if image:
-        # Delete old image if it exists
-        if db_item.image:
-            delete_file_from_s3(db_item.image)
-        
-        # Upload new image
-        new_image_url = await upload_file_to_s3(image)
-        db_item.image = new_image_url
-    
+    wishlist_uuid = _own_wishlist_id(db, wishlist_id, current_user)
+
     # Update other fields if provided
     if name is not None:
         db_item.name = name
@@ -332,6 +378,16 @@ async def update_wishlist_item(
     if owner_seed_amount is not None:
         db_item.owner_seed_amount = owner_seed_amount
 
+    # Handle image update if provided. Last, and upload before delete, so a request
+    # rejected anywhere above or a rejected file keeps the old image.
+    if image:
+        new_image_url = await upload_file_to_s3(image)
+
+        # Delete old image if it exists
+        if db_item.image:
+            delete_file_from_s3(db_item.image)
+        db_item.image = new_image_url
+
     db.commit()
     db.refresh(db_item)
     return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
@@ -381,9 +437,12 @@ def read_user_wishlist(
         # whole page rather than one per item
         selectinload(WishListItem.contributions)
     ).filter(
-        WishListItem.user_id == user_id
+        WishListItem.user_id == user_id,
+        # Only what the user has shared. Open to anyone, so a private list or an
+        # item on no list must never appear here.
+        WishListItem.wishlist.has(Wishlist.is_public == True)
     ).offset(skip).limit(limit).all()
-    
+
     return serialize_items(
         items,
         viewer_user_id=viewer_user_id,
@@ -472,12 +531,10 @@ async def get_item_image(
         
         # Get the object from S3
         response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
-        image_data = response['Body'].read()
-        
+
         # Return the image with proper content type
-        content_type = response.get('ContentType', 'image/jpeg')
-        return Response(content=image_data, media_type=content_type)
-        
+        return image_response(response)
+
     except Exception as e:
         print(f"Error retrieving item image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve item image")

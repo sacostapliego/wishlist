@@ -1,8 +1,11 @@
 import boto3
+import io
 import os
 import uuid
-from fastapi import UploadFile
+from typing import Tuple
+from fastapi import HTTPException, Response, UploadFile
 from botocore.exceptions import ClientError
+from PIL import Image
 
 s3_client = boto3.client(
     's3',
@@ -13,46 +16,64 @@ s3_client = boto3.client(
 
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
+# The client compresses to 2 MB at most; this leaves room for the larger PNG that
+# background removal hands back.
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+# Checked from the header, before any decoding. A small file can claim a huge
+# canvas, and it is the canvas that costs memory.
+MAX_IMAGE_PIXELS = 25_000_000
+
+# Pillow format -> (extension, content type). SVG is left out on purpose: it can
+# carry scripts.
+IMAGE_FORMATS = {
+    'JPEG': ('jpg', 'image/jpeg'),
+    'PNG': ('png', 'image/png'),
+    'WEBP': ('webp', 'image/webp'),
+    'GIF': ('gif', 'image/gif'),
+}
+
+# 'image/jpg' is not a real type, but older uploads stored whatever the client sent.
+SERVABLE_CONTENT_TYPES = {content_type for _, content_type in IMAGE_FORMATS.values()} | {'image/jpg'}
+
+async def read_image_upload(file: UploadFile) -> Tuple[bytes, str]:
+    """
+    Return the upload's bytes and its real Pillow format. The filename and content
+    type both come from the client, so neither is trusted; the format is read from
+    the bytes themselves.
+    """
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+
+    if not content:
+        raise HTTPException(status_code=400, detail='Image file is empty')
+
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail='Image is too large')
+
+    try:
+        with Image.open(io.BytesIO(content), formats=tuple(IMAGE_FORMATS)) as image:
+            image_format = image.format
+            width, height = image.size
+            image.verify()
+    except Exception:
+        raise HTTPException(status_code=400, detail='File must be a JPEG, PNG, WebP or GIF image')
+
+    if width * height > MAX_IMAGE_PIXELS:
+        raise HTTPException(status_code=413, detail='Image dimensions are too large')
+
+    return content, image_format
+
 async def upload_file_to_s3(file: UploadFile, folder: str = '') -> str:
     """
-    Upload a file to S3 and return the URL
+    Upload an image to S3 and return the URL
     """
+    file_content, image_format = await read_image_upload(file)
+    extension, content_type = IMAGE_FORMATS[image_format]
+
+    # Create S3 path with optional folder
+    unique_filename = f"{uuid.uuid4().hex}.{extension}"
+    s3_path = f"{folder}/{unique_filename}" if folder else unique_filename
+
     try:
-        # Basic validation
-        if not file:
-            raise ValueError("File is None")
-            
-        if not file.filename:
-            raise ValueError("Filename is missing")
-        
-        # Read file content (only once!)
-        file_content = await file.read()
-        if not file_content:
-            raise ValueError("File content is empty")
-            
-        # Check if the filename contains base64 data
-        if 'base64' in file.filename:
-            # Extract the content type from the filename if possible
-            content_type = file.content_type
-            if not content_type and 'data:' in file.filename and ';base64' in file.filename:
-                content_type = file.filename.split('data:')[1].split(';')[0]
-            
-            # Generate a proper filename instead of using the base64 string
-            unique_filename = f"{uuid.uuid4().hex}.jpg"  # Default to jpg for images
-            if content_type:
-                ext = content_type.split('/')[-1]
-                unique_filename = f"{uuid.uuid4().hex}.{ext}"
-        else:
-            # Normal file handling
-            file_extension = file.filename.split('.')[-1] if '.' in file.filename else ''
-            unique_filename = f"{uuid.uuid4().hex}.{file_extension}" if file_extension else f"{uuid.uuid4().hex}"
-        
-        # Create S3 path with optional folder
-        s3_path = f"{folder}/{unique_filename}" if folder else unique_filename
-        
-        # Set content type with fallback
-        content_type = file.content_type or 'application/octet-stream'
-        
         # Upload to S3
         s3_client.put_object(
             Bucket=BUCKET_NAME,
@@ -60,17 +81,29 @@ async def upload_file_to_s3(file: UploadFile, folder: str = '') -> str:
             Body=file_content,
             ContentType=content_type
         )
-        
-        # Generate URL
-        url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{s3_path}"
-        return url
-        
-    except ValueError as e:
-        raise Exception(f"Validation error during S3 upload: {str(e)}")
     except ClientError as e:
         raise Exception(f"AWS S3 error: {str(e)}")
-    except Exception as e:
-        raise Exception(f"S3 upload error: {str(e)}")
+
+    # Generate URL
+    url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{s3_path}"
+    return url
+
+def image_response(s3_object: dict) -> Response:
+    """
+    Turn an S3 get_object result into a response. Objects uploaded before
+    validation existed can hold anything, so a stored type that is not an image is
+    never echoed back: an HTML file served as text/html would run on the API's
+    domain.
+    """
+    content_type = s3_object.get('ContentType', 'image/jpeg')
+    if content_type not in SERVABLE_CONTENT_TYPES:
+        content_type = 'application/octet-stream'
+
+    return Response(
+        content=s3_object['Body'].read(),
+        media_type=content_type,
+        headers={'X-Content-Type-Options': 'nosniff'}
+    )
 
 def delete_file_from_s3(url: str) -> bool:
     """
@@ -79,7 +112,7 @@ def delete_file_from_s3(url: str) -> bool:
     try:
         # Extract the key from the URL
         key = url.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
-        
+
         # Delete the object
         s3_client.delete_object(
             Bucket=BUCKET_NAME,

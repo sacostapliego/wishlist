@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import Dict, Any, Optional
 from services.s3_service import delete_file_from_s3, upload_file_to_s3
+from services.rate_limit import limiter, rate_limit
 import bcrypt
 import jwt
 import os
@@ -11,13 +12,20 @@ from datetime import datetime
 
 from models.base import get_db
 from models.user import User, UserCreate, UserResponse, UserLogin
+from middleware.auth import session_stamp
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
 # JWT Settings
 JWT_SECRET = os.getenv('JWT_SECRET')
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
-ACCESS_TOKEN_EXPIRE_DAYS = ACCESS_TOKEN_EXPIRE_MINUTES * 7 # 7 days
+# People open this a few times a year rather than daily, so a short token would
+# mean a login on nearly every visit. Changing a password still revokes it early.
+ACCESS_TOKEN_EXPIRE_DAYS = 90
+
+# Failed logins per email, on top of the per-address limit on the route. An
+# attacker rotating addresses still only gets this many guesses at one account.
+LOGIN_FAILURE_LIMIT = 10
+LOGIN_FAILURE_WINDOW_SECONDS = 15 * 60
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storage."""
@@ -53,7 +61,8 @@ async def signup(
     password: str = Form(...),
     name: Optional[str] = Form(None),
     profile_picture: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit('register', limit=10, window_seconds=60 * 60))
 ):
     """Register a new user"""
     # Check if user exists
@@ -81,7 +90,9 @@ async def signup(
             else:
                 print("Warning: Empty file content detected")
                 raise HTTPException(status_code=400, detail="Profile picture file is empty")
-                
+
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"Profile picture upload error: {str(e)}, type={type(e)}")
             raise HTTPException(status_code=500, detail=f"Error uploading profile picture: {str(e)}")
@@ -103,7 +114,7 @@ async def signup(
         
         # Create access token
         access_token = create_access_token(
-            data={"sub": str(db_user.id)}
+            data={"sub": str(db_user.id), "sid": session_stamp(db_user)}
         )
         
         return {
@@ -124,27 +135,29 @@ async def signup(
         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
 @router.post('/login', response_model=Dict[str, Any])
-def login(form_data: UserLogin, db: Session = Depends(get_db)):
+def login(
+    form_data: UserLogin,
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit('login', limit=10, window_seconds=60))
+):
     """Login an existing user"""
+    failure_key = f'login-failures:{form_data.email.lower()}'
+    limiter.check(failure_key, LOGIN_FAILURE_LIMIT)
+
     user = db.query(User).filter(User.email == form_data.email).first()
-    if not user:
+    if not user or not verify_password(form_data.password, user.password):
+        limiter.record(failure_key, LOGIN_FAILURE_WINDOW_SECONDS)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    if not verify_password(form_data.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
+
     # Create access token with expiry
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
-        data={"sub": str(user.id)}, expires_delta=access_token_expires
+        data={"sub": str(user.id), "sid": session_stamp(user)},
+        expires_delta=access_token_expires
     )
     
     return {

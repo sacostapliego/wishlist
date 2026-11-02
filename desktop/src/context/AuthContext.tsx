@@ -49,6 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         const apiError = error as ApiError
         console.error('Failed server verification:', apiError?.response?.status)
+
+        // The server no longer accepts this token, so stop showing the cached
+        // user as signed in. Other failures may be temporary and keep the session.
+        // Reloading lets middleware and the home page see the cookie is gone, since
+        // both already decided on this page load that the visitor was signed in.
+        if (apiError?.response?.status === 401) {
+          await storage.removeItem('auth_token')
+          await storage.removeItem('user_data')
+          setUser(null)
+          window.location.reload()
+        }
       }
     } catch (error) {
       console.error('Failed to load user', error)
