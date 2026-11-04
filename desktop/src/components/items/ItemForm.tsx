@@ -355,9 +355,13 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
             the mechanism - "expensive item" is what the owner is thinking, and
             the subline says what turning it on actually does. */}
         <Box bg={COLORS.cardDarkLight} borderRadius="lg" p={3}>
+          {/* Fixed once the item exists: the API refuses a switch, because
+              whether one could go through would tell a blind owner if the item
+              was claimed or pledged to. */}
           <Switch.Root
             checked={isContribution}
             onCheckedChange={(e) => setIsContribution(e.checked)}
+            disabled={isEditMode}
             display="flex"
             alignItems="center"
             justifyContent="space-between"
@@ -372,7 +376,9 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
             </Switch.Control>
           </Switch.Root>
           <Text fontSize="xs" color={COLORS.text.muted} mt={2}>
-            Let people chip in together instead of one person buying it.
+            {isEditMode
+              ? 'Set when the item is added. To change it, add the item again.'
+              : 'Let people chip in together instead of one person buying it.'}
           </Text>
         </Box>
 

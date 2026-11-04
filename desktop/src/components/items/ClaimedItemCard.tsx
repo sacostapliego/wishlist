@@ -17,6 +17,7 @@ export interface ClaimedItem {
   /** Nullable in the database, so this arrives as null, not absent. */
   price?: number | null
   image?: string
+  image_token?: string | null
   owner_name: string
   color?: string
   wishlist_id?: string

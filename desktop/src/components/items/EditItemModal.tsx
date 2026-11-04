@@ -5,7 +5,7 @@ import { ItemForm, type ItemFormData, type ItemFormRef } from './ItemForm'
 import { COLORS } from '../../styles/common'
 import { wishlistAPI } from '../../services/wishlist'
 import { toaster } from '../ui/toaster'
-import { API_URL } from '../../services/api'
+import { itemImageUrl } from '../../utils/imageUrls'
 import { createPortal } from 'react-dom'
 import { apiMessage } from '../../utils/apiError'
 
@@ -38,7 +38,7 @@ export function EditItemModal({ isOpen, onClose, itemId, onSuccess }: EditItemMo
         description: itemData.description || '',
         price: itemData.price !== undefined && itemData.price !== null ? String(itemData.price) : '',
         url: itemData.url || '',
-        currentImageUri: itemData.image ? `${API_URL}wishlist/${itemData.id}/image` : undefined,
+        currentImageUri: itemImageUrl(itemData) || undefined,
         priority: itemData.priority || 0,
         isContribution: itemData.is_contribution || false,
         ownerSeedAmount:

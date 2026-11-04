@@ -2,7 +2,7 @@ import os
 import uuid
 import io
 import base64
-from fastapi import APIRouter, Depends, HTTPException, Form, Response, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload, selectinload
@@ -15,12 +15,14 @@ from PIL import Image
 from models.wishlist import Wishlist
 from models.base import get_db
 from models.item import WishListItem, WishListItemCreate, WishListItemUpdate, WishListItemResponse, ScrapeRequest
-from models.item_contribution import ItemContribution
 from middleware.auth import get_current_user, get_current_user_optional
 from services.guest_session import get_guest_token, resolve_guest_session
 from services.item_serializer import serialize_item, serialize_items
 from services.rate_limit import rate_limit
-from services.s3_service import upload_file_to_s3, delete_file_from_s3, image_response, read_image_upload, s3_client
+from services.s3_service import (
+    upload_file_to_s3, delete_file_from_s3, image_response, image_token, image_token_matches,
+    read_image_upload, s3_client
+)
 from services.scraper import scrape_url
 
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
@@ -34,11 +36,13 @@ router = APIRouter(prefix='/wishlist', tags=['wishlist'])
 
 ''' Scrap item details from a URL '''
 @router.post('/scrape-url', tags=['scraper'])
-async def scrape_item_from_url(
+def scrape_item_from_url(
     scrape_request: ScrapeRequest,
     current_user: dict = Depends(get_current_user),
     _: None = Depends(rate_limit('scrape', limit=10, window_seconds=60))
 ):
+    # A plain def, so FastAPI runs it on a worker thread: the scraper's request
+    # and its pause would otherwise hold up every other request.
     scraped_data = scrape_url(str(scrape_request.url))
     if "error" in scraped_data:
         raise HTTPException(status_code=400, detail=scraped_data["error"])
@@ -68,7 +72,8 @@ async def process_image_remove_background(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
+        print(f"Failed to process image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process image")
 
 """ Helper function to remove white background """
 def _remove_white_background(image_data: bytes) -> bytes:
@@ -213,7 +218,9 @@ async def create_wishlist_item(
     except Exception as e:
         if 'image_url' in locals() and image_url:
             delete_file_from_s3(image_url)
-        raise HTTPException(status_code=500, detail=f"Error creating item: {str(e)}")
+        # The text can include SQL and column values, so it stays in the log
+        print(f"Error creating item: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating item")
 
 ''' Get all items '''
 @router.get('/', response_model=List[WishListItemResponse])
@@ -346,49 +353,33 @@ async def update_wishlist_item(
     )
     _validate_contribution_fields(effective_is_contribution, owner_seed_amount)
 
+    # Contribution mode is fixed once the item exists. Switching it would have to
+    # be refused while the item is claimed (on) or has pledges (off), and on a
+    # blind list that refusal is the owner learning what the list hides from them.
+    # Any answer that depends on that state leaks it, so the answer does not
+    # depend on it: the switch is always refused.
     if is_contribution is not None and bool(db_item.is_contribution) != is_contribution:
-        if is_contribution:
-            # Turning it on would make the item both claimed and funded.
-            if (
-                db_item.claimed_by_user_id
-                or db_item.claimed_by_guest_session_id
-                or db_item.claimed_by_name
-            ):
-                raise HTTPException(
-                    status_code=400,
-                    detail='Release the claim on this item before it can take contributions'
-                )
-        else:
-            # Turning it off would strand pledges people have already made.
-            # Deleting them silently is the wrong default: someone said they
-            # would put money in, and the owner should have to see that before it
-            # is thrown away.
-            pledge_count = db.query(ItemContribution).filter(
-                ItemContribution.item_id == db_item.id
-            ).count()
-
-            if pledge_count:
-                raise HTTPException(
-                    status_code=400,
-                    detail='People have already contributed to this item, so it cannot stop taking contributions'
-                )
-
-        db_item.is_contribution = is_contribution
+        raise HTTPException(
+            status_code=400,
+            detail='Contributions are chosen when an item is added. Add a new item to change this'
+        )
 
     if owner_seed_amount is not None:
         db_item.owner_seed_amount = owner_seed_amount
 
     # Handle image update if provided. Last, and upload before delete, so a request
-    # rejected anywhere above or a rejected file keeps the old image.
+    # rejected anywhere above or a rejected file keeps the old image. The old one
+    # goes only after the commit, so a failed commit keeps it too.
+    replaced_image = None
     if image:
         new_image_url = await upload_file_to_s3(image)
-
-        # Delete old image if it exists
-        if db_item.image:
-            delete_file_from_s3(db_item.image)
+        replaced_image = db_item.image
         db_item.image = new_image_url
 
     db.commit()
+    if replaced_image:
+        delete_file_from_s3(replaced_image)
+
     db.refresh(db_item)
     return serialize_item(db_item, viewer_user_id=uuid.UUID(current_user["user_id"]))
 
@@ -407,11 +398,13 @@ def delete_wishlist_item(
     if not db_item:
         raise HTTPException(status_code=404, detail='Item not found')
     
-    # Delete image from S3 if it exists
-    if db_item.image:
-        delete_file_from_s3(db_item.image)
+    image_url = db_item.image
     db.delete(db_item)
     db.commit()
+
+    # After the commit, so a failed delete keeps the item's image
+    if image_url:
+        delete_file_from_s3(image_url)
     return {'detail': 'Item deleted successfully'}
 
 """ Get another user's wishlist """
@@ -515,13 +508,26 @@ async def remove_item_image_background(
 
 """Get an item's image directly from S3"""
 @router.get('/{item_id}/image', response_class=Response)
-async def get_item_image(
+def get_item_image(
     item_id: uuid.UUID,
+    t: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    """Get an item's image directly from S3"""
-    item = db.query(WishListItem).filter(WishListItem.id == item_id).first()
-    if not item or not item.image:
+    """
+    Get an item's image directly from S3. An item on a shared list is open to
+    anyone, as the list is; any other needs the image_token sent with the item.
+    """
+    item = db.query(WishListItem).options(
+        joinedload(WishListItem.wishlist)
+    ).filter(WishListItem.id == item_id).first()
+
+    on_shared_list = bool(item and item.wishlist and item.wishlist.is_public)
+    if (
+        not item
+        or not item.image
+        or not (on_shared_list or image_token_matches(item.image, t))
+    ):
+        # The same answer as a missing item, so a probe learns nothing
         raise HTTPException(status_code=404, detail="Item image not found")
     
     try:
@@ -613,6 +619,11 @@ def claim_item(
             status_code=400,
             detail="This item takes contributions rather than being claimed"
         )
+
+    # Asked before the claim state is looked at: the owner of a blind list would
+    # otherwise learn from "already claimed" what the list hides from them.
+    if current_user and item.user_id == uuid.UUID(current_user["user_id"]):
+        raise HTTPException(status_code=400, detail="You cannot claim an item on your own list")
 
     if item.claimed_by_user_id or item.claimed_by_guest_session_id or item.claimed_by_name:
         raise HTTPException(status_code=400, detail="Item is already claimed")
@@ -708,6 +719,7 @@ def get_my_claimed_items(
             "description": item.description,
             "price": item.price,
             "image": item.image,
+            "image_token": image_token(item.image),
             "owner_id": str(item.user_id),
             "owner_name": owner.name if owner and owner.name else owner.username if owner else "Unknown",
             "wishlist_id": str(item.wishlist_id) if item.wishlist_id else None,

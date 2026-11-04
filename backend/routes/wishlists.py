@@ -1,20 +1,22 @@
 from html import escape
 import os
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 import uuid
 
-from services.s3_service import upload_file_to_s3, delete_file_from_s3
 from models.base import get_db
 from models.wishlist import Wishlist, WishlistCreate, WishlistUpdate, WishlistResponse
 from models.item import WishListItem
+from models.saved_wishlist import SavedWishlist
 from middleware.auth import get_current_user
 from models.user import User
 
-from services.s3_service import upload_file_to_s3, delete_file_from_s3, image_response, s3_client
+from services.s3_service import (
+    upload_file_to_s3, delete_file_from_s3, image_response, image_token, image_token_matches, s3_client
+)
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
 
@@ -41,6 +43,7 @@ def build_wishlist_response(db_wishlist: Wishlist, item_count: int) -> dict:
     """Helper to build a wishlist response dict with item count"""
     response_data = {k: v for k, v in db_wishlist.__dict__.items() if not k.startswith('_')}
     response_data['item_count'] = item_count
+    response_data['thumbnail_token'] = image_token(db_wishlist.thumbnail_image)
     return response_data
 
 @router.post('/', response_model=WishlistResponse)
@@ -70,7 +73,8 @@ async def create_wishlist(
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
+            print(f"Error uploading thumbnail: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error uploading thumbnail")
 
     parsed_due_date: Optional[date_type] = None
     if due_date:
@@ -176,6 +180,9 @@ async def update_wishlist(
     if db_wishlist is None:
         raise HTTPException(status_code=404, detail="Wishlist not found")
 
+    # Removed from S3 only after the commit, so a failed commit keeps it
+    replaced_thumbnail: Optional[str] = None
+
     # Handle thumbnail image upload
     if thumbnail_image is not None:
         # Upload first, so a rejected file keeps the old thumbnail
@@ -184,14 +191,13 @@ async def update_wishlist(
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error uploading thumbnail: {str(e)}")
-        if db_wishlist.thumbnail_image is not None:
-            delete_file_from_s3(db_wishlist.thumbnail_image)
+            print(f"Error uploading thumbnail: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error uploading thumbnail")
+        replaced_thumbnail = db_wishlist.thumbnail_image
         db_wishlist.thumbnail_image = thumbnail_image_url
     elif remove_thumbnail_image:
-        if db_wishlist.thumbnail_image is not None:
-            delete_file_from_s3(db_wishlist.thumbnail_image)
-            db_wishlist.thumbnail_image = None
+        replaced_thumbnail = db_wishlist.thumbnail_image
+        db_wishlist.thumbnail_image = None
 
     # Handle due date
     if remove_due_date:
@@ -227,6 +233,9 @@ async def update_wishlist(
         db_wishlist.visibility_mode = validate_visibility_mode(visibility_mode)
 
     db.commit()
+    if replaced_thumbnail is not None:
+        delete_file_from_s3(replaced_thumbnail)
+
     db.refresh(db_wishlist)
 
     item_count = db.query(func.count(WishListItem.id)).filter(
@@ -250,15 +259,23 @@ def delete_wishlist(
     if db_wishlist is None:
         raise HTTPException(status_code=404, detail="Wishlist not found")
 
-    for item in db_wishlist.items:
-        if item.image is not None:
-            delete_file_from_s3(str(item.image))
+    # Collected now, deleted after the commit: if the commit fails the list is
+    # still there, and it needs its images.
+    files = [item.image for item in db_wishlist.items]
+    files.append(db_wishlist.thumbnail_image)
 
-    if db_wishlist.thumbnail_image is not None:
-        delete_file_from_s3(db_wishlist.thumbnail_image)
+    # Other people's saves of this list. The foreign key does not cascade in
+    # every database (migration 006 adds it), so they are removed here.
+    db.query(SavedWishlist).filter(
+        SavedWishlist.wishlist_id == db_wishlist.id
+    ).delete(synchronize_session=False)
 
     db.delete(db_wishlist)
     db.commit()
+
+    for url in files:
+        if url is not None:
+            delete_file_from_s3(str(url))
 
     return {"message": "Wishlist deleted successfully"}
 
@@ -305,16 +322,24 @@ def get_public_wishlist(
     return build_wishlist_response(db_wishlist, item_count)
 
 @router.get('/{wishlist_id}/thumbnail', response_class=Response)
-async def get_wishlist_thumbnail(
+def get_wishlist_thumbnail(
     wishlist_id: uuid.UUID,
+    t: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    """Get a wishlist's thumbnail image directly from S3"""
+    """
+    Get a wishlist's thumbnail image directly from S3. A shared list's is open to
+    anyone; a private list's needs the thumbnail_token its owner was sent.
+    """
     db_wishlist = db.query(Wishlist).filter(
         Wishlist.id == wishlist_id
     ).first()
 
-    if db_wishlist is None or db_wishlist.thumbnail_image is None:
+    if (
+        db_wishlist is None
+        or db_wishlist.thumbnail_image is None
+        or not (db_wishlist.is_public or image_token_matches(db_wishlist.thumbnail_image, t))
+    ):
         raise HTTPException(status_code=404, detail="Thumbnail not found")
 
     try:

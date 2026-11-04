@@ -4,6 +4,7 @@ from typing import List, Optional
 from models.item import WishListItem, WishListItemResponse
 from models.item_contribution import ItemContribution, ItemContributionResponse
 from models.wishlist import Wishlist
+from services.s3_service import image_token
 
 # A wishlist whose owner must not see who claimed what. The default everywhere,
 # because revealing a claim by accident cannot be undone.
@@ -122,6 +123,7 @@ def serialize_item(
     contributor count, nothing a progress bar could be drawn from.
     """
     item_dict = WishListItemResponse.model_validate(item).model_dump()
+    item_dict['image_token'] = image_token(item.image)
 
     if item.is_contribution:
         item_dict.update(_contribution_summary(item, viewer_user_id))

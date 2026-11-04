@@ -85,6 +85,8 @@ class WishlistResponse(BaseModel):
     thumbnail_type: Optional[str] = 'icon'
     thumbnail_icon: Optional[str] = None
     thumbnail_image: Optional[str] = None
+    # Sent back as ?t= on GET /wishlists/{id}/thumbnail while the list is private.
+    thumbnail_token: Optional[str] = None
     use_item_colors: bool = False
     default_view: str = 'list'
     due_date: Optional[date] = None

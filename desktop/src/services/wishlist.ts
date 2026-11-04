@@ -17,6 +17,7 @@ export interface ClaimedItemResponse {
   description?: string | null;
   price?: number | null;
   image?: string;
+  image_token?: string | null;
   owner_id: string;
   owner_name: string;
   wishlist_id?: string;

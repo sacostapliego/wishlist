@@ -7,7 +7,7 @@ import uuid
 from models.base import get_db
 from models.user import PublicUserResponse, User, UserResponse
 from middleware.auth import get_current_user
-from routes.auth import get_password_hash, verify_password
+from routes.auth import get_password_hash, validate_new_password, verify_password
 
 from services.s3_service import upload_file_to_s3, delete_file_from_s3, image_response, s3_client
 
@@ -56,10 +56,34 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     # A stolen token must not be enough to take the account over for good. Changing
-    # the password also signs out every token, including the one sent here.
-    if password is not None:
+    # the password also signs out every token, including the one sent here, and
+    # the email is what a future password reset would go to.
+    email_changing = email is not None and email != db_user.email
+    if password is not None or email_changing:
         if current_password is None or not verify_password(current_password, db_user.password):
             raise HTTPException(status_code=403, detail="Current password is incorrect")
+    if password is not None:
+        validate_new_password(password)
+
+    # Update other fields if provided. Checked before any upload, so a refused
+    # change does not leave a new image behind in S3.
+    if email_changing:
+        existing_email = db.query(User).filter(User.email == email).first()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        db_user.email = email
+
+    if username is not None:
+        # Check if the new username is already taken
+        if username != db_user.username:
+            existing_username = db.query(User).filter(User.username == username).first()
+            if existing_username:
+                raise HTTPException(status_code=400, detail="Username already taken")
+        db_user.username = username
+
+    # S3 files to remove once the commit has succeeded. Deleting first would lose
+    # the picture if the commit then failed.
+    replaced_files = []
 
     # Handle profile picture upload if provided
     if profile_picture:
@@ -69,34 +93,17 @@ async def update_user(
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error uploading profile picture: {str(e)}")
+            print(f"Error uploading profile picture: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error uploading profile picture")
 
-        # Delete old image if it exists
         if db_user.pfp:
-            delete_file_from_s3(db_user.pfp)
+            replaced_files.append(db_user.pfp)
         db_user.pfp = pfp_url
 
     elif remove_profile_picture:
         if db_user.pfp:
-            delete_file_from_s3(db_user.pfp)
+            replaced_files.append(db_user.pfp)
             db_user.pfp = None
-    
-    # Update other fields if provided
-    if email is not None:
-        # Check if the new email is already taken
-        if email != db_user.email:
-            existing_email = db.query(User).filter(User.email == email).first()
-            if existing_email:
-                raise HTTPException(status_code=400, detail="Email already registered")
-        db_user.email = email
-        
-    if username is not None:
-        # Check if the new username is already taken
-        if username != db_user.username:
-            existing_username = db.query(User).filter(User.username == username).first()
-            if existing_username:
-                raise HTTPException(status_code=400, detail="Username already taken")
-        db_user.username = username
         
     if name is not None:
         db_user.name = name
@@ -126,6 +133,9 @@ async def update_user(
         db_user.jacket_size = jacket_size
 
     db.commit()
+    for url in replaced_files:
+        delete_file_from_s3(url)
+
     db.refresh(db_user)
     return db_user
 
@@ -144,13 +154,19 @@ def delete_user(
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Delete profile picture from S3 if it exists
-    if db_user.pfp:
-        delete_file_from_s3(db_user.pfp)
-    
+    # Everything in S3 that belongs to the account, collected now and deleted only
+    # after the commit, so a failed delete does not leave rows pointing at nothing.
+    files = [db_user.pfp]
+    files += [item.image for item in db_user.wishlist_items]
+    files += [wishlist.thumbnail_image for wishlist in db_user.wishlists]
+
     db.delete(db_user)
     db.commit()
-    
+
+    for url in files:
+        if url:
+            delete_file_from_s3(url)
+
     return {"message": "User deleted successfully"}
 
 # Get user profile image

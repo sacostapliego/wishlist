@@ -61,11 +61,14 @@ This is enforced in three places, on purpose:
 The routes are where a future code path will forget; the constraint is what
 catches it when they do.
 
-Switching an existing item between modes is allowed but conditional. Turning
-contributions **on** requires the claim to be released first. Turning them
-**off** is refused while pledges exist — deleting them silently is the wrong
-default, because somebody said they would put money in and the owner should have
-to see that before it is thrown away.
+An item's mode is fixed once it exists. Switching used to be allowed but
+conditional: turning contributions **on** needed the claim released first, and
+turning them **off** was refused while pledges existed. On a blind list those
+refusals were the leak — an owner who tried the switch learned the item had been
+claimed or pledged to. Any answer that depends on that state reveals it, so the
+answer no longer depends on it: `update_wishlist_item` always refuses a switch,
+and the edit form disables the toggle. To change modes, the owner adds the item
+again.
 
 ## One pledge per person
 

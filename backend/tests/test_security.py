@@ -25,6 +25,7 @@ from middleware.auth import JWT_SECRET, session_stamp
 from models.base import get_db
 from routes import auth as auth_routes
 from routes import items as item_routes
+from routes import wishlists as wishlist_routes
 from services import s3_service
 from services.rate_limit import limiter
 from services.s3_service import MAX_UPLOAD_BYTES, image_response
@@ -72,7 +73,10 @@ class StubDb:
         self.query_chain.limit.return_value = self.query_chain
         self.query_chain.first.return_value = first_result
         self.query_chain.all.return_value = []
+        self.query_chain.count.return_value = 0
         self.committed = False
+        self.commit_error = None
+        self.deleted = []
 
     def query(self, *args):
         return self.query_chain
@@ -80,7 +84,12 @@ class StubDb:
     def add(self, row):
         pass
 
+    def delete(self, row):
+        self.deleted.append(row)
+
     def commit(self):
+        if self.commit_error:
+            raise self.commit_error
         self.committed = True
 
     def refresh(self, row):
@@ -103,6 +112,9 @@ def use_db():
 def s3(monkeypatch):
     mock = MagicMock()
     monkeypatch.setattr(s3_service, 's3_client', mock)
+    # The image routes import the client by name, so they hold their own reference
+    monkeypatch.setattr(item_routes, 's3_client', mock)
+    monkeypatch.setattr(wishlist_routes, 's3_client', mock)
     return mock
 
 @pytest.fixture(autouse=True)
@@ -381,3 +393,246 @@ def test_a_right_password_still_works_and_carries_a_stamp(client, use_db):
 
     payload = jwt.decode(response.json()['access_token'], JWT_SECRET, algorithms=['HS256'])
     assert payload['sid'] == session_stamp(user)
+
+# Passwords ------------------------------------------------------------------
+
+def test_a_password_over_72_bytes_is_a_wrong_password_not_a_crash(client, use_db):
+    user = make_user()
+    use_db(user)
+    response = client.post('/auth/login', json={'email': user.email, 'password': 'x' * 100})
+    assert response.status_code == 401
+
+def test_login_for_an_unknown_email_still_checks_a_hash(client, use_db, monkeypatch):
+    use_db(None)
+    checked = []
+    real_verify = auth_routes.verify_password
+    monkeypatch.setattr(
+        auth_routes, 'verify_password',
+        lambda plain, hashed: checked.append(hashed) or real_verify(plain, hashed)
+    )
+    client.post('/auth/login', json={'email': 'nobody@example.com', 'password': 'guess'})
+    assert checked == [auth_routes._DUMMY_HASH]
+
+@pytest.mark.parametrize('password', ['short', 'x' * 73])
+def test_sign_up_refuses_a_bad_password(client, use_db, password):
+    db = use_db(None)
+    response = client.post(
+        '/auth/register',
+        data={'email': 'new@example.com', 'username': 'new', 'password': password}
+    )
+    assert response.status_code == 400
+    assert not db.committed
+
+def test_a_new_password_must_be_long_enough(client, use_db):
+    user = make_user()
+    db = use_db(user)
+    response = client.put(
+        f'/users/{USER_ID}',
+        headers=bearer(user),
+        data={'password': 'short', 'current_password': PASSWORD}
+    )
+    assert response.status_code == 400
+    assert not db.committed
+
+@pytest.mark.parametrize('form', [
+    {'email': 'thief@example.com'},
+    {'email': 'thief@example.com', 'current_password': 'wrong'},
+])
+def test_changing_the_email_needs_the_current_password(client, use_db, form):
+    user = make_user()
+    db = use_db(user)
+    response = client.put(f'/users/{USER_ID}', headers=bearer(user), data=form)
+    assert response.status_code == 403
+    assert not db.committed
+
+def test_sending_the_same_email_back_needs_no_password(client, use_db):
+    user = make_user()
+    use_db(user)
+    response = client.put(f'/users/{USER_ID}', headers=bearer(user), data={'email': user.email})
+    assert response.status_code == 200
+
+# Errors ---------------------------------------------------------------------
+
+def test_a_database_error_is_not_sent_to_the_client(client, use_db):
+    user = make_user()
+    db = use_db(user)
+    db.commit_error = RuntimeError('INSERT INTO wishlist_items secret_column')
+    response = client.post('/wishlist/', headers=bearer(user), data={'name': 'Item'})
+    assert response.status_code == 500
+    assert 'secret_column' not in response.text
+
+# Blind lists ----------------------------------------------------------------
+
+def test_an_owner_claiming_their_own_item_is_not_told_it_is_claimed(client, use_db):
+    user = make_user()
+    item = SimpleNamespace(
+        id=uuid.uuid4(), user_id=USER_ID, wishlist_id=uuid.uuid4(), is_contribution=False,
+        claimed_by_user_id=uuid.uuid4(), claimed_by_guest_session_id=None, claimed_by_name=None,
+    )
+    wishlist = SimpleNamespace(id=item.wishlist_id, is_public=True, visibility_mode='blind')
+    db = use_db(user)
+    db.query_chain.first.side_effect = [user, item, wishlist]
+    response = client.post(f'/wishlist/{item.id}/claim', headers=bearer(user))
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'You cannot claim an item on your own list'
+    assert not db.committed
+
+# Images ---------------------------------------------------------------------
+
+IMAGE_URL = 'https://test-bucket.s3.amazonaws.com/wishlist_images/a.png'
+
+def image_item(is_public):
+    return SimpleNamespace(
+        id=uuid.uuid4(), image=IMAGE_URL,
+        wishlist=SimpleNamespace(is_public=is_public)
+    )
+
+def test_a_private_item_image_needs_its_token(client, use_db, s3):
+    item = image_item(is_public=False)
+    use_db(item)
+    s3.get_object.return_value = {'ContentType': 'image/png', 'Body': io.BytesIO(png_bytes())}
+
+    assert client.get(f'/wishlist/{item.id}/image').status_code == 404
+    assert client.get(f'/wishlist/{item.id}/image?t=guess').status_code == 404
+    token = s3_service.image_token(IMAGE_URL)
+    assert client.get(f'/wishlist/{item.id}/image?t={token}').status_code == 200
+
+def test_a_shared_item_image_loads_for_anyone(client, use_db, s3):
+    item = image_item(is_public=True)
+    use_db(item)
+    s3.get_object.return_value = {'ContentType': 'image/png', 'Body': io.BytesIO(png_bytes())}
+    assert client.get(f'/wishlist/{item.id}/image').status_code == 200
+
+def test_a_private_list_thumbnail_needs_its_token(client, use_db, s3):
+    wishlist = SimpleNamespace(id=uuid.uuid4(), thumbnail_image=IMAGE_URL, is_public=False)
+    use_db(wishlist)
+    s3.get_object.return_value = {'ContentType': 'image/png', 'Body': io.BytesIO(png_bytes())}
+
+    assert client.get(f'/wishlists/{wishlist.id}/thumbnail').status_code == 404
+    token = s3_service.image_token(IMAGE_URL)
+    assert client.get(f'/wishlists/{wishlist.id}/thumbnail?t={token}').status_code == 200
+
+def test_replacing_an_image_changes_its_token():
+    other = IMAGE_URL.replace('a.png', 'b.png')
+    assert s3_service.image_token(IMAGE_URL) != s3_service.image_token(other)
+
+def test_a_failed_list_delete_keeps_its_images(client, use_db, s3):
+    user = make_user()
+    wishlist = SimpleNamespace(
+        id=uuid.uuid4(), thumbnail_image=IMAGE_URL,
+        items=[SimpleNamespace(image=IMAGE_URL)]
+    )
+    db = use_db(user)
+    db.query_chain.first.side_effect = [user, wishlist]
+    db.commit_error = RuntimeError('foreign key')
+    response = client.delete(f'/wishlists/{wishlist.id}', headers=bearer(user))
+    assert response.status_code == 500
+    s3.delete_object.assert_not_called()
+
+def test_a_list_delete_removes_its_images_after_the_commit(client, use_db, s3):
+    user = make_user()
+    wishlist = SimpleNamespace(
+        id=uuid.uuid4(), thumbnail_image=IMAGE_URL,
+        items=[SimpleNamespace(image=IMAGE_URL.replace('a.png', 'b.png'))]
+    )
+    db = use_db(user)
+    db.query_chain.first.side_effect = [user, wishlist]
+    response = client.delete(f'/wishlists/{wishlist.id}', headers=bearer(user))
+    assert response.status_code == 200
+    assert db.committed
+    assert s3.delete_object.call_count == 2
+
+def test_deleting_an_account_removes_its_item_images(client, use_db, s3):
+    user = make_user(
+        pfp=IMAGE_URL,
+        wishlist_items=[SimpleNamespace(image=IMAGE_URL.replace('a.png', 'b.png'))],
+        wishlists=[SimpleNamespace(thumbnail_image=None)],
+    )
+    use_db(user)
+    response = client.delete(f'/users/{USER_ID}', headers=bearer(user))
+    assert response.status_code == 200
+    assert s3.delete_object.call_count == 2
+
+# Guest sessions -------------------------------------------------------------
+
+def test_a_full_list_makes_room_for_a_new_guest(use_db):
+    from services.guest_session import MAX_SESSIONS_PER_WISHLIST, create_guest_session
+
+    idle = SimpleNamespace(id=uuid.uuid4())
+    db = use_db(idle)
+    db.query_chain.count.return_value = MAX_SESSIONS_PER_WISHLIST
+    db.query_chain.order_by.return_value = db.query_chain
+
+    _, token = create_guest_session(db, uuid.uuid4(), 'Aunt May')
+    assert db.deleted == [idle]
+    assert token
+
+def test_a_full_list_of_active_guests_still_refuses(use_db):
+    from fastapi import HTTPException
+    from services.guest_session import MAX_SESSIONS_PER_WISHLIST, create_guest_session
+
+    db = use_db(None)
+    db.query_chain.count.return_value = MAX_SESSIONS_PER_WISHLIST
+    db.query_chain.order_by.return_value = db.query_chain
+
+    with pytest.raises(HTTPException) as refused:
+        create_guest_session(db, uuid.uuid4(), 'Aunt May')
+    assert refused.value.status_code == 429
+
+# Scraper --------------------------------------------------------------------
+
+def test_only_amazon_links_are_rewritten():
+    from services import scraper
+    assert scraper.is_amazon_host('www.amazon.co.uk')
+    assert scraper.is_amazon_host('a.co')
+    assert not scraper.is_amazon_host('www.target.com')
+    assert not scraper.is_amazon_host('notamazon.com')
+
+@pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.5', '169.254.169.254', '::1'])
+def test_the_scraper_will_not_fetch_a_private_address(monkeypatch, address):
+    from services import scraper
+    monkeypatch.setattr(
+        scraper.socket, 'getaddrinfo',
+        lambda *args, **kwargs: [(None, None, None, None, (address, 0))]
+    )
+    assert scraper.scrape_url('http://internal.example/') == {'error': 'That link cannot be fetched'}
+
+def test_the_scraper_reads_open_graph_and_schema_tags():
+    from bs4 import BeautifulSoup
+    from services import scraper
+    soup = BeautifulSoup(
+        '<html><head>'
+        '<meta property="og:title" content="Blue Mug">'
+        '<meta property="og:image" content="/mug.jpg">'
+        '<script type="application/ld+json">{"@type": "Product", "offers": {"price": "12.50"}}</script>'
+        '</head></html>',
+        'html.parser'
+    )
+    details = scraper.scrape_generic(soup)
+    assert details['name'] == 'Blue Mug'
+    assert details['price'] == 12.5
+    assert details['image_url'] == '/mug.jpg'
+
+# Contribution mode ----------------------------------------------------------
+
+@pytest.mark.parametrize('was_contribution, claimed_by', [
+    (False, None), (False, uuid.uuid4()), (True, None),
+])
+def test_contribution_mode_cannot_be_switched_whatever_the_item_state(
+    client, use_db, was_contribution, claimed_by
+):
+    user = make_user()
+    item = SimpleNamespace(
+        id=uuid.uuid4(), image=None, is_contribution=was_contribution,
+        claimed_by_user_id=claimed_by, claimed_by_guest_session_id=None, claimed_by_name=None,
+    )
+    db = use_db(user)
+    db.query_chain.first.side_effect = [user, item]
+    response = client.put(
+        f'/wishlist/{item.id}',
+        headers=bearer(user),
+        data={'is_contribution': str(not was_contribution).lower()}
+    )
+    assert response.status_code == 400
+    assert response.json()['detail'].startswith('Contributions are chosen when an item is added')
+    assert not db.committed

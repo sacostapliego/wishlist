@@ -161,6 +161,7 @@ function AllWishlistsPage({ type }: AllWishlistsPageProps) {
           thumbnail_type: w.thumbnail_type,
           thumbnail_icon: w.thumbnail_icon,
           thumbnail_image: w.thumbnail_image,
+          thumbnail_token: w.thumbnail_token,
           due_date: w.due_date,
         }))
         setWishlists(transformed)

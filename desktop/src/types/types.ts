@@ -14,6 +14,8 @@ export interface Wishlist {
   thumbnail_type?: 'icon' | 'image'
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
+  /** Needed to load a private list's thumbnail; see utils/imageUrls.ts. */
+  thumbnail_token?: string | null
   item_count?: number
   updated_at?: string
   created_at?: string
@@ -39,6 +41,8 @@ export interface WishlistItem {
   name: string
   description?: string
   image?: string
+  /** Needed to load the image while its list is private; see utils/imageUrls.ts. */
+  image_token?: string | null
   price?: number
   url?: string
   wishlist_id: string

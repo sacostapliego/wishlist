@@ -3,7 +3,7 @@
 import { Box, Heading, Text, IconButton, HStack } from '@chakra-ui/react'
 import { LuEllipsisVertical, LuCopy, LuExternalLink } from 'react-icons/lu'
 import { COLORS } from '../styles/common'
-import { API_URL } from '../services/api'
+import { itemImageUrl } from '../utils/imageUrls'
 import { toaster } from '../components/ui/toaster'
 import { ItemDetailContent } from '../components/items/ItemDetailContent'
 import { useItemDetail } from '../hooks/useItemDetail'
@@ -151,7 +151,7 @@ function ItemPage({ wishlistId, itemId }: ItemPageProps) {
     )
   }
 
-  const imageUrl = item.image ? `${API_URL}wishlist/${item.id}/image` : null
+  const imageUrl = itemImageUrl(item) || null
 
   return (
     <Box h={{ base: 'calc(100vh + 80px)', md: 'calc(100vh - 32px)' }} w="100%" position="relative">

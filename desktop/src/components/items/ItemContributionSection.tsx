@@ -75,12 +75,6 @@ function ContributionProgress({ item, accent }: ContributionProgressProps) {
           />
         </Box>
       )}
-
-      {!hasGoal && (
-        <Text color={COLORS.text.secondary} fontSize="xs">
-          No target set — anything helps.
-        </Text>
-      )}
     </VStack>
   )
 }

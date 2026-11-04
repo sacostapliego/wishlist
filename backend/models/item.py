@@ -105,7 +105,10 @@ class WishListItemResponse(WishListItemBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     image: Optional[str] = None
-    
+    # Sent back as ?t= on GET /wishlist/{id}/image. Only needed while the item's
+    # list is private; see image_token in services/s3_service.py.
+    image_token: Optional[str] = None
+
     claimed_at: Optional[datetime] = None
     
     # Who claimed it, resolved to a display name. Never the raw identity fields -

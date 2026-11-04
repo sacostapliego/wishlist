@@ -1,6 +1,6 @@
 import { LuGift, LuShoppingCart, LuTag, LuStar, LuHeart, LuDiamond, LuBike, LuGamepad2, LuShirt, LuPlane, LuHouse, LuBook } from 'react-icons/lu'
 import type { IconType } from 'react-icons'
-import { API_URL } from '../services/api'
+import { wishlistThumbnailUrl } from './imageUrls'
 
 export const WISHLIST_ICON_MAP: Record<string, IconType> = {
   'gift-outline': LuGift,
@@ -33,6 +33,7 @@ export function resolveWishlistThumbnail(wishlist: {
   thumbnail_type?: 'icon' | 'image'
   thumbnail_icon?: string | null
   thumbnail_image?: string | null
+  thumbnail_token?: string | null
   image?: string
   /** Absolute URL for thumbnails in static demos — wins over API URLs */
   demo_thumbnail_url?: string | null
@@ -41,7 +42,7 @@ export function resolveWishlistThumbnail(wishlist: {
     return { type: 'image', url: wishlist.demo_thumbnail_url }
   }
   if (wishlist.thumbnail_type === 'image' && wishlist.thumbnail_image && wishlist.id) {
-    return { type: 'image', url: `${API_URL}wishlists/${wishlist.id}/thumbnail` }
+    return { type: 'image', url: wishlistThumbnailUrl(wishlist) }
   }
   const iconKey = wishlist.thumbnail_icon || wishlist.image || null
   return { type: 'icon', icon: getWishlistIcon(iconKey) }

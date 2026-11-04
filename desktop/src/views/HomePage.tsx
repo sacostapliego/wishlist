@@ -113,6 +113,7 @@ function HomePage() {
         thumbnail_type: wishlist.thumbnail_type,
         thumbnail_icon: wishlist.thumbnail_icon,
         thumbnail_image: wishlist.thumbnail_image,
+        thumbnail_token: wishlist.thumbnail_token,
         due_date: wishlist.due_date,
         itemCount: wishlist.item_count,
       }))
@@ -129,6 +130,7 @@ function HomePage() {
           description: item.description,
           price: item.price,
           image: item.image,
+          image_token: item.image_token,
           owner_name: item.owner_name,
           color: item.wishlist_color,
           wishlist_id: item.wishlist_id,

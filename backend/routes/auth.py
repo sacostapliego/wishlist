@@ -27,13 +27,36 @@ ACCESS_TOKEN_EXPIRE_DAYS = 90
 LOGIN_FAILURE_LIMIT = 10
 LOGIN_FAILURE_WINDOW_SECONDS = 15 * 60
 
+MIN_PASSWORD_LENGTH = 8
+# bcrypt only reads the first 72 bytes, and bcrypt 5 raises on anything longer
+# rather than quietly ignoring the rest.
+MAX_PASSWORD_BYTES = 72
+
+def validate_new_password(password: str) -> None:
+    """Rules for a password being set, at sign-up or on a change."""
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
+        )
+    if len(password.encode('utf-8')) > MAX_PASSWORD_BYTES:
+        raise HTTPException(status_code=400, detail="That password is too long")
+
 def get_password_hash(password: str) -> str:
     """Hash a password for storage."""
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+# Checked against when the email has no account, so a miss costs the same bcrypt
+# work as a wrong password and the response time does not tell the two apart.
+_DUMMY_HASH = get_password_hash('not-a-real-password')
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    password_bytes = plain_password.encode('utf-8')
+    if len(password_bytes) > MAX_PASSWORD_BYTES:
+        # No stored password can be this long, so it cannot match.
+        return False
+    return bcrypt.checkpw(password_bytes, hashed_password.encode('utf-8'))
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """Create a JWT token."""
@@ -65,6 +88,8 @@ async def signup(
     _: None = Depends(rate_limit('register', limit=10, window_seconds=60 * 60))
 ):
     """Register a new user"""
+    validate_new_password(password)
+
     # Check if user exists
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
@@ -95,7 +120,7 @@ async def signup(
             raise
         except Exception as e:
             print(f"Profile picture upload error: {str(e)}, type={type(e)}")
-            raise HTTPException(status_code=500, detail=f"Error uploading profile picture: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error uploading profile picture")
     
     try:
         # Create new user
@@ -132,7 +157,9 @@ async def signup(
         # Clean up S3 if user creation fails
         if pfp_url:
             delete_file_from_s3(pfp_url)
-        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+        # The text can include SQL and column values, so it stays in the log
+        print(f"Error creating user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error creating user")
 
 @router.post('/login', response_model=Dict[str, Any])
 def login(
@@ -145,7 +172,8 @@ def login(
     limiter.check(failure_key, LOGIN_FAILURE_LIMIT)
 
     user = db.query(User).filter(User.email == form_data.email).first()
-    if not user or not verify_password(form_data.password, user.password):
+    password_ok = verify_password(form_data.password, user.password if user else _DUMMY_HASH)
+    if not user or not password_ok:
         limiter.record(failure_key, LOGIN_FAILURE_WINDOW_SECONDS)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

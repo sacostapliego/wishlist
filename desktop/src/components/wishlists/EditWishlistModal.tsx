@@ -7,7 +7,7 @@ import { COLORS } from '../../styles/common'
 import wishlistAPI from '../../services/wishlist'
 import { toaster } from '../ui/toaster'
 import type { UpdateWishlistData } from '../../types/types'
-import { API_URL } from '../../services/api'
+import { wishlistThumbnailUrl } from '../../utils/imageUrls'
 import { createPortal } from 'react-dom'
 
 interface EditWishlistModalProps {
@@ -43,7 +43,7 @@ export function EditWishlistModal({ isOpen, onClose, wishlistId, onSuccess }: Ed
         thumbnail_type: wishlistData.thumbnail_type || 'icon',
         thumbnail_icon: wishlistData.thumbnail_icon || null,
         existing_thumbnail_image_url: wishlistData.thumbnail_image 
-        ? `${API_URL}wishlists/${wishlistId}/thumbnail`
+        ? wishlistThumbnailUrl({ id: wishlistId, thumbnail_token: wishlistData.thumbnail_token })
         : null,
         use_item_colors: wishlistData.use_item_colors ?? false,
         default_view: wishlistData.default_view || 'list',

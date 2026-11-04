@@ -1,7 +1,7 @@
 import { Box, Image, Text, HStack, VStack, Stack } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { COLORS } from '../../styles/common'
-import { API_URL } from '../../services/api'
+import { itemImageUrl } from '../../utils/imageUrls'
 import getLightColor from '../common/getLightColor'
 import { getPriorityColor } from '../common/getPriorityColor'
 import { LuCheck } from 'react-icons/lu'
@@ -105,8 +105,7 @@ export function WishlistItemView({
   const resolveImageSrc = (item: WishlistItem) => {
     const resolved = resolveItemImageUrl?.(item)
     if (resolved != null && resolved !== '') return resolved
-    if (item.id && item.image) return `${API_URL}wishlist/${item.id}/image`
-    return ''
+    return itemImageUrl(item)
   }
 
   /*

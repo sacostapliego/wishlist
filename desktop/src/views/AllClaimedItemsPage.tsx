@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { wishlistAPI, type ClaimedItemResponse } from '../services/wishlist'
 import { isWishlistActive } from '../utils/wishlistUtils'
 import { COLORS } from '../styles/common'
-import { API_URL } from '../services/api'
+import { itemImageUrl } from '../utils/imageUrls'
 import { ClaimedItemCard, type ClaimedItem } from '../components/items/ClaimedItemCard'
 import { BackButton } from '../components/common/BackButton'
 
@@ -52,6 +52,7 @@ function AllClaimedItemsPage() {
         description: item.description,
         price: item.price,
         image: item.image,
+        image_token: item.image_token,
         owner_name: item.owner_name,
         color: item.wishlist_color,
         wishlist_id: item.wishlist_id,
@@ -65,12 +66,7 @@ function AllClaimedItemsPage() {
     }
   }
 
-  const getImageUrl = (item: ClaimedItem) => {
-    if (item.image && item.id) {
-      return `${API_URL}wishlist/${item.id}/image`
-    }
-    return ''
-  }
+  const getImageUrl = (item: ClaimedItem) => itemImageUrl(item)
 
   const activeItems = items.filter(item => isWishlistActive(item.wishlist_due_date))
   const inactiveItems = items.filter(item => !isWishlistActive(item.wishlist_due_date))

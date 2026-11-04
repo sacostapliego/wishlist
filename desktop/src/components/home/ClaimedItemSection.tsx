@@ -3,7 +3,7 @@
 import { Box, Heading, HStack, Button, Text, VStack } from '@chakra-ui/react'
 import { FaChevronRight } from 'react-icons/fa'
 import { COLORS } from '../../styles/common'
-import { API_URL } from '../../services/api'
+import { itemImageUrl } from '../../utils/imageUrls'
 import { SnapCarouselRow } from '../common/SnapCarouselRow'
 import { ClaimedItemCard, type ClaimedItem, type ClaimedItemCardProps } from '../items/ClaimedItemCard'
 
@@ -98,10 +98,7 @@ export function ClaimedItemsSection({
     if (custom != null && custom !== '') {
       return custom
     }
-    if (item.image && item.id) {
-      return `${API_URL}wishlist/${item.id}/image`
-    }
-    return ''
+    return itemImageUrl(item)
   }
 
   /**

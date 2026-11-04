@@ -1,8 +1,10 @@
 import boto3
+import hashlib
+import hmac
 import io
 import os
 import uuid
-from typing import Tuple
+from typing import Optional, Tuple
 from fastapi import HTTPException, Response, UploadFile
 from botocore.exceptions import ClientError
 from PIL import Image
@@ -104,6 +106,25 @@ def image_response(s3_object: dict) -> Response:
         media_type=content_type,
         headers={'X-Content-Type-Options': 'nosniff'}
     )
+
+def image_token(url: Optional[str]) -> Optional[str]:
+    """
+    Proof that the API already showed this image to the caller. The image routes
+    are loaded by plain <img> tags, which cannot send the login header, so a
+    private list's images are served only to a request carrying this. It is
+    derived from the stored URL, so replacing an image changes the token.
+    """
+    if not url:
+        return None
+    return hmac.new(
+        os.getenv('JWT_SECRET', '').encode('utf-8'),
+        f'image:{url}'.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()[:32]
+
+def image_token_matches(url: Optional[str], token: Optional[str]) -> bool:
+    expected = image_token(url)
+    return bool(expected and token) and hmac.compare_digest(expected, token)
 
 def delete_file_from_s3(url: str) -> bool:
     """
