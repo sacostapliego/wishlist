@@ -21,5 +21,10 @@ export const COLORS = {
   white: '#ffffff',
   border: '#64748b',
   cardGray: '#212121',
-  cardDarkLight: '#1e1e1e'
+  cardDarkLight: '#1e1e1e',
+  /**
+   * Image tile behind an item on a list with no colour. Lighter than cardGray so
+   * dark products stay visible, and rgb() so getPriorityColor can shade it.
+   */
+  itemTileGray: 'rgb(58, 58, 58)'
 };

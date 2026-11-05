@@ -306,7 +306,7 @@ export function OwnerWishlistView({
               {hasDueCountdown(wishlist.due_date) && (
                 <>
                   <Text>•</Text>
-                  <DueBadge due_date={wishlist.due_date} size="md" />
+                  <DueBadge due_date={wishlist.due_date} size="md" plain />
                 </>
               )}
             </HStack>

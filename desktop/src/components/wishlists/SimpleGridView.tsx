@@ -114,6 +114,10 @@ export function SimpleGridView({
           ? getPriorityColor(baseWishlistColor, item.priority)
           : baseWishlistColor
 
+        const tileBg = sortBy === 'priority-high'
+          ? getPriorityColor(COLORS.itemTileGray, item.priority)
+          : COLORS.itemTileGray
+
         const isSelected = selectedItems.includes(item.id)
 
         return (
@@ -138,7 +142,7 @@ export function SimpleGridView({
                 <Box
                   w="100%"
                   aspectRatio={1}
-                  bg={backgroundLightColor}
+                  bg={wishlistColor ? backgroundLightColor : tileBg}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"

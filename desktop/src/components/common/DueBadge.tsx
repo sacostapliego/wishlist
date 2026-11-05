@@ -5,6 +5,8 @@ import { formatCountdown, getDueUrgency } from '../../utils/wishlistUtils'
 interface DueBadgeProps {
   due_date?: string | null
   size?: 'sm' | 'md'
+  /** White text at every distance — no urgency colour. */
+  plain?: boolean
 }
 
 /**
@@ -23,7 +25,7 @@ export function hasDueCountdown(due_date?: string | null): boolean {
  * Renders nothing when the list is undated or the date has passed; an explicit
  * "no date" label is noise on a card.
  */
-export function DueBadge({ due_date, size = 'sm' }: DueBadgeProps) {
+export function DueBadge({ due_date, size = 'sm', plain = false }: DueBadgeProps) {
   const label = formatCountdown(due_date)
   const urgency = getDueUrgency(due_date)
 
@@ -39,7 +41,7 @@ export function DueBadge({ due_date, size = 'sm' }: DueBadgeProps) {
       fontWeight="semibold"
       lineHeight="1.4"
       whiteSpace="nowrap"
-      color={isSoon ? '#F2758A' : COLORS.text.subtle}
+      color={plain ? COLORS.white : isSoon ? '#F2758A' : COLORS.text.subtle}
     >
       {label}
     </Text>

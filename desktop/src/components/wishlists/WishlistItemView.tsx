@@ -140,6 +140,10 @@ export function WishlistItemView({
         const displayDate = item.updated_at || item.created_at
 
         const isSelected = selectedItems.includes(item.id)
+        const tileBg = sortBy === 'priority-high'
+          ? getPriorityColor(COLORS.itemTileGray, item.priority)
+          : COLORS.itemTileGray
+
         const cardBg = wishlistColor ? itemBackgroundColor : COLORS.cardGray
         const rowBg = isSelected
           ? rowPlain('rgba(255, 255, 255, 0.08)', backgroundLightColor)
@@ -191,7 +195,7 @@ export function WishlistItemView({
                   w={imgBox}
                   h={imgBox}
                   borderRadius="0.375rem"
-                  bg={wishlistColor ? rowPlain(itemBackgroundColor, backgroundLightColor) : backgroundLightColor}
+                  bg={wishlistColor ? rowPlain(itemBackgroundColor, backgroundLightColor) : tileBg}
                   flexShrink={0}
                   display="flex"
                   alignItems="center"
