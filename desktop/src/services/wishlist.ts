@@ -271,11 +271,6 @@ export const wishlistAPI = {
     return response.data;
   },
 
-  removeItemBackground: async (itemId: string): Promise<WishlistItem> => {
-    const response = await api.post(`/wishlist/${itemId}/remove-background`);
-    return response.data;
-  },
-
   scrapeUrl: async (url: string): Promise<ScrapedItemData> => {
     try {
       const response = await api.post('/wishlist/scrape-url', { url });

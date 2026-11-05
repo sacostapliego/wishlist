@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from fastapi.concurrency import run_in_threadpool
 from typing import List, Optional
 from urllib.parse import urlsplit
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw, ImageOps
 
 
 from models.wishlist import Wishlist
@@ -27,7 +27,7 @@ from services.scraper import scrape_url
 
 BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
 
-# Longest side the background remover works on. The pixel loop is the slow part
+# Longest side the background remover works on. The flood fill is the slow part
 # and its cost grows with area, so this is what keeps a request bounded. Matches
 # what the item form compresses to.
 MAX_BACKGROUND_REMOVAL_SIDE = 1200
@@ -77,20 +77,33 @@ async def process_image_remove_background(
 
 """ Helper function to remove white background """
 def _remove_white_background(image_data: bytes) -> bytes:
-    """Processes image data with Pillow to remove white background."""
+    """
+    Makes the white background transparent. Only near-white pixels reachable from
+    the image edges count as background, so white parts of the product itself (a
+    white shoe sole, a label) survive as long as the product outline encloses them.
+    """
     img = Image.open(io.BytesIO(image_data))
     img.thumbnail((MAX_BACKGROUND_REMOVAL_SIDE, MAX_BACKGROUND_REMOVAL_SIDE))
     img = img.convert("RGBA")
-    datas = img.getdata()
-    newData = []
     # Tolerance for "off-white" colors
     tolerance = 20
-    for item_pixel in datas:
-        if item_pixel[0] > 255 - tolerance and item_pixel[1] > 255 - tolerance and item_pixel[2] > 255 - tolerance:
-            newData.append((255, 255, 255, 0))
-        else:
-            newData.append(item_pixel)
-    img.putdata(newData)
+
+    # Near-white is 255, everything else 0: a pixel is near-white when its darkest
+    # channel is.
+    r, g, b, alpha = img.split()
+    darkest = ImageChops.darker(ImageChops.darker(r, g), b)
+    near_white = darkest.point(lambda v: 255 if v > 255 - tolerance else 0)
+
+    # A 1px near-white frame joins every edge, so one fill from a corner reaches
+    # all the background touching any side.
+    framed = ImageOps.expand(near_white, border=1, fill=255)
+    ImageDraw.floodfill(framed, (0, 0), 128)
+    background = framed.crop((1, 1, framed.width - 1, framed.height - 1)).point(
+        lambda v: 255 if v == 128 else 0
+    )
+
+    # Keep any transparency the upload already had
+    img.putalpha(ImageChops.subtract(alpha, background))
     buffer = io.BytesIO()
     img.save(buffer, "PNG")
     buffer.seek(0)
@@ -441,70 +454,6 @@ def read_user_wishlist(
         viewer_user_id=viewer_user_id,
         viewer_guest_session_id=viewer_guest_session_id
     )
-
-""" Remove white background from an item's image """
-@router.post('/{item_id}/remove-background', response_model=dict)
-async def remove_item_image_background(
-    item_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Removes the white background from an item's image and saves it back to S3.
-    """
-    item = db.query(WishListItem).filter(WishListItem.id == item_id).first()
-    if not item or not item.image:
-        raise HTTPException(status_code=404, detail="Item or item image not found")
-    
-    wishlist = db.query(Wishlist).filter(Wishlist.id == item.wishlist_id).first()
-    if not wishlist or wishlist.owner_id != uuid.UUID(current_user['id']):
-        raise HTTPException(status_code=403, detail="Not authorized to modify this item")
-
-    try:
-        # 1. Download image from S3
-        s3_key = item.image.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[1]
-        response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
-        image_data = response['Body'].read()
-        
-        # 2. Process with Pillow
-        img = Image.open(io.BytesIO(image_data)).convert("RGBA")
-        datas = img.getdata()
-
-        newData = []
-        # Set a tolerance for "off-white" colors
-        tolerance = 20 
-        for item_pixel in datas:
-            # If the pixel is close to white, make it transparent
-            if item_pixel[0] > 255 - tolerance and item_pixel[1] > 255 - tolerance and item_pixel[2] > 255 - tolerance:
-                newData.append((255, 255, 255, 0))
-            else:
-                newData.append(item_pixel)
-        
-        img.putdata(newData)
-
-        # 3. Save processed image to a buffer
-        buffer = io.BytesIO()
-        img.save(buffer, "PNG")
-        buffer.seek(0)
-
-        # 4. Upload the new transparent image back to S3, overwriting the old one
-        # The s3_key should point to the same object to overwrite it.
-        # Ensure the content type is 'image/png' for transparency.
-        s3_client.put_object(
-            Bucket=BUCKET_NAME,
-            Key=s3_key,
-            Body=buffer,
-            ContentType='image/png',
-            ACL='public-read' # Or your default ACL
-        )
-        
-        # The URL remains the same, so no DB update is needed.
-        
-        return {"message": "Background removed successfully."}
-
-    except Exception as e:
-        print(f"Error removing background: {e}")
-        raise HTTPException(status_code=500, detail="Failed to remove image background.")
 
 """Get an item's image directly from S3"""
 @router.get('/{item_id}/image', response_class=Response)

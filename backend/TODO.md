@@ -26,11 +26,8 @@ Low priority:
 - [ ] `services/scraper.py:93` — the address check and the fetch resolve DNS separately, so a rebinding domain could still reach a private address; pin the checked IP if this matters
 - [ ] `routes/items.py:222` — `limit` has no maximum (same at `routes/items.py:422`, `routes/wishlists.py:110` and `routes/wishlists.py:269`)
 - [ ] `main.py:32` — localhost origins are still allowed in production
-- [ ] `routes/items.py:467` — route always returns a 500 (`owner_id` does not exist) and nothing calls it, delete it and `removeItemBackground` in `desktop/src/services/wishlist.ts:273`
 - [ ] `routes/auth.py:47` — `datetime.utcnow()` is deprecated
-- [ ] `routes/items.py:79` — `Image.getdata` is removed in Pillow 14 (October 2027)
 
 Background removal:
 
-- [ ] `routes/items.py:74` — replace the white threshold with a flood-fill from the image edges, so white parts of a product survive
 - [ ] `desktop/src/components/items/ItemForm.tsx:154` — use Cloudflare Images `segment=foreground` for regular photos, test on a free account first (free for 5,000 unique images a month, then fails with no charge)

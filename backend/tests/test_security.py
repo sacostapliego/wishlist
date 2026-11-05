@@ -299,6 +299,32 @@ def test_background_removal_is_size_bounded(client, use_db):
     encoded = response.json()['image_data_url'].split(',', 1)[1]
     assert Image.open(io.BytesIO(base64.b64decode(encoded))).size == (1200, 600)
 
+def test_background_removal_keeps_white_inside_the_product():
+    # A white sheet with a dark ring whose middle is also white
+    img = Image.new('RGB', (40, 40), (255, 255, 255))
+    for x in range(10, 30):
+        for y in range(10, 30):
+            if x in (10, 29) or y in (10, 29):
+                img.putpixel((x, y), (20, 20, 20))
+    buffer = io.BytesIO()
+    img.save(buffer, 'PNG')
+
+    result = Image.open(io.BytesIO(item_routes._remove_white_background(buffer.getvalue())))
+    assert result.getpixel((0, 0))[3] == 0          # background
+    assert result.getpixel((39, 20))[3] == 0        # background on another edge
+    assert result.getpixel((10, 10))[3] == 255      # the ring
+    assert result.getpixel((20, 20)) == (255, 255, 255, 255)  # white inside the ring
+
+def test_background_removal_keeps_existing_transparency():
+    img = Image.new('RGBA', (10, 10), (200, 30, 30, 255))
+    img.putpixel((5, 5), (200, 30, 30, 0))
+    buffer = io.BytesIO()
+    img.save(buffer, 'PNG')
+
+    result = Image.open(io.BytesIO(item_routes._remove_white_background(buffer.getvalue())))
+    assert result.getpixel((5, 5))[3] == 0
+    assert result.getpixel((0, 0))[3] == 255
+
 # Item rules -----------------------------------------------------------------
 
 def test_an_item_cannot_be_put_on_someone_elses_list(client, use_db):
