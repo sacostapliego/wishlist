@@ -9,9 +9,11 @@ import type { ApiError } from '../../types/types'
 
 interface ScrapeUrlFormProps {
   onScrapeSuccess: (data: Partial<ItemFormData>) => void
+  /** The lookup failed; the link is handed back so the manual form can keep it. */
+  onScrapeFailure: (url: string) => void
 }
 
-export const ScrapeUrlForm = ({ onScrapeSuccess }: ScrapeUrlFormProps) => {
+export const ScrapeUrlForm = ({ onScrapeSuccess, onScrapeFailure }: ScrapeUrlFormProps) => {
   const [scrapeUrl, setScrapeUrl] = useState('')
   const [isScraping, setIsScraping] = useState(false)
 
@@ -25,31 +27,43 @@ export const ScrapeUrlForm = ({ onScrapeSuccess }: ScrapeUrlFormProps) => {
       return
     }
 
+    const link = scrapeUrl.trim()
     setIsScraping(true)
     try {
-      const result = await wishlistAPI.scrapeUrl(scrapeUrl)
+      const result = await wishlistAPI.scrapeUrl(link)
       onScrapeSuccess({
         name: result.name || '',
         price: result.price ? String(result.price) : '',
-        url: result.url || scrapeUrl,
+        url: result.url || link,
         newImageUri: result.image_url || undefined,
         description: '',
         priority: 0,
       })
-      
-      toaster.create({
-        title: 'Success',
-        description: 'Product information retrieved successfully!',
-        type: 'success',
-      })
+
+      // Some shops only give part of it (e.g. the price is loaded by script)
+      const missing = [!result.price && 'price', !result.image_url && 'picture'].filter(Boolean)
+      toaster.create(
+        missing.length
+          ? {
+              title: 'Mostly filled in',
+              description: `Couldn't find the ${missing.join(' or ')} on that page. Add it below.`,
+              type: 'info',
+            }
+          : {
+              title: 'Success',
+              description: 'Product information retrieved successfully!',
+              type: 'success',
+            }
+      )
     } catch (error) {
       const apiError = error as ApiError
-      const errorMessage =
-        apiError?.response?.data?.detail || 'Failed to scrape the URL. The site may be unsupported.'
+      const reason = apiError?.response?.data?.detail || "We couldn't read that page."
+      // Whatever went wrong, carry on by hand with the link already saved
+      onScrapeFailure(link)
       toaster.create({
-        title: 'Scraping Error',
-        description: errorMessage,
-        type: 'error',
+        title: 'Fill in the details',
+        description: `${reason} The link has been added for you.`,
+        type: 'info',
       })
     } finally {
       setIsScraping(false)

@@ -79,6 +79,11 @@ export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, preferred
     setAddMode('manual')
   }
 
+  const handleScrapeFailure = (url: string) => {
+    setInitialFormValues({ name: '', description: '', price: '', url, priority: 0 })
+    setAddMode('manual')
+  }
+
   const handleAddItemSubmit = async (formData: ItemFormData, imageFile?: File | string) => {
     setIsSubmitting(true)
     try {
@@ -243,7 +248,7 @@ export function AddItemModal({ isOpen, onClose, preSelectedWishlistId, preferred
                   hideWishlistSelector={!!preSelectedWishlistId}
                 />
               ) : (
-                <ScrapeUrlForm onScrapeSuccess={handleScrapeSuccess} />
+                <ScrapeUrlForm onScrapeSuccess={handleScrapeSuccess} onScrapeFailure={handleScrapeFailure} />
               )}
             </Box>
           </VStack>
