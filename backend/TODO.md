@@ -28,6 +28,14 @@ Low priority:
 - [ ] `main.py:32` — localhost origins are still allowed in production
 - [ ] `routes/auth.py:47` — `datetime.utcnow()` is deprecated
 
+Link scraper:
+
+- [ ] Share to app (once there is a phone app) — many big shops (Abercrombie, Zara, H&M, Sephora, Lululemon, Home Depot, Costco, eBay) block the server with bot protection, so `services/scraper.py` only gets "This store blocks automatic lookups". Reading the page on the user's own phone avoids that and costs the server nothing:
+  - iOS: a Safari share extension can run a script on the open page (`NSExtensionJavaScriptPreprocessingFile`) and pass back the product tags
+  - Android: the share sheet only passes the link, so load it in a hidden in-app WebView and read the tags there
+  - Either way, reuse the parsing order from `scrape_generic` (schema.org JSON-LD, then microdata, then Open Graph) on the device and fall back to the server scraper, then the manual form
+- [ ] Uniqlo and Target return name and picture but no price; they add the price with JavaScript after load, which the scraper never runs. Share to app would cover these too
+
 Background removal:
 
 - [ ] `desktop/src/components/items/ItemForm.tsx:154` — use Cloudflare Images `segment=foreground` for regular photos, test on a free account first (free for 5,000 unique images a month, then fails with no charge)
