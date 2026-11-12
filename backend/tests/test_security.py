@@ -638,6 +638,65 @@ def test_the_scraper_reads_open_graph_and_schema_tags():
     assert details['name'] == 'Blue Mug'
     assert details['price'] == 12.5
     assert details['image_url'] == '/mug.jpg'
+    assert 'description' not in details
+
+def test_the_scraper_finds_a_product_nested_in_a_graph_with_variants():
+    from bs4 import BeautifulSoup
+    from services import scraper
+    soup = BeautifulSoup(
+        '<html><head><title>Ignored</title>'
+        '<script type="application/ld+json">{"@context": "https://schema.org", "@graph": ['
+        '{"@type": "WebPage", "mainEntity": {"@type": ["ProductGroup"], "name": "Rain Jacket &amp; Hood",'
+        ' "hasVariant": [{"@type": "Product", "image": [{"@type": "ImageObject", "url": "https://cdn.shop/j.jpg"}],'
+        ' "offers": {"@type": "AggregateOffer", "lowPrice": "89,00", "priceCurrency": "EUR"}}]}}'
+        ']}</script>'
+        '</head></html>',
+        'html.parser'
+    )
+    details = scraper.scrape_generic(soup)
+    assert details == {'name': 'Rain Jacket & Hood', 'price': 89.0, 'image_url': 'https://cdn.shop/j.jpg'}
+
+def test_the_scraper_falls_back_to_microdata_and_page_title():
+    from bs4 import BeautifulSoup
+    from services import scraper
+    soup = BeautifulSoup(
+        '<html><head><title>Desk Lamp | Lamp Co</title>'
+        '<meta property="og:site_name" content="Lamp Co">'
+        '<link rel="image_src" href="//cdn.lamp.co/lamp.png">'
+        '</head><body><div itemscope itemtype="https://schema.org/Product">'
+        '<span itemprop="price" content="1299.00">$1,299</span>'
+        '</div></body></html>',
+        'html.parser'
+    )
+    details = scraper.scrape_generic(soup)
+    assert details == {'name': 'Desk Lamp', 'price': 1299.0, 'image_url': '//cdn.lamp.co/lamp.png'}
+
+@pytest.mark.parametrize('title, hostname, expected', [
+    ('Unisex Crew Neck T-Shirt | UNIQLO US', 'www.uniqlo.com', 'Unisex Crew Neck T-Shirt'),
+    ('Paper Towels - 6 Rolls : Target', 'www.target.com', 'Paper Towels - 6 Rolls'),
+    ('Shirt | Blue', 'www.uniqlo.com', 'Shirt | Blue'),
+])
+def test_the_scraper_drops_the_store_name_from_titles(title, hostname, expected):
+    from services import scraper
+    assert scraper.clean_name(title, None, hostname) == expected
+
+@pytest.mark.parametrize('title, blocked', [
+    ('Client Challenge', True), ('Just a moment...', True), ('Access Denied', True),
+    ('Essential Popover Hoodie | Abercrombie', False),
+])
+def test_the_scraper_recognises_bot_check_pages(title, blocked):
+    from bs4 import BeautifulSoup
+    from services import scraper
+    soup = BeautifulSoup(f'<html><head><title>{title}</title></head></html>', 'html.parser')
+    assert scraper.is_block_page(soup) is blocked
+
+@pytest.mark.parametrize('text, expected', [
+    ('$1,299.00', 1299.0), ('19,99 €', 19.99), ('EUR 1.299,00', 1299.0), ('£1,299', 1299.0),
+    ('From $25 - $40', 25.0), (49, 49.0), ('Free', None), ('0.00', None), (None, None),
+])
+def test_the_scraper_reads_prices_in_any_format(text, expected):
+    from services import scraper
+    assert scraper.parse_price(text) == expected
 
 # Contribution mode ----------------------------------------------------------
 

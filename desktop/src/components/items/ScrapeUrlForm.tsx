@@ -63,7 +63,7 @@ export const ScrapeUrlForm = ({ onScrapeSuccess }: ScrapeUrlFormProps) => {
           Product URL
         </Text>
         <Input
-          placeholder="https://www.amazon.com/..."
+          placeholder="https://..."
           value={scrapeUrl}
           onChange={(e) => setScrapeUrl(e.target.value)}
           bg={COLORS.cardDarkLight}
@@ -96,7 +96,7 @@ export const ScrapeUrlForm = ({ onScrapeSuccess }: ScrapeUrlFormProps) => {
       </Button>
 
       <Text color={COLORS.text.secondary} fontSize="sm" textAlign="center">
-        Enter a link from a supported store (e.g., Amazon) to automatically fill in the details.
+        Paste a product link from any store to fill in the name, price and picture.
       </Text>
     </VStack>
   )

@@ -439,15 +439,15 @@ export const ItemForm = forwardRef<ItemFormRef, ItemFormProps>(
           />
         </Box>
 
-        {/* Description */}
+        {/* Notes (stored as the item's description) */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.primary}>
-            Description
+            Notes
           </Text>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add details about this item"
+            placeholder="Size, colour, or anything the gift-giver should know"
             bg={COLORS.cardDarkLight}
             color={COLORS.text.primary}
             borderColor={COLORS.cardDarkLight}
